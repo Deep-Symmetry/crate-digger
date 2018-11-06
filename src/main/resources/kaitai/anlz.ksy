@@ -74,6 +74,9 @@ types:
             'section_tags::vbr': vbr_tag
             'section_tags::wave_preview': wave_preview_tag
             'section_tags::wave_tiny': wave_preview_tag
+            'section_tags::wave_scroll': wave_scroll_tag
+            'section_tags::wave_color_preview': wave_color_preview_tag
+            'section_tags::wave_color_scroll': wave_color_scroll_tag
     -webide-representation: '{fourcc}'
 
 
@@ -210,8 +213,8 @@ types:
 
   wave_preview_tag:
     doc: |
-      Stores a waveform preview image suitable for display long the
-      bottom of a loaded track.
+      Stores a waveform preview image suitable for display above
+      the touch strip for jumping to a track position.
     seq:
       - id: len_preview
         type: u4
@@ -225,23 +228,75 @@ types:
         doc: |
           The actual bytes of the waveform preview.
 
+  wave_scroll_tag:
+    doc: |
+      A larger waveform image suitable for scrolling along as a track
+      plays.
+    seq:
+      - type: u4  # Always 1?
+      - id: len_entries
+        type: u4
+        doc: |
+          The number of waveform data points, each of which takes one
+          byte.
+      - type: u4  # Always 0x960000?
+      - id: entries
+        size: len_entries
+
+  wave_color_preview_tag:
+    doc: |
+      A larger, colorful waveform preview image suitable for display
+      above the touch strip for jumping to a track position on newer
+      high-resolution players.
+    seq:
+      - type: u4
+      - id: len_entries
+        type: u4
+        doc: |
+          The number of waveform data points, each of which takes one
+          byte for each of six channels of information.
+      - type: u4
+      - id: entries
+        size: len_entries * 6
+
+  wave_color_scroll_tag:
+    doc: |
+      A larger, colorful waveform image suitable for scrolling along
+      as a track plays on newer high-resolution hardware. Also
+      contains a higher-resolution blue/white waveform.
+    seq:
+      - type: u4  # I have seen the value 2?
+      - id: len_entries
+        type: u4
+        doc: |
+          The number of columns of waveform data (this matches the
+          non-color waveform length), but we do not yet know how to
+          translate the payload into color columns.
+      - type: u4
+      - id: entries
+        size-eos: true
+
 enums:
-    section_tags:
-      0x50434f42: cues          # PCOB
-      0x50505448: path          # PPTH
-      0x50564252: vbr           # PVBR
-      0x5051545a: beat_grid     # PQTZ
-      0x50574156: wave_preview  # PWAV
-      0x50575632: wave_tiny     # PWV2
+  section_tags:
+    0x50434f42: cues                # PCOB
+    0x50434f32: cues_2              # PCO2 (seen in .EXT)
+    0x50505448: path                # PPTH
+    0x50564252: vbr                 # PVBR
+    0x5051545a: beat_grid           # PQTZ
+    0x50574156: wave_preview        # PWAV
+    0x50575632: wave_tiny           # PWV2
+    0x50575633: wave_scroll         # PWV3 (seen in .EXT)
+    0x50575634: wave_color_preview  # PWV4 (seen in .EXT)
+    0x50575635: wave_color_scroll   # PWV5 (seen in .EXT)
 
-    cue_list_type:
-      0: memory_cues
-      1: hot_cues
+  cue_list_type:
+    0: memory_cues
+    1: hot_cues
 
-    cue_entry_type:
-      1: memory_cue
-      2: loop
+  cue_entry_type:
+    1: memory_cue
+    2: loop
 
-    cue_entry_status:
-      0: disabled
-      1: enabled
+  cue_entry_status:
+    0: disabled
+    1: enabled
