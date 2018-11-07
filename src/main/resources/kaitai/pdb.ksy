@@ -172,9 +172,14 @@ types:
       - type: u1
         doc: |
           @flesniak said: "a bitmask (1st track: 32)"
-      - type: u2
+      - type: u1
         doc: |
-          @flesniak said: "25600 for strange blocks"
+          @flesniak said: "often 0, sometimes larger, esp. for pages
+          with high real_entry_count (e.g. 12 for 101 entries)"
+      - id: page_flags
+        type: u1
+        doc: |
+          @flesniak said: "strange pages: 0x44, 0x64; otherwise seen: 0x24, 0x34"
       - id: free_size
         type: u2
         doc: |
@@ -209,6 +214,9 @@ types:
         size-eos: true
         if: heap_pos < 0  # never true, but stores pos
     instances:
+      is_data_page:
+        value: page_flags & 0x40 == 0
+        -webide-parse-mode: eager
       heap_pos:
         value: _io.pos
       num_rows:
@@ -231,7 +239,9 @@ types:
         repeat-expr: num_groups
         doc: |
           The actual row groups making up the row index. Each group
-          can hold up to sixteen rows.
+          can hold up to sixteen rows. Non-data pages do not have
+          actual rows, and attempting to parse them can crash.
+        if: is_data_page
 
   row_group:
     doc: |
