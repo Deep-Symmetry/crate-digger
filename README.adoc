@@ -15,8 +15,8 @@ ifdef::env-github[]
 :warning-caption: :warning:
 endif::env-github[]
 
-A Java library for parsing rekordbox media exports and track analysis
-files.
+A Java library for fetching and parsing rekordbox media exports and
+track analysis files.
 
 image:https://img.shields.io/badge/License-Eclipse%20Public%20License%201.0-blue.svg[link="#license"]
 
@@ -71,17 +71,6 @@ Be sure to keep the `.ksy` extension. Then you can upload it to the
 Kaitai Struct Web IDE.
 
 
-=== Unfinished Tasks
-
-There are still more tables to be figured out. `Columns` looks like
-the list of things that can be searched by, so perhaps it will hold
-some clues for how to find and use the index tables, which must exist
-because it would be horribly slow for the players to do a linear scan
-through the main sparse tables whenever they wanted a record.
-
-If we could figure out how to use the indices ourselves, we could
-avoid having to load the whole file and index it ourselves.
-
 == ANLZ Data
 
 Each track in a rekordbox database also has `ANLZnnnn.DAT` and
@@ -92,8 +81,26 @@ files are found inside the corresponding track record.
 
 The structure definitions for these files are in
 link:src/main/resources/kaitai/anlz.ksy[`anlz.ksy`]. You can use it
-with the Kaitai Struct Web IDE as described above to explore analysis
+with the Kaitai Struct Web IDE as described
+<<exploring-the-analysis,above>> to explore analysis
 files found in your own exported media.
+
+== Unfinished Tasks
+
+* The process of actually fetching the databases from the players using
+NFS is under active development now.
+
+* A document explaining the structures with diagrams, along the lines
+of the Dysentery Packet Analysis, will be part of this project as well.
+
+* There are still more tables to be figured out. `Columns` looks like
+the list of things that can be searched by, so perhaps it will hold
+some clues for how to find and use the index tables, which must exist
+because it would be horribly slow for the players to do a linear scan
+through the main sparse tables whenever they wanted a record.
+
+* If we could figure out how to use the indices ourselves, we could
+avoid having to load the whole file and index it ourselves.
 
 == Using the Library
 
@@ -103,8 +110,21 @@ I have finished testing them in the context of Beat Link, I will write
 up some documentation here about how to use them, pointing at the
 relevant parts of Beat Link as examples.
 
+== Building the source
 
-== License
+The Maven project uses a plugin to run the the `jrpcgen` tool
+(which is part of the
+https://sourceforge.net/projects/remotetea/[Remote Tea
+project]) to generate Java classes to implement the
+ONC RPC specifications found in `src/main/rpc`.
+(These are used for communicating with the NFS servers
+in CDJs.) It also uses the http://kaitai.io[Kaitai Struct Compiler]
+through another plugin to generate Java classes that can parse the
+rekordbox databases it downloads from the players, based on the
+specifications found in `src/main/kaitai`.
+
+== Licenses
+
 +++<a href="http://deepsymmetry.org"><img src="assets/DS-logo-bw-200-padded-left.png" align="right" alt="Deep Symmetry logo" width="216" height="123"></a>+++
 Copyright © 2018 http://deepsymmetry.org[Deep Symmetry, LLC]
 
@@ -114,3 +134,13 @@ http://opensource.org/licenses/eclipse-1.0.php[Eclipse Public License
 are agreeing to be bound by the terms of this license. You must not
 remove this notice, or any other, from this software. A copy of the
 license can be found in link:LICENSE[LICENSE] within this project.
+
+Remote Tea is licensed under the
+https://opensource.org/licenses/LGPL-2.0[GNU Library General
+Public License, version 2].
+
+The https://github.com/kaitai-io/kaitai_struct_compiler[Kaitai Struct
+Compiler] is licensed under the
+https://opensource.org/licenses/GPL-3.0[GNU General Public License,
+version 3] and the Kaitai Java runtime embedded in crate-digger is
+licensed under the https://opensource.org/licenses/MIT[MIT License].
