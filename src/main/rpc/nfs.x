@@ -44,13 +44,13 @@ const COOKIESIZE  = 4;
 const FHSIZE = 32;
 
 /*
- * The "stat" type is returned with every procedure's results. A value
+ * The "Stat" type is returned with every procedure's results. A value
  * of NFS_OK indicates that the call completed successfully and the
  * results are valid. The other values indicate some kind of error
  * occurred on the server side during the servicing of the procedure.
  * The error values are derived from UNIX error numbers.
  */
-enum stat {
+enum Stat {
   NFS_OK = 0,
   /*
    * Not owner. The caller does not have correct ownership to perform
@@ -136,12 +136,12 @@ enum stat {
 };
 
 /*
- * The enumeration "ftype" gives the type of a file. The type NFNON
+ * The enumeration "FType" gives the type of a file. The type NFNON
  * indicates a non-file, NFREG is a regular file, NFDIR is a
  * directory, NFBLK is a block-special device, NFCHR is a character-
  * special device, and NFLNK is a symbolic link.
  */
-enum ftype {
+enum FType {
    NFNON = 0,
    NFREG = 1,
    NFDIR = 2,
@@ -159,17 +159,17 @@ enum ftype {
 typedef opaque FHandle[FHSIZE];
 
 /*
- * The "timeval" structure is the number of seconds and microseconds
+ * The "TimeVal" structure is the number of seconds and microseconds
  * since midnight January 1, 1970, Greenwich Mean Time. It is used to
  * pass time and date information.
  */
-struct timeval {
+struct TimeVal {
   unsigned int seconds;
   unsigned int useconds;
 };
 
 /*
- * The "fattr" structure contains the attributes of a file; "type" is
+ * The "FAttr" structure contains the attributes of a file; "type" is
  * the type of the file; "nlink" is the number of hard links to the
  * file (the number of different names for the same file); "uid" is
  * the user identification number of the owner of the file; "gid" is
@@ -221,8 +221,8 @@ struct timeval {
  * specific device specifier. It will be removed and generalized in
  * the next revision of the protocol.
  */
-struct fattr {
-  ftype        type;
+struct FAttr {
+  FType        type;
   unsigned int mode;
   unsigned int nlink;
   unsigned int uid;
@@ -233,173 +233,183 @@ struct fattr {
   unsigned int blocks;
   unsigned int fsid;
   unsigned int fileid;
-  timeval      atime;
-  timeval      mtime;
-  timeval      ctime;
+  TimeVal      atime;
+  TimeVal      mtime;
+  TimeVal      ctime;
 };
 
 /*
- * The "sattr" structure contains the file attributes which can be set
- * from the client. The fields are the same as for "fattr" above. A
+ * The "SAttr" structure contains the file attributes which can be set
+ * from the client. The fields are the same as for "FAttr" above. A
  * "size" of zero means the file should be truncated. A value of -1
  * indicates a field that should be ignored.
  */
-struct sattr {
+struct SAttr {
   unsigned int mode;
   unsigned int uid;
   unsigned int gid;
   unsigned int size;
-  timeval      atime;
-  timeval      mtime;
+  TimeVal      atime;
+  TimeVal      mtime;
 };
 
 /*
- * The type "filename" is used for passing file names or pathname
+ * The type "Filename" is used for passing file names or pathname
  * components.
+ *
+ * In the standard protocol, this is an ASCII string. For Pioneer
+ * players, it is an UTF-16LE encoded string; to ensure that encoding,
+ * we define it as an opaque byte stream and do the encoding and
+ * decoding in our NFS helper classes.
  */
-typedef string filename<MAXNAMLEN>;
+typedef opaque Filename<MAXNAMLEN>;
 
 /*
- * The type "path" is a pathname. The server considers it as a string
+ * The type "Path" is a pathname. The server considers it as a string
  * with no internal structure, but to the client it is the name of a
  * node in a filesystem tree.
+ *
+ * In the standard protocol, this is an ASCII string. For Pioneer
+ * players, it is an UTF-16LE encoded string; to ensure that encoding,
+ * we define it as an opaque byte stream and do the encoding and
+ * decoding in our NFS helper classes.
  */
-typedef string path<MAXPATHLEN>;
+typedef opaque Path<MAXPATHLEN>;
 
-typedef opaque nfsdata<MAXDATA>;
+typedef opaque NFSData<MAXDATA>;
 
-typedef opaque nfscookie[COOKIESIZE];
+typedef opaque NFSCookie[COOKIESIZE];
 
 /*
- * The "attrstat" structure is a common procedure result. It contains
+ * The "AttrStat" structure is a common procedure result. It contains
  * a "status" and, if the call succeeded, it also contains the
  * attributes of the file on which the operation was done.
  */
-union attrstat switch (stat status) {
+union AttrStat switch (Stat status) {
   case NFS_OK:
-    fattr attributes;
+    FAttr attributes;
   default:
     void;
 };
 
 /*
- * The "diropargs" structure is used in directory operations. The
+ * The "DirOpArgs" structure is used in directory operations. The
  * "FHandle" "dir" is the directory in which to find the file "name".
  * A directory operation is one in which the directory is affected.
  */
-struct diropargs {
+struct DirOpArgs {
   FHandle  dir;
-  filename name;
+  Filename name;
 };
 
 /*
  * This structure is returned in a "diropres" structure when the call
  * succeeded and "status" has the value NFS_OK.
  */
-struct diopresbody {
+struct DirOpResBody {
   FHandle file;
-  fattr   attributes;
+  FAttr   attributes;
 };
 
 /*
- * The results of a directory operation are returned in a "diropres"
+ * The results of a directory operation are returned in a "DirOpRes"
  * structure. If the call succeeded, a new file handle "file" and the
  * "attributes" associated with that file are returned along with the
  * "status".
  */
-union diropres switch (stat status) {
+union DirOpRes switch (Stat status) {
   case NFS_OK:
-    diopresbody diropok;
+    DirOpResBody diropok;
   default:
     void;
 };
 
-struct sattrargs {
+struct SAttrArgs {
   FHandle file;
-  sattr attributes;
+  SAttr attributes;
 };
 
-union readlinkres switch (stat status) {
+union ReadLinkRes switch (Stat status) {
   case NFS_OK:
-    path data;
+    Path data;
   default:
     void;
 };
 
-struct readargs {
+struct ReadArgs {
   FHandle file;
   unsigned offset;
   unsigned count;
   unsigned totalcount;
 };
 
-struct readresbody {
-   fattr attributes;
-   nfsdata data;
+struct ReadResBody {
+   FAttr attributes;
+   NFSData data;
 };
 
-union readres switch (stat status) {
+union ReadRes switch (Stat status) {
  case NFS_OK:
-   readresbody readresok;
+   ReadResBody readResOk;
  default:
    void;
  };
 
-struct writeargs {
+struct WriteArgs {
   FHandle file;
-  unsigned beginoffset;
+  unsigned beginOffset;
   unsigned offset;
-  unsigned totalcount;
-  nfsdata data;
+  unsigned totalCount;
+  NFSData data;
 };
 
-struct createargs {
-  diropargs where;
-  sattr attributes;
+struct CreateArgs {
+  DirOpArgs where;
+  SAttr attributes;
 };
 
-struct renameargs {
-  diropargs from;
-  diropargs to;
+struct RenameArgs {
+  DirOpArgs from;
+  DirOpArgs to;
 };
 
-struct linkargs {
+struct LinkArgs {
   FHandle from;
-  diropargs to;
+  DirOpArgs to;
 };
 
-struct symlinkargs {
-  diropargs from;
-  path to;
-  sattr attributes;
+struct SymLinkArgs {
+  DirOpArgs from;
+  Path to;
+  SAttr attributes;
 };
 
-struct readdirargs {
+struct ReadDirArgs {
   FHandle dir;
-  nfscookie cookie;
+  NFSCookie cookie;
   unsigned count;
 };
 
-struct entry {
-  unsigned fileid;
-  filename name;
-  nfscookie cookie;
-  entry *nextentry;
+struct Entry {
+  unsigned fileId;
+  Filename name;
+  NFSCookie cookie;
+  Entry *next;
 };
 
-struct readdirresbody {
-  entry *entries;
+struct ReadDirResBody {
+  Entry *entries;
   bool eof;
 };
 
-union readdirres switch (stat status) {
+union ReadDirRes switch (Stat status) {
   case NFS_OK:
-    readdirresbody readdirok;
+    ReadDirResBody readdirok;
   default:
    void;
 };
 
-struct statfsresbody {
+struct StatFSResBody {
   unsigned tsize;
   unsigned bsize;
   unsigned blocks;
@@ -407,9 +417,9 @@ struct statfsresbody {
   unsigned bavail;
 };
 
-union statfsres switch (stat status) {
+union StatFSRes switch (Stat status) {
   case NFS_OK:
-    statfsresbody info;
+    StatFSResBody info;
   default:
     void;
 };
@@ -434,7 +444,7 @@ program NFS_PROGRAM {
          * If the reply status is NFS_OK, then the reply attributes contains
          * the attributes for the file given by the input FHandle
          */
-        attrstat
+        AttrStat
         NFSPROC_GETATTR(FHandle)        = 1;
 
         /*
@@ -448,8 +458,8 @@ program NFS_PROGRAM {
          * Notes: The use of -1 to indicate an unused field in "attributes" is
          * changed in the next version of the protocol.
          */
-        attrstat
-        NFSPROC_SETATTR(sattrargs)      = 2;
+        AttrStat
+        NFSPROC_SETATTR(SAttrArgs)      = 2;
 
         /*
          * Get Filesystem Root.
@@ -472,8 +482,8 @@ program NFS_PROGRAM {
          * "attributes" are the file handle and attributes for the file "name"
          * in the directory given by "dir" in the argument.
          */
-        diropres
-        NFSPROC_LOOKUP(diropargs)       = 4;
+        DirOpRes
+        NFSPROC_LOOKUP(DirOpArgs)       = 4;
 
         /*
          * Read from Symbolic Link.
@@ -487,7 +497,7 @@ program NFS_PROGRAM {
          * on a different client or on the server if a different pathname syntax
          * is used.
          */
-        readlinkres
+        ReadLinkRes
         NFSPROC_READLINK(FHandle)       = 5;
 
         /*
@@ -501,8 +511,8 @@ program NFS_PROGRAM {
          * Notes:  The argument "totalcount" is unused, and is removed in the
          * next protocol revision.
          */
-        readres
-        NFSPROC_READ(readargs)          = 6;
+        ReadRes
+        NFSPROC_READ(ReadArgs)          = 6;
 
         /*
          * Write to Cache.
@@ -526,8 +536,8 @@ program NFS_PROGRAM {
          * Notes: The arguments "beginoffset" and "totalcount" are
          * ignored and are removed in the next protocol revision.
          */
-        attrstat
-        NFSPROC_WRITE(writeargs)        = 8;
+        AttrStat
+        NFSPROC_WRITE(WriteArgs)        = 8;
 
         /*
          * Create File.
@@ -543,8 +553,8 @@ program NFS_PROGRAM {
          * Notes: This routine should pass an exclusive create flag,
          * meaning "create the file only if it is not already there".
          */
-        diropres
-        NFSPROC_CREATE(createargs)      = 9;
+        DirOpRes
+        NFSPROC_CREATE(CreateArgs)      = 9;
 
         /*
          * Remove File.
@@ -554,8 +564,8 @@ program NFS_PROGRAM {
          *
          * Notes: Possibly non-idempotent operation.
          */
-        stat
-        NFSPROC_REMOVE(diropargs)       = 10;
+        Stat
+        NFSPROC_REMOVE(DirOpArgs)       = 10;
 
         /*
          * Rename File.
@@ -568,8 +578,8 @@ program NFS_PROGRAM {
          *
          * Notes: Possibly non-idempotent operation.
          */
-        stat
-        NFSPROC_RENAME(renameargs)      = 11;
+        Stat
+        NFSPROC_RENAME(RenameArgs)      = 11;
 
         /*
          * Create Link to File.
@@ -588,13 +598,13 @@ program NFS_PROGRAM {
          *
          * Notes: Possibly non-idempotent operation.
          */
-        stat
-        NFSPROC_LINK(linkargs)          = 12;
+        Stat
+        NFSPROC_LINK(LinkArgs)          = 12;
 
         /*
          * Crete Symbolic Link.
          *
-         * Creates the file "from.name" with ftype NFLNK in the
+         * Creates the file "from.name" with FType NFLNK in the
          * directory given by "from.dir". The new file contains the
          * pathname "to" and has initial attributes given by
          * "attributes". If the return value is NFS_OK, a link was
@@ -605,15 +615,15 @@ program NFS_PROGRAM {
          * given in "to" is not interpreted by the server, only stored
          * in the newly created file. When the client references a
          * file that is a symbolic link, the contents of the symbolic
-         * link are normally transparently reinterpreted as a pathname
+         * link are normally transparently reinterpreted as a pathxname
          * to substitute. A READLINK operation returns the data to the
          * client for interpretation.
          *
          * Notes: On UNIX servers the attributes are never used, since
          * symbolic links always have mode 0777.
          */
-        stat
-        NFSPROC_SYMLINK(symlinkargs)    = 13;
+        Stat
+        NFSPROC_SYMLINK(SymLinkArgs)    = 13;
 
         /*
          * Create Directory.
@@ -628,8 +638,8 @@ program NFS_PROGRAM {
          *
          * Notes: Possibly non-idempotent operation.
          */
-        diropres
-        NFSPROC_MKDIR(createargs)       = 14;
+        DirOpRes
+        NFSPROC_MKDIR(CreateArgs)       = 14;
 
         /*
          * Remove Directory.
@@ -640,8 +650,8 @@ program NFS_PROGRAM {
          *
          * Notes: Possibly non-idempotent operation.
          */
-        stat
-        NFSPROC_RMDIR(diropargs)        = 15;
+        Stat
+        NFSPROC_RMDIR(DirOpArgs)        = 15;
 
         /*
          * Read from Directory.
@@ -649,8 +659,8 @@ program NFS_PROGRAM {
          * Returns a variable number of directory entries, with a
          * total size of up to "count" bytes, from the directory given
          * by "dir". If the returned value of "status" is NFS_OK, then
-         * it is followed by a variable number of "entry"s. Each
-         * "entry" contains a "fileid" which consists of a unique
+         * it is followed by a variable number of "Entry"s. Each
+         * "Entry" contains a "fileid" which consists of a unique
          * number to identify the file within a filesystem, the "name"
          * of the file, and a "cookie" which is an opaque pointer to
          * the next entry in the directory. The cookie is used in the
@@ -659,12 +669,12 @@ program NFS_PROGRAM {
          * zero) can be used to get the entries starting at the
          * beginning of the directory. The "fileid" field should be
          * the same number as the "fileid" in the the attributes of
-         * the file. (See section "2.3.5. fattr" under "Basic Data
+         * the file. (See section "2.3.5. FAttr" under "Basic Data
          * Types".) The "eof" flag has a value of TRUE if there are no
          * more entries in the directory.
          */
-        readdirres
-        NFSPROC_READDIR(readdirargs)    = 16;
+        ReadDirRes
+        NFSPROC_READDIR(ReadDirArgs)    = 16;
 
         /*
          * Get Filesystem Attributes.
@@ -690,7 +700,7 @@ program NFS_PROGRAM {
          * Notes: This call does not work well if a filesystem has
          *        variable size blocks.
          */
-        statfsres
+        StatFSRes
         NFSPROC_STATFS(FHandle)         = 17;
     } = 2;
 } = 100003;

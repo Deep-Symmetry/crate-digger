@@ -67,11 +67,12 @@ union FHStatus switch (unsigned status) {
 };
 
 /*
- * The type "DirPath" is a server pathname of a directory. In the
- * standard protocol, this is an ASCII string. For Pioneer players, it
- * is an UTF-16LE encoded string; to ensure that encoding, we define
- * it as an opaque byte stream and do the encoding in our mount helper
- * class.
+ * The type "DirPath" is a server pathname of a directory.
+ *
+ * In the standard protocol, this is an ASCII string. For Pioneer
+ * players, it is an UTF-16LE encoded string; to ensure that encoding,
+ * we define it as an opaque byte stream and do the encoding in our
+ * mount helper class.
  */
 typedef opaque DirPath<MNTPATHLEN>;
 
