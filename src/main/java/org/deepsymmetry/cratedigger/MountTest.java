@@ -28,6 +28,12 @@ public class MountTest {
      */
     public final static int MAX_CONSECUTIVE_TIMEOUTS = 4;
 
+    /**
+     * How long we wait for a response to our UDP RPC calls before retransmitting. The players respond within a
+     * few milliseconds if they are going to at all.
+     */
+    public static final int RPC_RETRANSMIT_TIMEOUT = 250;
+
     public static FHStatus mount (InetAddress host, String path) throws IOException, OncRpcException {
         OncRpcClient client = OncRpcUdpClient.newOncRpcClient(host, mount.MOUNTPROG, mount.MOUNTVERS, OncRpcProtocols.ONCRPC_UDP);
         DirPath mountPath = new DirPath(path.getBytes(CHARSET));
@@ -74,7 +80,7 @@ public class MountTest {
                 throw new IOException("Path \"" + sourcePath + "\" is not a normal file.");
             }
             OncRpcUdpClient client = (OncRpcUdpClient) OncRpcClient.newOncRpcClient(host, nfs.NFS_PROGRAM, nfs.NFS_VERSION, OncRpcProtocols.ONCRPC_UDP);
-            client.setRetransmissionTimeout(250);  // It only takes a few milliseconds to respond if it is ever going to.
+            client.setRetransmissionTimeout(RPC_RETRANSMIT_TIMEOUT);  // It only takes a few milliseconds to respond if it is ever going to.
             client.setRetransmissionMode(OncRpcUdpRetransmissionMode.EXPONENTIAL);
             ReadArgs args = new ReadArgs();
             args.file = found.file;
