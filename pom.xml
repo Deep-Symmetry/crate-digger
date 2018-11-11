@@ -191,7 +191,7 @@
                 <version>1.1.4</version>
                 <executions>
                     <execution>
-                        <id>jrpcgen</id>
+                        <id>jrpcgen.nfs</id>
                         <goals>
                             <goal>client</goal>
                         </goals>
@@ -208,6 +208,18 @@
                             <!-- Uncomment the following line to create
                                  an RPC server listening only on UDP. -->
                             <!-- <serverUdpOnly>true</serverUdpOnly> -->
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>jrpcgen.mount</id>
+                        <goals>
+                            <goal>client</goal>
+                        </goals>
+                        <configuration>
+                            <xFile>src/main/rpc/mount.x</xFile>
+                            <destDir>${project.build.directory}/generated-sources/remotetea</destDir>
+                            <packageName>org.deepsymmetry.cratedigger.rpc</packageName>
+                            <createDir>true</createDir>
                         </configuration>
                     </execution>
                 </executions>
