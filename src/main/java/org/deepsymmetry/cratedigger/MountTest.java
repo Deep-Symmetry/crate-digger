@@ -35,7 +35,9 @@ public class MountTest {
     public static final int RPC_RETRANSMIT_TIMEOUT = 250;
 
     public static FHStatus mount (InetAddress host, String path) throws IOException, OncRpcException {
-        OncRpcClient client = OncRpcUdpClient.newOncRpcClient(host, mount.MOUNTPROG, mount.MOUNTVERS, OncRpcProtocols.ONCRPC_UDP);
+        OncRpcUdpClient client = (OncRpcUdpClient) OncRpcUdpClient.newOncRpcClient(host, mount.MOUNTPROG, mount.MOUNTVERS, OncRpcProtocols.ONCRPC_UDP);
+        client.setRetransmissionTimeout(RPC_RETRANSMIT_TIMEOUT);  // It only takes a few milliseconds to respond if it is ever going to.
+        client.setRetransmissionMode(OncRpcUdpRetransmissionMode.EXPONENTIAL);
         DirPath mountPath = new DirPath(path.getBytes(CHARSET));
         FHStatus result = new FHStatus();
         client.call(mount.MOUNTPROC_MNT_1, mountPath, result);
@@ -47,7 +49,9 @@ public class MountTest {
         if (root.status != 0) {
             throw new IOException("Unable to mount \"" + mountPath + "\", mount returned status of " + root.status);
         }
-        OncRpcClient client = OncRpcUdpClient.newOncRpcClient(host, nfs.NFS_PROGRAM, nfs.NFS_VERSION, OncRpcProtocols.ONCRPC_UDP);
+        OncRpcUdpClient client = (OncRpcUdpClient) OncRpcClient.newOncRpcClient(host, nfs.NFS_PROGRAM, nfs.NFS_VERSION, OncRpcProtocols.ONCRPC_UDP);
+        client.setRetransmissionTimeout(RPC_RETRANSMIT_TIMEOUT);  // It only takes a few milliseconds to respond if it is ever going to.
+        client.setRetransmissionMode(OncRpcUdpRetransmissionMode.EXPONENTIAL);
         String[] elements = filePath.split("/");
         FHandle fileHandle = root.directory;
         DirOpRes result = null;
@@ -68,6 +72,9 @@ public class MountTest {
                 }
                 fileHandle = result.diropok.file;
             }
+        }
+        if (result == null) {
+            throw new IllegalArgumentException("Must supply at least one non-empty mountPath element to look up.");
         }
         return result.diropok;
     }
@@ -93,19 +100,7 @@ public class MountTest {
                 } else {
                     args.count = READ_SIZE;
                 }
-                int timeouts = 0;
-                boolean succeeded = false;
-                try {
-                    while (!succeeded) {
-                        client.call(nfs.NFSPROC_READ_2, args, result);
-                        succeeded = true;
-                    }
-                }  catch (OncRpcTimeoutException e) {
-                    ++timeouts;
-                    if (timeouts > MAX_CONSECUTIVE_TIMEOUTS) {
-                        throw e;
-                    }
-                }
+                client.call(nfs.NFSPROC_READ_2, args, result);
                 if (result.status != Stat.NFS_OK) {
                     throw new IOException("Problem reading \"" + sourcePath + "\": NFS read call returned status: " + result.status);
                 }
@@ -122,9 +117,7 @@ public class MountTest {
         } catch (OncRpcException e) {
             throw new IOException("Unable to download file \"" + sourcePath + "\", caught ONC RPC exception.", e);
         } finally {
-            if (outputStream != null) {
-                outputStream.close();
-            }
+            outputStream.close();
         }
 
     }
