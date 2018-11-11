@@ -123,7 +123,7 @@ enum stat {
    */
   NFSERR_DQUOT=69,
   /*
-   * The "fhandle" given in the arguments was invalid. That is, the
+   * The "FHandle" given in the arguments was invalid. That is, the
    * file referred to by that file handle no longer exists, or access
    * to it has been revoked.
    */
@@ -151,12 +151,12 @@ enum ftype {
 };
 
 /*
- * The "fhandle" is the file handle passed between the server and the
+ * The "FHandle" is the file handle passed between the server and the
  * client. All file operations are done using file handles to refer to
  * a file or directory. The file handle can contain whatever
  * information the server needs to distinguish an individual file.
  */
-typedef opaque fhandle[FHSIZE];
+typedef opaque FHandle[FHSIZE];
 
 /*
  * The "timeval" structure is the number of seconds and microseconds
@@ -268,7 +268,7 @@ typedef string path<MAXPATHLEN>;
 
 typedef opaque nfsdata<MAXDATA>;
 
-typedef opaque nfscookie[4];
+typedef opaque nfscookie[COOKIESIZE];
 
 /*
  * The "attrstat" structure is a common procedure result. It contains
@@ -284,11 +284,11 @@ union attrstat switch (stat status) {
 
 /*
  * The "diropargs" structure is used in directory operations. The
- * "fhandle" "dir" is the directory in which to find the file "name".
+ * "FHandle" "dir" is the directory in which to find the file "name".
  * A directory operation is one in which the directory is affected.
  */
 struct diropargs {
-  fhandle  dir;
+  FHandle  dir;
   filename name;
 };
 
@@ -297,7 +297,7 @@ struct diropargs {
  * succeeded and "status" has the value NFS_OK.
  */
 struct diopresbody {
-  fhandle file;
+  FHandle file;
   fattr   attributes;
 };
 
@@ -315,7 +315,7 @@ union diropres switch (stat status) {
 };
 
 struct sattrargs {
-  fhandle file;
+  FHandle file;
   sattr attributes;
 };
 
@@ -327,7 +327,7 @@ union readlinkres switch (stat status) {
 };
 
 struct readargs {
-  fhandle file;
+  FHandle file;
   unsigned offset;
   unsigned count;
   unsigned totalcount;
@@ -346,7 +346,7 @@ union readres switch (stat status) {
  };
 
 struct writeargs {
-  fhandle file;
+  FHandle file;
   unsigned beginoffset;
   unsigned offset;
   unsigned totalcount;
@@ -364,7 +364,7 @@ struct renameargs {
 };
 
 struct linkargs {
-  fhandle from;
+  FHandle from;
   diropargs to;
 };
 
@@ -375,7 +375,7 @@ struct symlinkargs {
 };
 
 struct readdirargs {
-  fhandle dir;
+  FHandle dir;
   nfscookie cookie;
   unsigned count;
 };
@@ -432,10 +432,10 @@ program NFS_PROGRAM {
          * Get File Attributes.
          *
          * If the reply status is NFS_OK, then the reply attributes contains
-         * the attributes for the file given by the input fhandle
+         * the attributes for the file given by the input FHandle
          */
         attrstat
-        NFSPROC_GETATTR(fhandle)        = 1;
+        NFSPROC_GETATTR(FHandle)        = 1;
 
         /*
          * Set File Attributes.
@@ -479,7 +479,7 @@ program NFS_PROGRAM {
          * Read from Symbolic Link.
          *
          * If "status" has the value NFS_OK, then the reply "data" is the data
-         * in the symbolic link given by the file referred to by the fhandle
+         * in the symbolic link given by the file referred to by the FHandle
          * argument.
          *
          * Notes:  Since NFS always parses pathnames on the client, the pathname
@@ -488,7 +488,7 @@ program NFS_PROGRAM {
          * is used.
          */
         readlinkres
-        NFSPROC_READLINK(fhandle)       = 5;
+        NFSPROC_READLINK(FHandle)       = 5;
 
         /*
          * Read from File.
@@ -671,7 +671,7 @@ program NFS_PROGRAM {
          *
          * If the reply "status" is NFS_OK, then the reply "info"
          * gives the attributes for the filesystem that contains file
-         * referred to by the input fhandle. The attribute fields
+         * referred to by the input FHandle. The attribute fields
          * contain the following values:
          *
          * tsize   The optimum transfer size of the server in bytes.  This is
@@ -691,6 +691,6 @@ program NFS_PROGRAM {
          *        variable size blocks.
          */
         statfsres
-        NFSPROC_STATFS(fhandle)         = 17;
+        NFSPROC_STATFS(FHandle)         = 17;
     } = 2;
 } = 100003;

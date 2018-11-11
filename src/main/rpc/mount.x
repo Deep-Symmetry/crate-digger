@@ -23,7 +23,7 @@
  *
  * Version one of the mount protocol is used with version two of the
  * NFS protocol. The only information communicated between these two
- * protocols is the "fhandle" structure.
+ * protocols is the "FHandle" structure.
  */
 
 /*
@@ -42,82 +42,86 @@ const MNTNAMLEN = 255;
 const FHSIZE = 32;
 
 /*
- * The type "fhandle" is the file handle that the server passes to the
+ * The type "FHandle" is the file handle that the server passes to the
  * client. All file operations are done using file handles to refer to
  * a file or directory. The file handle can contain whatever
  * information the server needs to distinguish an individual file.
  *
- * This is the same as the "fhandle" XDR definition in version 2 of
- * the NFS protocol; see section "2.3.3. fhandle" under "Basic Data
+ * This is the same as the "FHandle" XDR definition in version 2 of
+ * the NFS protocol; see section "2.3.3. FHandle" under "Basic Data
  * Types".
  */
-typedef opaque fhandle[FHSIZE];
+typedef opaque FHandle[FHSIZE];
 
 /*
- * The type "fhstatus" is a union.  If a "status" of zero is returned,
+ * The type "FHStatus" is a union.  If a "status" of zero is returned,
  * the call completed successfully, and a file handle for the
  * "directory" follows.  A non-zero status indicates some sort of error.
  * In this case, the status is a UNIX error number.
  */
-union fhstatus switch (unsigned status) {
+union FHStatus switch (unsigned status) {
   case 0:
-    fhandle directory;
+    FHandle directory;
   default:
     void;
 };
 
 /*
- * The type "dirpath" is a server pathname of a directory.
+ * The type "DirPath" is a server pathname of a directory. In the
+ * standard protocol, this is an ASCII string. For Pioneer players, it
+ * is an UTF-16LE encoded string; to ensure that encoding, we define
+ * it as an opaque byte stream and do the encoding in our mount helper
+ * class.
  */
-typedef string dirpath<MNTPATHLEN>;
+typedef opaque DirPath<MNTPATHLEN>;
 
 /*
- * The type "name" is an arbitrary string used for various names.
+ * The type "Name" is an arbitrary string used for various names.
  */
-typedef string name<MNTNAMLEN>;
+typedef string Name<MNTNAMLEN>;
 
 /*
  * Enumerates the currently mounted directories on the server.
  */
-struct mountlist {
-  name      hostname;
-  dirpath   directory;
-  mountlist *nextentry;
+struct MountList {
+  Name      hostName;
+  DirPath   directory;
+  MountList *next;
 };
 
 /*
  * The response to the mount list call, points at a list of zero or
  * more mount list entries.
  */
-struct mountlistres {
-  mountlist *next;
+struct MountListRes {
+  MountList *next;
 };
 
 /*
  * Enumerates the names of the groups that are allowed to mount a
  * filesystem in the export list.
  */
-struct groups {
-  name grname;
-  groups *grnext;
+struct Groups {
+  Name name;
+  Groups *next;
 };
 
 /*
  * Enumerates the filesystems available for mounting from the server,
  * along with the groups allowed to mount them.
  */
-struct exportlist {
-  dirpath filesys;
-  groups *groups;
-  exportlist *next;
+struct ExportList {
+  DirPath fileSystem;
+  Groups *groups;
+  ExportList *next;
 };
 
 /*
  * The response to the export list call, points at a list of zero or
  * more export list entries.
  */
-struct exportlistres {
-  exportlist *next;
+struct ExportListRes {
+  ExportList *next;
 };
 
 /*
@@ -147,26 +151,26 @@ program MOUNTPROG {
          * also adds a new entry to the mount list for this client
          * mounting "dirname".
          */
-        fhstatus
-        MOUNTPROC_MNT(dirpath) = 1;
+        FHStatus
+        MOUNTPROC_MNT(DirPath) = 1;
 
         /*
          * Return Mount Entries.
          *
          * Returns the list of remote mounted filesystems. The
-         * "mountlist" contains one entry for each "hostname" and
+         * "MountList" contains one entry for each "hostName" and
          * "directory" pair.
          */
-        mountlistres
+        MountListRes
         MOUNTPROC_DUMP(void) = 2;
 
         /*
          * Remove Mount Entry.
          *
-         * Removes the mount list entry for the input "dirpath".
+         * Removes the mount list entry for the input "DirPath".
          */
         void
-        MOUNTPROC_UMNT(dirpath) = 3;
+        MOUNTPROC_UMNT(DirPath) = 3;
 
         /*
          * Remove All Mount Entries.
@@ -184,7 +188,7 @@ program MOUNTPROG {
          * are allowed to import it. The filesystem name is in
          * "filesys", and the group name is in the list "groups".
          */
-        exportlistres
+        ExportListRes
         MOUNTPROC_EXPORT(void)  = 5;
     } = 1;
 } = 100005;
