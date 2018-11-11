@@ -49,7 +49,7 @@
     </properties>
 
     <dependencies>
-        <!-- Kaitai Struct Compiler-->
+        <!-- Kaitai Struct Compiler runtime for Java -->
         <dependency>
             <groupId>io.kaitai</groupId>
             <artifactId>kaitai-struct-runtime</artifactId>

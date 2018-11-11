@@ -90,6 +90,13 @@ files found in your own exported media.
 * The process of actually fetching the databases from the players using
 NFS is under active development now.
 
+* Because of the license incompatibility bewteen Crate Digger and
+Remote Tea, that is probably going to be moved out into a separate
+library which can be separately linked by client programs that need
+to obtain `.pdb` file and related resources over the network, and
+which can be substituted for alternate implementations using different
+mechanism or available under different licenses as needed.
+
 * A document explaining the structures with diagrams, along the lines
 of the Dysentery Packet Analysis, will be part of this project as well.
 
