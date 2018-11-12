@@ -23,10 +23,17 @@ image:https://img.shields.io/badge/License-Eclipse%20Public%20License%201.0-blue
 This project uses the http://kaitai.io[Kaitai Struct] compiler with
 the help of a https://github.com/valery1707/kaitai-maven-plugin[Maven
 plugin] to create classes that can parse and output binary data
-strutures in a convenient and efficient way. It uses them to create
+structures in a convenient and efficient way. It uses them to create
 Java classes, because it was created to support
 https://github.com/Deep-Symmetry/beat-link[Beat Link], but other
 projects can use them to output code for other languages.
+
+It also uses the `jrpcgen` tool (which is part of the
+https://sourceforge.net/projects/remotetea/[Remote Tea project]),
+via another plugin, to generate classes that know how to talk to the
+non-standard NFSv2 file servers running in Link-capable players, so
+the rekordbox data can be reliably obtained even during big shows
+where all four players are in use.
 
 == PDB Database
 
@@ -74,8 +81,8 @@ Kaitai Struct Web IDE.
 == ANLZ Data
 
 Each track in a rekordbox database also has `ANLZnnnn.DAT` and
-`ANLZnnn.EXT` files associated with it, containing the beat grid, an
-index allowing rapid seeking to any time in variable-bitrate audio
+`ANLZnnnn.EXT` files associated with it, containing the beat grid, an
+index allowing rapid seeking to any time in variable-bit rate audio
 files, the waveforms, memory cues and loop points. The paths to these
 files are found inside the corresponding track record.
 
@@ -85,17 +92,66 @@ with the Kaitai Struct Web IDE as described
 <<exploring-the-analysis,above>> to explore analysis
 files found in your own exported media.
 
+== Using the Library
+
+There are two halves to what Crate Digger offers. The first is an
+ability to talk to the nonstandard Network File System servers that
+are running in Pioneer players, and ask them to deliver the rekordbox
+data export and track analysis files (programs like Beat Link
+need these files to provide smooth integrations with the music being
+performed). The second half is the ability to parse the contents of
+those files, as described above.
+
+=== Retreiving Files
+
+The class `org.deepsymmetry.cratedigger.FileFetcher` is a singleton,
+so to work with it you will start by calling `getInstance()`, as is
+customary. Retrieving a file is then as simple as this:
+
+[source,java]
+----
+FileFetcher fetcher = FileFetcher.getInstance();
+fetcher.fetch(playerAddress, mountPath, sourcePath, destination);
+----
+
+`playerAddress` is an `InetAddress` object holding the address of the
+player from which you want to download a file. `mountPath` identifies
+the media slot you want to get information from, as shown in the table
+below. `sourcePath` is the path to the specific file you want within
+the mounted media, and `destination` is a `File` object identifying
+where you want the downloaded data to be stored.
+
+.Media Slot Mount Paths
+|===
+|Media Slot | Mount Path
+|SD
+|`/B/`
+
+|USB
+|`/C/`
+|===
+
+[IMPORTANT]
+====
+The `FileFetcher` caches information about players to make
+requests more efficient, so it is important for you to tell it when a
+player goes away, or unmounts one of its media slots, by calling:
+
+[source,java]
+----
+fetcher.removePlayer(playerAddress);
+----
+====
+
+=== Parsing Structures
+
+There are a set of Java classes created from the mapping files, and
+bundled into a library that is published to Maven Central. As soon as
+I have finished testing them in the context of Beat Link, I will write
+up some documentation here about how to use them, pointing at the
+relevant parts of Beat Link as examples.
+
 == Unfinished Tasks
-
-* The process of actually fetching the databases from the players using
-NFS is under active development now.
-
-* Because of the license incompatibility bewteen Crate Digger and
-Remote Tea, that is probably going to be moved out into a separate
-library which can be separately linked by client programs that need
-to obtain `.pdb` file and related resources over the network, and
-which can be substituted for alternate implementations using different
-mechanism or available under different licenses as needed.
 
 * A document explaining the structures with diagrams, along the lines
 of the Dysentery Packet Analysis, will be part of this project as well.
@@ -109,18 +165,10 @@ through the main sparse tables whenever they wanted a record.
 * If we could figure out how to use the indices ourselves, we could
 avoid having to load the whole file and index it ourselves.
 
-== Using the Library
-
-There are a set of Java classes created from the mapping files, and
-bundled into a library that is published to Maven Central. As soon as
-I have finished testing them in the context of Beat Link, I will write
-up some documentation here about how to use them, pointing at the
-relevant parts of Beat Link as examples.
-
 == Building the source
 
-The Maven project uses a plugin to run the the `jrpcgen` tool
-(which is part of the
+As noted above, he Maven project uses a plugin to run the the
+`jrpcgen` tool (which is part of the
 https://sourceforge.net/projects/remotetea/[Remote Tea
 project]) to generate Java classes to implement the
 ONC RPC specifications found in `src/main/rpc`.
@@ -130,6 +178,17 @@ through another plugin to generate Java classes that can parse the
 rekordbox databases it downloads from the players, based on the
 specifications found in `src/main/kaitai`.
 
+These things happen for you automatically during the code generation
+phase of the Maven build. If you want to use something other than
+Maven, you will need to figure out how to configure and run the
+tools yourself.
+
+== Contributing
+
+If you have ideas, discoveries, or even code you’d like to share,
+that’s fantastic! Please take a look at the
+link:CONTRIBUTING.md[guidelines] and get in touch!
+
 == Licenses
 
 +++<a href="http://deepsymmetry.org"><img src="assets/DS-logo-bw-200-padded-left.png" align="right" alt="Deep Symmetry logo" width="216" height="123"></a>+++
@@ -137,12 +196,14 @@ Copyright © 2018 http://deepsymmetry.org[Deep Symmetry, LLC]
 
 Distributed under the
 http://opensource.org/licenses/eclipse-1.0.php[Eclipse Public License
-1.0], the same as Clojure. By using this software in any fashion, you
+1.0]. By using this software in any fashion, you
 are agreeing to be bound by the terms of this license. You must not
 remove this notice, or any other, from this software. A copy of the
 license can be found in link:LICENSE[LICENSE] within this project.
 
-Remote Tea is licensed under the
+=== Library and Build Tool Licenses
+
+https://sourceforge.net/projects/remotetea/[Remote Tea] is licensed under the
 https://opensource.org/licenses/LGPL-2.0[GNU Library General
 Public License, version 2].
 
