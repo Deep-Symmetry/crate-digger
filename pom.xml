@@ -46,6 +46,7 @@
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <slf4jVersion>1.7.25</slf4jVersion>
     </properties>
 
     <dependencies>
@@ -61,6 +62,19 @@
             <groupId>org.acplt.remotetea</groupId>
             <artifactId>remotetea-oncrpc</artifactId>
             <version>1.1.4</version>
+        </dependency>
+
+        <!-- Simple Logging Facade for Java -->
+        <dependency>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-api</artifactId>
+            <version>${slf4jVersion}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-simple</artifactId>
+            <version>${slf4jVersion}</version>
+            <scope>test</scope>
         </dependency>
     </dependencies>
 

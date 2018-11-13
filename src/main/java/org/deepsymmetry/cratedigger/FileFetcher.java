@@ -22,6 +22,7 @@ import java.util.concurrent.ConcurrentHashMap;
  * <p>This is a singleton, so the single instance is obtained through the {@link #getInstance()} method.</p>
  */
 public class FileFetcher {
+
     /**
      * The character set with which paths are sent to the NFS servers running on players.
      */

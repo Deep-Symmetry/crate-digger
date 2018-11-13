@@ -151,6 +151,13 @@ I have finished testing them in the context of Beat Link, I will write
 up some documentation here about how to use them, pointing at the
 relevant parts of Beat Link as examples.
 
+== Logging
+
+Crate Digger uses http://www.slf4j.org/manual.html[slf4j] to allow you
+to integrate it with whatever Java logging framework your project is
+using, so you will need to include the appropriate slf4j binding on
+your class path.
+
 == Unfinished Tasks
 
 * A document explaining the structures with diagrams, along the lines
