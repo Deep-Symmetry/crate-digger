@@ -46,7 +46,7 @@ doc: |
   grateful. @GreyCat helped me learn the intricacies (and best
   practices) of Kaitai far faster than I would have managed on my own.
 
-doc-ref: https://github.com/Deep-Symmetry/dysentery/blob/master/doc/Analysis.pdf
+doc-ref: https://github.com/Deep-Symmetry/crate-digger/blob/master/doc/Analysis.pdf
 
 seq:
   - contents: [0, 0, 0, 0]
