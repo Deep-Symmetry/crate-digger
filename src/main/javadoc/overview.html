@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Crate Digger</title>
+</head>
+<body>
+<p>A Java library for fetching and parsing rekordbox media exports and track analysis files.</p>
+
+<p>The top level package {@link org.deepsymmetry.cratedigger} contains all the classes that are intended for
+    direct access by consumers of this library. The other packages contain generated Java code for parsing
+    database structures or sending and receiving RPC messages to implement the Mount and NFSv2 protocols used
+    to pull databases and analysis files from players.</p>
+
+<p>The class {@link org.deepsymmetry.cratedigger.FileFetcher} is used to actually retrieve the database and
+    analysis files as needed, and the class {@link org.deepsymmetry.cratedigger.Database} is used to parse them
+    and provide access to the information contained within.</p>
+
+<p>For more details, please see the <a href="https://github.com/Deep-Symmetry/crate-digger" target="_blank">project
+    documentation</a> on GitHub.</p>
+
+<h3>Background</h3>
+
+<p>This project is based on research performed with <a href="https://github.com/Deep-Symmetry/dysentery"
+                                                       target="_blank">dysentery</a>,
+    and the <a href="https://github.com/Deep-Symmetry/dysentery/blob/master/doc/Analysis.pdf" target="_blank">packet
+        analysis</a> resulting from that project (also available as
+    <a href="https://github.com/Deep-Symmetry/dysentery/raw/master/doc/Analysis.pdf" target="_blank">downloadable
+        PDF</a>).</p>
+
+<p>A good example of an application built using this library is
+    <a href="https://github.com/Deep-Symmetry/beat-link-trigger" target="_blank">Beat Link Trigger</a>.</p>
+</body>
+</html>

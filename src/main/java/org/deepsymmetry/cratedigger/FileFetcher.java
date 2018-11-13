@@ -12,6 +12,15 @@ import java.nio.charset.Charset;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
+/**
+ * <p>Retrieves data files from a Pioneer player over NFS to enable use of track metadata even when four players
+ * are using the same media.</p>
+ *
+ * <p>The primary purpose of this class is provided through the {@link #fetch(InetAddress, String, String, File)}
+ * method.</p>
+ *
+ * <p>This is a singleton, so the single instance is obtained through the {@link #getInstance()} method.</p>
+ */
 public class FileFetcher {
     /**
      * The character set with which paths are sent to the NFS servers running on players.
@@ -43,6 +52,13 @@ public class FileFetcher {
      */
     public static FileFetcher getInstance() {
         return instance;
+    }
+
+    /**
+     * Make sure the only way to get an instance is to call {@link #getInstance()}.
+     */
+    private FileFetcher() {
+        // Prevent instantiation.
     }
 
     /**
