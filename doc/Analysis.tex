@@ -1,0 +1,133 @@
+\documentclass[11pt]{article}
+
+\usepackage[utf8]{inputenc}
+\usepackage[english]{babel}
+\usepackage{courier}
+\usepackage{graphicx}
+\usepackage[bottom]{footmisc}
+\usepackage{bytefield}
+\usepackage{hyperref}
+\usepackage{bookmark}
+\usepackage{color}
+\usepackage{alltt}
+\usepackage{tabu, booktabs}
+\usepackage{longtable}
+
+\newcommand{\rmst}{{\it\small rmst}}
+
+\title{Rekordbox Export Structure Analysis}
+\author{James Elliott\\Deep Symmetry, LLC}
+
+\begin{document}
+
+\maketitle
+
+\abstract{The files written to external media by rekordbox for use in
+  player hardware contain a wealth of information that can be used in
+  place of queries to the remotedb server on the players, which is
+  important because they can be obtained from the players' NFS
+  servers, even if there are four players in use sharing the same
+  media. Under those circumstances, remotedb queries are impossible.
+  This article documents what has been learned so far about the
+  files, and how to interpret them.}
+
+\pagestyle{headings}
+
+%% Define macros used to draw more complex message byte fields with
+%% labeled headers and color-related sections.
+
+\newcommand\hexhead{
+  \bitbox[]{1}{\tiny\bfseries 0}
+  \bitbox[]{1}{\tiny\bfseries 1}
+  \bitbox[]{1}{\tiny\bfseries 2}
+  \bitbox[]{1}{\tiny\bfseries 3}
+  \bitbox[]{1}{\tiny\bfseries 4}
+  \bitbox[]{1}{\tiny\bfseries 5}
+  \bitbox[]{1}{\tiny\bfseries 6}
+  \bitbox[]{1}{\tiny\bfseries 7}
+  \bitbox[]{1}{\tiny\bfseries 8}
+  \bitbox[]{1}{\tiny\bfseries 9}
+  \bitbox[]{1}{\tiny\bfseries a}
+  \bitbox[]{1}{\tiny\bfseries b}
+  \bitbox[]{1}{\tiny\bfseries c}
+  \bitbox[]{1}{\tiny\bfseries d}
+  \bitbox[]{1}{\tiny\bfseries e}
+  \bitbox[]{1}{\tiny\bfseries f}
+}
+
+\newcommand{\baselinealign}[1]{%
+  \centering
+  \strut#1%
+}
+
+\newcommand{\colorbitbox}[4][rlbt]{%
+  \sbox0{\bitbox[#1]{#3}{#4}}%
+ \makebox[0pt][l]{\textcolor{#2}{\rule[-\dp0]{\wd0}{\ht0}}}%
+ \bitbox[#1]{#3}{#4}%
+}
+
+\definecolor{lightgreen}{rgb}{0.64,1,0.71}
+\definecolor{yellow}{rgb}{1,1,0.71}
+\definecolor{lightred}{rgb}{1,0.7,0.71}
+\definecolor{lightcyan}{rgb}{0.84,1,1}
+\definecolor{lightpurple}{rgb}{1,0.71,1}
+
+\tableofcontents
+
+\newpage
+
+\section{Database Exports}
+
+The starting point for finding track metadata from a player is the
+database export file, which can be found within rekordbox media at the
+path {\tt PIONEER/rekordbox/export.pdb} (if you are using the Crate
+Digger {\tt FileFetcher} to request this file, use that path as the
+{\tt filePath} argument, and use a {\tt mountPath} value of {\tt /B/}
+if you want to read it from the SD slot, or {\tt /C/} to obtain it
+from the USB slot).
+
+The file consists of a series of fixed size pages. The first page
+contains a file header which defines the page size and the locations
+of database tables of different types, by the index of their first
+page. The rest of the pages consist of the data pages for all of the
+tables identified in the header. Each page contains rows of a single
+table, and links to the next page containing that type of rows.
+
+\subsection{File Header}
+
+\section{Crate Digger}
+
+You can find a Java library that can parse the structures described in
+this research, and that can retrieve them from players' NFS servers,
+at: \url{https://github.com/deep-symmetry/crate-digger}
+
+The project also contains Kaitai Struct specifications for the file
+structures, which were used to automatically generate the Java classes
+which parse them, and which can be used to generate equivalent code
+for a variety of other programming languages.
+
+There are also ONC RPC specification files that were similarly used to
+generate the Java classes used to send and receive messages to the
+NFSv2 servers in the players to request these files, and which can
+likely be used to generate structures for other languages as well.
+
+\begin{appendix}
+
+  \addcontentsline{toc}{section}{\listfigurename}
+  \listoffigures
+
+  \addcontentsline{toc}{section}{\listtablename}
+  \listoftables
+
+  \begin{center}
+    \begin{samepage}
+      \includegraphics[width=4cm]{assets/DS-Logo-bw-4k}
+
+      \vspace{0.25cm}
+      \url{http://deepsymmetry.org}
+    \end{samepage}
+  \end{center}
+
+\end{appendix}
+
+\end{document}
