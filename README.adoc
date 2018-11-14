@@ -52,6 +52,10 @@ Purkhiser] posted on
 https://reverseengineering.stackexchange.com/questions/4311/help-reversing-a-edb-database-file-for-pioneers-rekordbox-software[Stack
 Exchange].
 
+There is a link:doc/Analysis.pdf[Structure Analysis] article describing
+the details of what we have learned about these file formats. Reading
+that will help make sense of the exploration tools and the objects
+returned by this library.
 
 === Exploring the Analysis
 
@@ -93,6 +97,8 @@ with the Kaitai Struct Web IDE as described
 files found in your own exported media.
 
 == Using the Library
+
+TODO: Add Maven Badge link once the library is published.
 
 There are two halves to what Crate Digger offers. The first is an
 ability to talk to the nonstandard Network File System servers that
@@ -145,11 +151,27 @@ fetcher.removePlayer(playerAddress);
 
 === Parsing Structures
 
-There are a set of Java classes created from the mapping files, and
-bundled into a library that is published to Maven Central. As soon as
-I have finished testing them in the context of Beat Link, I will write
-up some documentation here about how to use them, pointing at the
-relevant parts of Beat Link as examples.
+The class `org.deepsymmetry.cratedigger.Database` provides support for
+accessing the contents of rekordbox database export files. You can create
+an instance to wrap a `File` instance that contains such an export (for
+example one that you downloaded using the `fetch` method above). Then
+you can query it for track and other information:
+
+[source,java]
+----
+Database database = new Database(downloadedFile);
+PdbFile.TrackRow track = database.findTrack(1);
+System.out.println(database.getText(track.title()));
+----
+
+Strings (like titles, artist names, etc.) are represented by a variety,
+of structures with different encodings, so a `getText()` method is
+provided to convert them into ordinary Java strings.
+
+See the http://deepsymmetry.org/cratedigger/apidocs/[API documentation]
+for more details about these classes, and the
+link:doc/Analysis.pdf[Structure Analysis] for more details about the
+file formats.
 
 == Logging
 
