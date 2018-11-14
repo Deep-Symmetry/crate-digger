@@ -86,14 +86,176 @@ Digger {\tt FileFetcher} to request this file, use that path as the
 if you want to read it from the SD slot, or {\tt /C/} to obtain it
 from the USB slot).
 
+The file is a relational database format designed to be efficiently
+used by very low power devices (there were deployments on 16 bit
+devices with 32K of RAM). Today you are most likely to encounter it
+within the Pioneer Professional DJ ecosystem, because it is the format
+that their rekordbox software uses to write USB and SD media which can
+be mounted in DJ controllers and used to play and mix music.
+
 The file consists of a series of fixed size pages. The first page
 contains a file header which defines the page size and the locations
 of database tables of different types, by the index of their first
 page. The rest of the pages consist of the data pages for all of the
-tables identified in the header. Each page contains rows of a single
-table, and links to the next page containing that type of rows.
+tables identified in the header.
+
+Each table is made up of a series of rows which may be spread across
+any number of pages. The pages start with a header describing the page
+and linking to the next page. The rest of the page is used as a heap:
+rows are scattered around it, and located using an index structure
+that builds backwards from the end of the page. Each row of a given
+type has a fixed size structure which links to any variable-sized
+strings by their offsets within the page.
+
+As changes are made to the table, some records may become unused, and
+there may be gaps within the heap that are too small to be used by
+other data. There is a bit map in the row index that identifies which
+rows are actually present. Rows that are not present must be ignored:
+they do not contain valid (or even necessarily well-formed) data.
+
+The majority of the work in reverse-engineering this format was
+performed by Henry
+Betts\footnote{\url{https://github.com/henrybetts/Rekordbox-Decoding}}
+and Fabian
+Lesniak\footnote{\url{https://github.com/flesniak/python-prodj-link}},
+to whom I am hugely grateful.
 
 \subsection{File Header}
+
+\begin{figure}
+  \begin{bytefield}[bitwidth=1.9em, leftcurly=., leftcurlyspace=0pt, boxformatting={\baselinealign}]{16}
+    \hexhead \\
+
+    \begin{leftwordgroup}{\tiny\bfseries 00}
+      \bitboxes*{1}{{\tt 00} {\tt 00} {\tt 00} {\tt 00}} & \bitbox{4}{$len\_page$} &
+      \bitbox{4}{$num\_tables$} & \bitbox{4}{$next_u$}
+    \end{leftwordgroup} \\
+    \begin{leftwordgroup}{\tiny\bfseries 10}
+      \bitbox{4}{$unknown$} & \bitbox{4}{$sequence$} & \bitboxes*{1}{{\tt 00} {\tt 00} {\tt 00} {\tt 00}} &
+      & \bitbox[lrt]{4}{}
+    \end{leftwordgroup} \\
+    \begin{leftwordgroup}{}
+      \wordbox[lr]{1}{Table Pointers} \\
+      \skippedwords \\
+      \wordbox[lrb]{1}{}
+    \end{leftwordgroup}
+
+  \end{bytefield}
+  \caption{File Header}
+  \label{fig:fileHeader}
+\end{figure}
+
+Unless otherwise stated, all multi-byte numbers in the file are stored
+in little-endian byte order. Field names used in the Figures match the
+IDs assigned to them in the Kaitai Struct
+specification\footnote{\url{https://github.com/Deep-Symmetry/crate-digger/blob/master/src/main/kaitai/pdb.ksy}},
+unless that is too long to fit, in which case a subscripted
+abbreviation is used, and the text will mention the actual ID.
+
+The first page begins with the file header, shown in
+Figure~\ref{fig:fileHeader}. The header starts with four zero bytes,
+followed by a four-byte integer, $len\_page$ at byte~{\tt 04}, that
+establishes the size of each page (including this first one), in
+bytes. This is followed by another four-byte integer, $num\_tables$ at
+byte~{\tt 08}, which reports the number of different tables that are
+present in the file. Each table will have a table pointer entry in the
+``Table pointers'' section of the file header, described below, that
+identifies and locates the table.
+
+The four-byte integer $next_u$ at byte~{\tt 0c} has an unknown
+purpose, but Mr. Lesniak named it {\tt next\_unused\_page} and said
+``Not used as any {\tt empty\_candidate}, points past the end of the
+file.'' The four-byte integer $sequence$, at byte~{\tt 14}, was
+described ``Always incremented by at least one, sometimes by two or
+three.'' and I assume this means it reflects a version number that
+rekordbox updates when synchronizing to the exported media.
+
+Finally, there is another series of four zero bytes, and then the
+header ends with the list of table pointers which begins at byte~{\tt
+  1c}. There are as many of these as specified by $num\_tables$, and
+each has the structure shown in Figure~\ref{fig:tablePointer}.
+
+\begin{figure}
+  \begin{bytefield}[bitwidth=1.9em, leftcurly=., leftcurlyspace=0pt, boxformatting={\baselinealign}]{16}
+    \hexhead \\
+
+    \begin{leftwordgroup}{\tiny\bfseries 00}
+      \bitbox{4}{$type$} & \bitbox{4}{$empty_c$} & \bitbox{4}{$first\_page$} & \bitbox{4}{$last\_page$}
+    \end{leftwordgroup}
+
+  \end{bytefield}
+  \caption{Table Pointer}
+  \label{fig:tablePointer}
+\end{figure}
+
+Each Table Pointer is a series of four four-byte integers. The first,
+$type$, identifies the type of table being defined. The known table
+types are shown in Table~\ref{table:tableTypes}. The second value, at
+byte~{\tt 04} of the Table Pointer, was called {\tt empty\_candidate}
+by Mr. Lesniak. It may link to a chain of empty pages if the database
+is ever garbage collected, but this is speculation on my part.
+
+\begin{longtabu}{rlX}
+  \toprule
+  {\bfseries Type} & {\bfseries Name} & {\bfseries Row Content} \endhead
+
+  \bottomrule \\
+  \caption{Table Types} \endfoot
+
+  0 & tracks & Track metadata: title, artist, genre, artwork ID,
+  playing time, etc. \label{table:tableTypes} \\
+
+  1 & genres & Musical genres, for reference by tracks and searching.
+  \\
+
+  2 & artists & Artists, for reference by tracks and searching. \\
+
+  3 & albums & Albums, for reference by tracks and searching. \\
+
+  4 & labels & Music labels, for reference by tracks and searching. \\
+
+  5 & keys & Musical keys, for reference by tracks, searching, and key
+  matching. \\
+
+  6 & colors & Color labels, for reference by tracks and searching. \\
+
+  7 & playlist\_tree & Describes the hierarchical tree structure of
+  available playlists and folders grouping them. \\
+
+  8 & playlist\_entries & Links tracks to playlists, in the rightp
+  order. \\
+
+  13 & artwork & File paths of album artwork images. \\
+
+  16 & columns & Details not yet confirmed. \\
+
+  19 & history & Records the tracks played during performances. \\
+
+\end{longtabu}
+
+Other than the type, the two important values are $first\_page$ at
+byte~{\tt 08} and $last\_page$ at byte~{\tt 0c}. These tell us how to
+find the table. They are page indices, where the page containing the
+file header has index 0, the page with index 1 begins at
+byte~$len\_page$, and so on. In other words, the first page of the
+table identified by the current Table Pointer can be found within the
+file starting at the byte $len\_page \times first\_page$.
+
+The table is a linked list of pages: each page contains the index of
+the next page after it. However, you need to keep track of the
+$last\_page$ value for the table, because it tells you not to try to
+follow the next page link once you reach the page with that index. (If
+you do keep going, you will start reading pages of some different
+table.) The structure of the table pages themselves are described
+in the next section.
+
+As far as we know, the remainder of the first page after the table
+pointers is unused.
+
+
+\subsection{Table Pages}
+
+To be continued...
 
 \section{Crate Digger}
 
