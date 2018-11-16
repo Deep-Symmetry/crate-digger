@@ -26,6 +26,7 @@ public class FileFetcher {
     /**
      * The character set with which paths are sent to the NFS servers running on players.
      */
+    @SuppressWarnings("WeakerAccess")
     public final static Charset CHARSET = Charset.forName("UTF-16LE");
 
     /**
@@ -33,12 +34,14 @@ public class FileFetcher {
      * between reducing the number of requests and reducing IP fragmentation and expensive retransmissions
      * of already-sent fragments whenever one is lost.
      */
+    @SuppressWarnings("WeakerAccess")
     public final static int DEFAULT_READ_SIZE = 2048;
 
     /**
      * How long to wait for a response to our UDP RPC calls before retransmitting. The players respond within a
      * few milliseconds if they are going to at all.
      */
+    @SuppressWarnings("WeakerAccess")
     public static final int DEFAULT_RPC_RETRANSMIT_TIMEOUT = 250;
 
     /**

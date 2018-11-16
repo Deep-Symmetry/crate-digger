@@ -33,25 +33,18 @@ public class Database {
      */
     public Database(File pdbFile) throws IOException {
         this.pdbFile = PdbFile.fromFile(pdbFile.getAbsolutePath());
-        indexTables();
-    }
 
-    /**
-     * Scan the tables present in the database export, building our indices.
-     */
-    private void indexTables() {
-        for (PdbFile.Table table : pdbFile.tables()) {
-            switch (table.type()) {
-                case TRACKS:
-                    indexTracks(table);
-                    break;
-                case COLORS:
-                    indexColors(table);
-                    break;
-                case ARTISTS:
-                    indexArtists(table);
-            }
-        }
+        final SortedMap<String, SortedSet<Long>> mutableTrackTitleIndex = new TreeMap<String, SortedSet<Long>>();
+        trackIndex = indexTracks(mutableTrackTitleIndex);
+        trackTitleIndex = freezeSecondaryIndex(mutableTrackTitleIndex);
+
+        final SortedMap<String, SortedSet<Long>> mutableArtistTitleIndex = new TreeMap<String, SortedSet<Long>>();
+        artistIndex = indexArtists(mutableArtistTitleIndex);
+        artistNameIndex = freezeSecondaryIndex(mutableArtistTitleIndex);
+
+        final SortedMap<String, SortedSet<Long>> mutableColorNameIndex = new TreeMap<String, SortedSet<Long>>();
+        colorIndex = indexColors(mutableColorNameIndex);
+        colorNameIndex = freezeSecondaryIndex(mutableColorNameIndex);
     }
 
     /**
@@ -73,36 +66,46 @@ public class Database {
      * specified table, passing all rows that are encountered to an interface that knows what to do
      * with them.
      *
-     * @param table the table being scanned and parsed
+     * @param type the type of table to be scanned and parsed
      * @param handler the code that knows how to index that kind of row
+     *
+     * @throws IllegalStateException if there is more than (or less than) one table of that type in the file
      */
-    private void indexRows(PdbFile.Table table, RowHandler handler) {
-        final long lastIndex = table.lastPage().index();  // This is how we know when to stop.
-        PdbFile.PageRef currentRef = table.firstPage();
-        boolean moreLeft = true;
-        do {
-            final PdbFile.Page page = currentRef.body();
+    private void indexRows(PdbFile.PageType type, RowHandler handler) {
+        boolean done = false;
+        for (PdbFile.Table table : pdbFile.tables()) {
+            if (table.type() == type) {
+                if (done) throw new IllegalStateException("More than one table found with type " + type);
+                final long lastIndex = table.lastPage().index();  // This is how we know when to stop.
+                PdbFile.PageRef currentRef = table.firstPage();
+                boolean moreLeft = true;
+                do {
+                    final PdbFile.Page page = currentRef.body();
 
-            // Process only ordinary data pages.
-            if (page.isDataPage()) {
-                for (PdbFile.RowGroup rowGroup : page.rowGroups()) {
-                    for (PdbFile.RowRef rowRef : rowGroup.rows()) {
-                        if (rowRef.present()) {
-                            // We found a row, pass it to the handler to be indexed appropriately.
-                            handler.rowFound(rowRef.body());
+                    // Process only ordinary data pages.
+                    if (page.isDataPage()) {
+                        for (PdbFile.RowGroup rowGroup : page.rowGroups()) {
+                            for (PdbFile.RowRef rowRef : rowGroup.rows()) {
+                                if (rowRef.present()) {
+                                    // We found a row, pass it to the handler to be indexed appropriately.
+                                    handler.rowFound(rowRef.body());
+                                }
+                            }
                         }
                     }
-                }
-            }
 
-            // Was this the final page in the table? If so, stop, otherwise, move on to the next page.
-            if (currentRef.index() == lastIndex) {
-                moreLeft = false;
-            } else {
-                currentRef = page.nextPage();
+                    // Was this the final page in the table? If so, stop, otherwise, move on to the next page.
+                    if (currentRef.index() == lastIndex) {
+                        moreLeft = false;
+                    } else {
+                        currentRef = page.nextPage();
+                    }
+                } while (moreLeft);
+                done = true;
             }
-        } while (moreLeft);
+        }
 
+        if (!done) throw new IllegalStateException("No table found of type " + type);
     }
 
     /**
@@ -129,11 +132,14 @@ public class Database {
      *
      * @param index the index that should no longer be modified.
      * @param <K> the type of the key (often String, but may be Long, e.g. to index tracks by artist ID)
+     *
+     * @return an unmodifiable top-level view of the unmodifiable children
      */
-    private <K> void freezeSecondaryIndex(SortedMap<K, SortedSet<Long>> index) {
+    private <K> SortedMap<K, SortedSet<Long>> freezeSecondaryIndex(SortedMap<K, SortedSet<Long>> index) {
         for (K key : index.keySet()) {
             index.put(key, Collections.unmodifiableSortedSet(index.get(key)));
         }
+        return Collections.unmodifiableSortedMap(index);
     }
 
     /**
@@ -144,187 +150,129 @@ public class Database {
      * figure out how to find and use the index tables that must exist in the file somewhere, and avoid
      * building this at all.
      */
-    private final SortedMap<Long,PdbFile.TrackRow> trackIndex = new TreeMap<Long, PdbFile.TrackRow>();
+    @SuppressWarnings("WeakerAccess")
+    public final Map<Long, PdbFile.TrackRow> trackIndex;
 
     /**
-     * A map from track title to the set of track IDs with that title.
+     * A sorted map from track title to the set of track IDs with that title.
      */
-    private final SortedMap<String, SortedSet<Long>> trackTitleIndex = new TreeMap<String, SortedSet<Long>>();
+    @SuppressWarnings("WeakerAccess")
+    public final SortedMap<String, SortedSet<Long>> trackTitleIndex;
 
     /**
      * Parse and index all the tracks found in the database export.
      *
-     * @param table the track table that has been found in the database
+     * @param titleIndex the sorted map in which the secondary track title index should be built
+     *
+     * @return the populated and unmodifiable primary track index
      */
-    private void indexTracks(PdbFile.Table table) {
-        if (!trackIndex.isEmpty()) {
-            throw new IllegalStateException("PDB file contains more than one Tracks table.");
-        }
+    private Map<Long, PdbFile.TrackRow> indexTracks(final SortedMap<String, SortedSet<Long>> titleIndex) {
+        final Map<Long, PdbFile.TrackRow> index = new HashMap<Long, PdbFile.TrackRow>();
 
-        indexRows(table, new RowHandler() {
+        indexRows(PdbFile.PageType.TRACKS, new RowHandler() {
             @Override
             public void rowFound(KaitaiStruct row) {
                 // We found a track; index it by its ID.
                 PdbFile.TrackRow trackRow = (PdbFile.TrackRow)row;
                 final long id = trackRow.id();
-                trackIndex.put(id, trackRow);
+                index.put(id, trackRow);
 
                 // Index the track ID by title as well.
                 final String title = getText(trackRow.title());
                 if (title.length() > 0) {
-                    addToSecondaryIndex(trackTitleIndex, title, id);
+                    addToSecondaryIndex(titleIndex, title, id);
                 }
             }
         });
-        freezeSecondaryIndex(trackTitleIndex);
 
-        logger.info("Indexed " + trackIndex.size() + " Tracks.");
+        logger.info("Indexed " + index.size() + " Tracks.");
+        return Collections.unmodifiableMap(index);
     }
 
-    /**
-     * Look up the track with the specified ID.
-     *
-     * @param id the rekordbox id of the track desired
-     *
-     * @return the corresponding track row, if found, or {@code null}
-     */
-    public PdbFile.TrackRow findTrack(long id) {
-        return trackIndex.get(id);
-    }
-
-    /**
-     * Get the set of all known track IDs, in ascending order.
-     *
-     * @return a sorted set containing the rekordbox id values for all tracks found in the database export
-     */
-    public Set<Long> getTrackIds() {
-        return Collections.unmodifiableSet(trackIndex.keySet());
-    }
-
-    /**
-     * Get the index of track IDs by title.
-     *
-     * @return a sorted map whose keys are track titles and whose values are sorted sets of the IDs of tracks with
-     *         that title
-     */
-    public SortedMap<String, SortedSet<Long>> getTrackTitleIndex() {
-        return Collections.unmodifiableSortedMap(trackTitleIndex);
-    }
 
     /**
      * A map from artist ID to the actual artist object.
      */
-    private final SortedMap<Long,PdbFile.ArtistRow> artistIndex = new TreeMap<Long, PdbFile.ArtistRow>();
+    @SuppressWarnings("WeakerAccess")
+    public final Map<Long,PdbFile.ArtistRow> artistIndex;
 
     /**
-     * A map from artist name to the set of artist IDs with that name.
+     * A sorted map from artist name to the set of artist IDs with that name.
      */
-    private final SortedMap<String, SortedSet<Long>> artistNameIndex = new TreeMap<String, SortedSet<Long>>();
+    @SuppressWarnings("WeakerAccess")
+    public final SortedMap<String, SortedSet<Long>> artistNameIndex;
 
-    private void indexArtists(PdbFile.Table table) {
-        if (!artistIndex.isEmpty()) {
-            throw new IllegalStateException("PDB file contains more than one Artists table.");
-        }
+    /**
+     * Parse and index all the artists found in the database export.
+     *
+     * @param nameIndex the sorted map in which the secondary artist name index should be built
+     *
+     * @return the populated and unmodifiable primary artist index
+     */
+    private Map<Long, PdbFile.ArtistRow> indexArtists(final SortedMap<String, SortedSet<Long>> nameIndex) {
+        final Map<Long, PdbFile.ArtistRow> index = new HashMap<Long, PdbFile.ArtistRow>();
 
-        indexRows(table, new RowHandler() {
+        indexRows(PdbFile.PageType.ARTISTS, new RowHandler() {
             @Override
             public void rowFound(KaitaiStruct row) {
                 PdbFile.ArtistRow artistRow = (PdbFile.ArtistRow)row;
                 final long id = artistRow.id();
-                artistIndex.put(id, artistRow);
+                index.put(id, artistRow);
 
                 // Index the artist ID by name as well.
                 final String name = getText(artistRow.name());
                 if (name.length() > 0) {
-                    addToSecondaryIndex(artistNameIndex, name, id);
+                    addToSecondaryIndex(nameIndex, name, id);
                 }
             }
         });
-        freezeSecondaryIndex(artistNameIndex);
 
-        logger.info("Indexed " + artistIndex.size() + " Artists.");
+        logger.info("Indexed " + index.size() + " Artists.");
+        return Collections.unmodifiableMap(index);
     }
 
-    /**
-     * Look up the artist with the specified ID.
-     *
-     * @param id the rekordbox id of the artist desired
-     *
-     * @return the corresponding artist row, if found, or {@code null}
-     */
-    public PdbFile.ArtistRow findArtist(long id) {
-        return artistIndex.get(id);
-    }
-
-    /**
-     * Get the index of artist IDs by name.
-     *
-     * @return a sorted map whose keys are artist names and whose values are sorted sets of the IDs of artists with
-     *         that name
-     */
-    public SortedMap<String, SortedSet<Long>> getArtistNameIndex() {
-        return Collections.unmodifiableSortedMap(artistNameIndex);
-    }
 
     /**
      * A map from color ID to the actual color object.
      */
-    private final SortedMap<Long,PdbFile.ColorRow> colorIndex = new TreeMap<Long, PdbFile.ColorRow>();
+    @SuppressWarnings("WeakerAccess")
+    public final Map<Long,PdbFile.ColorRow> colorIndex;
 
     /**
-     * A map from color name to the set of color IDs with that name.
+     * A sorted map from color name to the set of color IDs with that name.
      */
-    private final SortedMap<String, SortedSet<Long>> colorNameIndex = new TreeMap<String, SortedSet<Long>>();
+    @SuppressWarnings("WeakerAccess")
+    public final SortedMap<String, SortedSet<Long>> colorNameIndex;
 
     /**
      * Parse and index all the colors found in the database export.
      *
-     * @param table the color table that has been found in the database
+     * @param nameIndex the sorted map in which the secondary color name index should be built
+     *
+     * @return the populated and unmodifiable primary color index
      */
-    private void indexColors(PdbFile.Table table) {
-        if (!colorIndex.isEmpty()) {
-            throw new IllegalStateException("PDB file contains more than one Colors table.");
-        }
+    private Map<Long, PdbFile.ColorRow> indexColors(final SortedMap<String, SortedSet<Long>> nameIndex) {
+        final Map<Long, PdbFile.ColorRow> index = new HashMap<Long, PdbFile.ColorRow>();
 
-        indexRows(table, new RowHandler() {
+        indexRows(PdbFile.PageType.COLORS, new RowHandler() {
             @Override
             public void rowFound(KaitaiStruct row) {
                 PdbFile.ColorRow colorRow = (PdbFile.ColorRow)row;
                 final long id = colorRow.id();
-                colorIndex.put(id, colorRow);
+                index.put(id, colorRow);
 
                 // Index the color by name as well.
                 final String name = Database.getText(colorRow.name());
                 if (name.length() > 0) {
-                    addToSecondaryIndex(colorNameIndex, name, id);
+                    addToSecondaryIndex(nameIndex, name, id);
                 }
             }
         });
-        freezeSecondaryIndex(colorNameIndex);
 
-        logger.info("Indexed " + colorIndex.size() + " Colors.");
+        logger.info("Indexed " + index.size() + " Colors.");
+        return Collections.unmodifiableMap(index);
     }
 
-    /**
-     * Look up the color with the specified ID.
-     *
-     * @param id the database id of the color desired
-     *
-     * @return the corresponding color row, if found, or {@code null}
-     */
-    public PdbFile.ColorRow findColor(long id) {
-        return colorIndex.get(id);
-    }
-
-    /**
-     * Get the index of colors by name.
-     *
-     * @return a sorted map whose keys are color names and whose values are sorted sets of the IDs of colors with
-     *         that name
-     */
-    public SortedMap<String, SortedSet<Long>> getColorNameIndex() {
-        return Collections.unmodifiableSortedMap(colorNameIndex);
-    }
 
     /**
      * Helper function to extract the text value from one of the strings found in the database, which
