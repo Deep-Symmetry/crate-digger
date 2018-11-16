@@ -15,7 +15,7 @@ import java.util.*;
  */
 public class Database {
 
-    private static final Logger logger = LoggerFactory.getLogger(FileFetcher.class);
+    private static final Logger logger = LoggerFactory.getLogger(Database.class);
 
     /**
      * Holds a reference to the parser for the file we were constructed with.
