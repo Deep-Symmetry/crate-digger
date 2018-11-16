@@ -935,6 +935,8 @@ enums:
       id: unknown_10
     11:
       id: unknown_11
+      doc: |
+        The rows all seem to have history file names in them, such as "HISTORY 001".
     12:
       id: unknown_12
     13:

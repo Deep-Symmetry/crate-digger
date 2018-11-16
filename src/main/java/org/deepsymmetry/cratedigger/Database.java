@@ -45,6 +45,18 @@ public class Database {
         final SortedMap<String, SortedSet<Long>> mutableColorNameIndex = new TreeMap<String, SortedSet<Long>>();
         colorIndex = indexColors(mutableColorNameIndex);
         colorNameIndex = freezeSecondaryIndex(mutableColorNameIndex);
+
+        final SortedMap<String, SortedSet<Long>> mutableAlbumNameIndex = new TreeMap<String, SortedSet<Long>>();
+        albumIndex = indexAlbums(mutableAlbumNameIndex);
+        albumNameIndex = freezeSecondaryIndex(mutableAlbumNameIndex);
+
+        final SortedMap<String, SortedSet<Long>> mutableLabelNameIndex = new TreeMap<String, SortedSet<Long>>();
+        labelIndex = indexLabels(mutableLabelNameIndex);
+        labelNameIndex = freezeSecondaryIndex(mutableLabelNameIndex);
+
+        final SortedMap<String, SortedSet<Long>> mutableMusicalKeyNameIndex = new TreeMap<String, SortedSet<Long>>();
+        musicalKeyIndex = indexKeys(mutableMusicalKeyNameIndex);
+        musicalKeyNameIndex = freezeSecondaryIndex(mutableMusicalKeyNameIndex);
     }
 
     /**
@@ -194,7 +206,7 @@ public class Database {
      * A map from artist ID to the actual artist object.
      */
     @SuppressWarnings("WeakerAccess")
-    public final Map<Long,PdbFile.ArtistRow> artistIndex;
+    public final Map<Long, PdbFile.ArtistRow> artistIndex;
 
     /**
      * A sorted map from artist name to the set of artist IDs with that name.
@@ -270,6 +282,131 @@ public class Database {
         });
 
         logger.info("Indexed " + index.size() + " Colors.");
+        return Collections.unmodifiableMap(index);
+    }
+
+    /**
+     * A map from album ID to the actual album object.
+     */
+    @SuppressWarnings("WeakerAccess")
+    public final Map<Long, PdbFile.AlbumRow> albumIndex;
+
+    /**
+     * A sorted map from album name to the set of album IDs with that name.
+     */
+    @SuppressWarnings("WeakerAccess")
+    public final SortedMap<String, SortedSet<Long>> albumNameIndex;
+
+    /**
+     * Parse and index all the albums found in the database export.
+     *
+     * @param nameIndex the sorted map in which the secondary album name index should be built
+     *
+     * @return the populated and unmodifiable primary album index
+     */
+    private Map<Long, PdbFile.AlbumRow> indexAlbums(final SortedMap<String, SortedSet<Long>> nameIndex) {
+        final Map<Long, PdbFile.AlbumRow> index = new HashMap<Long, PdbFile.AlbumRow>();
+
+        indexRows(PdbFile.PageType.ALBUMS, new RowHandler() {
+            @Override
+            public void rowFound(KaitaiStruct row) {
+                PdbFile.AlbumRow albumRow = (PdbFile.AlbumRow) row;
+                final long id = albumRow.id();
+                index.put(id, albumRow);
+
+                // Index the album ID by name as well.
+                final String name = getText(albumRow.name());
+                if (name.length() > 0) {
+                    addToSecondaryIndex(nameIndex, name, id);
+                }
+            }
+        });
+
+        logger.info("Indexed " + index.size() + " Albums.");
+        return Collections.unmodifiableMap(index);
+    }
+
+
+    /**
+     * A map from label ID to the actual label object.
+     */
+    @SuppressWarnings("WeakerAccess")
+    public final Map<Long, PdbFile.LabelRow> labelIndex;
+
+    /**
+     * A sorted map from label name to the set of label IDs with that name.
+     */
+    @SuppressWarnings("WeakerAccess")
+    public final SortedMap<String, SortedSet<Long>> labelNameIndex;
+
+    /**
+     * Parse and index all the labels found in the database export.
+     *
+     * @param nameIndex the sorted map in which the secondary label name index should be built
+     *
+     * @return the populated and unmodifiable primary label index
+     */
+    private Map<Long, PdbFile.LabelRow> indexLabels(final SortedMap<String, SortedSet<Long>> nameIndex) {
+        final Map<Long, PdbFile.LabelRow> index = new HashMap<Long, PdbFile.LabelRow>();
+
+        indexRows(PdbFile.PageType.LABELS, new RowHandler() {
+            @Override
+            public void rowFound(KaitaiStruct row) {
+                PdbFile.LabelRow labelRow = (PdbFile.LabelRow) row;
+                final long id = labelRow.id();
+                index.put(id, labelRow);
+
+                // Index the label ID by name as well.
+                final String name = getText(labelRow.name());
+                if (name.length() > 0) {
+                    addToSecondaryIndex(nameIndex, name, id);
+                }
+            }
+        });
+
+        logger.info("Indexed " + index.size() + " Labels.");
+        return Collections.unmodifiableMap(index);
+    }
+
+
+    /**
+     * A map from (musical) key ID to the actual key object.
+     */
+    @SuppressWarnings("WeakerAccess")
+    public final Map<Long, PdbFile.KeyRow> musicalKeyIndex;
+
+    /**
+     * A sorted map from musical key name to the set of musical key IDs with that name.
+     */
+    @SuppressWarnings("WeakerAccess")
+    public final SortedMap<String, SortedSet<Long>> musicalKeyNameIndex;
+
+    /**
+     * Parse and index all the musical keys found in the database export.
+     *
+     * @param nameIndex the sorted map in which the secondary musical key name index should be built
+     *
+     * @return the populated and unmodifiable primary musical key index
+     */
+    private Map<Long, PdbFile.KeyRow> indexKeys(final SortedMap<String, SortedSet<Long>> nameIndex) {
+        final Map<Long, PdbFile.KeyRow> index = new HashMap<Long, PdbFile.KeyRow>();
+
+        indexRows(PdbFile.PageType.KEYS, new RowHandler() {
+            @Override
+            public void rowFound(KaitaiStruct row) {
+                PdbFile.KeyRow keyRow = (PdbFile.KeyRow) row;
+                final long id = keyRow.id();
+                index.put(id, keyRow);
+
+                // Index the musical key ID by name as well.
+                final String name = getText(keyRow.name());
+                if (name.length() > 0) {
+                    addToSecondaryIndex(nameIndex, name,  id);
+                }
+            }
+        });
+
+        logger.info("Indexed " + index.size() + " Musical Keys.");
         return Collections.unmodifiableMap(index);
     }
 
