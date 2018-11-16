@@ -13,6 +13,7 @@ import java.util.*;
 /**
  * <p>Parses rekordbox database export and track analysis files, providing access to the information they contain.</p>
  */
+@SuppressWarnings("WeakerAccess")
 public class Database {
 
     private static final Logger logger = LoggerFactory.getLogger(Database.class);
@@ -31,6 +32,7 @@ public class Database {
      *
      * @throws IOException if there is a problem reading the file
      */
+    @SuppressWarnings("WeakerAccess")
     public Database(File pdbFile) throws IOException {
         this.pdbFile = PdbFile.fromFile(pdbFile.getAbsolutePath());
 
@@ -57,6 +59,10 @@ public class Database {
         final SortedMap<String, SortedSet<Long>> mutableMusicalKeyNameIndex = new TreeMap<String, SortedSet<Long>>();
         musicalKeyIndex = indexKeys(mutableMusicalKeyNameIndex);
         musicalKeyNameIndex = freezeSecondaryIndex(mutableMusicalKeyNameIndex);
+
+        final SortedMap<String, SortedSet<Long>> mutableGenreNameIndex = new TreeMap<String, SortedSet<Long>>();
+        genreIndex = indexGenres(mutableGenreNameIndex);
+        genreNameIndex = freezeSecondaryIndex(mutableGenreNameIndex);
     }
 
     /**
@@ -407,6 +413,48 @@ public class Database {
         });
 
         logger.info("Indexed " + index.size() + " Musical Keys.");
+        return Collections.unmodifiableMap(index);
+    }
+
+
+    /**
+     * A map from genre ID to the actual genre object.
+     */
+    @SuppressWarnings("WeakerAccess")
+    public final Map<Long, PdbFile.GenreRow> genreIndex;
+
+    /**
+     * A sorted map from genre name to the set of genre IDs with that name.
+     */
+    @SuppressWarnings("WeakerAccess")
+    public final SortedMap<String, SortedSet<Long>> genreNameIndex;
+
+    /**
+     * Parse and index all the genres found in the database export.
+     *
+     * @param nameIndex the sorted map in which the secondary genre name index should be built
+     *
+     * @return the populated and unmodifiable primary genre index
+     */
+    private Map<Long, PdbFile.GenreRow> indexGenres(final SortedMap<String, SortedSet<Long>> nameIndex) {
+        final Map<Long, PdbFile.GenreRow> index = new HashMap<Long, PdbFile.GenreRow>();
+
+        indexRows(PdbFile.PageType.GENRES, new RowHandler() {
+            @Override
+            public void rowFound(KaitaiStruct row) {
+                PdbFile.GenreRow genreRow = (PdbFile.GenreRow) row;
+                final long id = genreRow.id();
+                index.put(id, genreRow);
+
+                // Index the genre by name as well.
+                final String name = getText(genreRow.name());
+                if (name.length() > 0) {
+                    addToSecondaryIndex(nameIndex, name, id);
+                }
+            }
+        });
+
+        logger.info("Indexed " + index.size() + " Genres.");
         return Collections.unmodifiableMap(index);
     }
 
