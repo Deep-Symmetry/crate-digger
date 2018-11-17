@@ -37,8 +37,15 @@ public class Database {
         this.pdbFile = PdbFile.fromFile(pdbFile.getAbsolutePath());
 
         final SortedMap<String, SortedSet<Long>> mutableTrackTitleIndex = new TreeMap<String, SortedSet<Long>>();
-        trackIndex = indexTracks(mutableTrackTitleIndex);
+        final SortedMap<Long, SortedSet<Long>> mutableTrackArtistIndex = new TreeMap<Long, SortedSet<Long>>();
+        final SortedMap<Long, SortedSet<Long>> mutableTrackAlbumIndex = new TreeMap<Long, SortedSet<Long>>();
+        final SortedMap<Long, SortedSet<Long>> mutableTracGenreIndex = new TreeMap<Long, SortedSet<Long>>();
+        trackIndex = indexTracks(mutableTrackTitleIndex, mutableTrackArtistIndex, mutableTrackAlbumIndex, mutableTracGenreIndex);
         trackTitleIndex = freezeSecondaryIndex(mutableTrackTitleIndex);
+        trackAlbumIndex = freezeSecondaryIndex(mutableTrackAlbumIndex);
+        trackArtistIndex = freezeSecondaryIndex(mutableTrackArtistIndex);
+
+        trackGenreIndex = freezeSecondaryIndex(mutableTracGenreIndex);
 
         final SortedMap<String, SortedSet<Long>> mutableArtistTitleIndex = new TreeMap<String, SortedSet<Long>>();
         artistIndex = indexArtists(mutableArtistTitleIndex);
@@ -49,8 +56,10 @@ public class Database {
         colorNameIndex = freezeSecondaryIndex(mutableColorNameIndex);
 
         final SortedMap<String, SortedSet<Long>> mutableAlbumNameIndex = new TreeMap<String, SortedSet<Long>>();
-        albumIndex = indexAlbums(mutableAlbumNameIndex);
+        final SortedMap<Long, SortedSet<Long>> mutableAlbumArtistIndex = new TreeMap<Long, SortedSet<Long>>();
+        albumIndex = indexAlbums(mutableAlbumNameIndex, mutableAlbumArtistIndex);
         albumNameIndex = freezeSecondaryIndex(mutableAlbumNameIndex);
+        albumArtistIndex = freezeSecondaryIndex(mutableAlbumArtistIndex);
 
         final SortedMap<String, SortedSet<Long>> mutableLabelNameIndex = new TreeMap<String, SortedSet<Long>>();
         labelIndex = indexLabels(mutableLabelNameIndex);
@@ -63,6 +72,8 @@ public class Database {
         final SortedMap<String, SortedSet<Long>> mutableGenreNameIndex = new TreeMap<String, SortedSet<Long>>();
         genreIndex = indexGenres(mutableGenreNameIndex);
         genreNameIndex = freezeSecondaryIndex(mutableGenreNameIndex);
+
+        artworkIndex = indexArtwork();
     }
 
     /**
@@ -178,13 +189,37 @@ public class Database {
     public final SortedMap<String, SortedSet<Long>> trackTitleIndex;
 
     /**
+     * A sorted map from artist ID to the set of track IDs associated with that artist.
+     */
+    @SuppressWarnings("WeakerAccess")
+    public final SortedMap<Long, SortedSet<Long>> trackArtistIndex;
+
+    /**
+     * A sorted map from album ID to the set of track IDs associated with that album.
+     */
+    @SuppressWarnings("WeakerAccess")
+    public final SortedMap<Long, SortedSet<Long>> trackAlbumIndex;
+
+    /**
+     * A sorted map from genre ID to the set of track IDs associated with that genre.
+     */
+    @SuppressWarnings("WeakerAccess")
+    public final SortedMap<Long, SortedSet<Long>> trackGenreIndex;
+
+    /**
      * Parse and index all the tracks found in the database export.
      *
      * @param titleIndex the sorted map in which the secondary track title index should be built
+     * @param artistIndex the map in which the secondary track artist index should be built
+     * @param albumIndex the map in which the secondary track album index should be built
+     * @param genreIndex the map in which the secondary track genre index should be built
      *
      * @return the populated and unmodifiable primary track index
      */
-    private Map<Long, PdbFile.TrackRow> indexTracks(final SortedMap<String, SortedSet<Long>> titleIndex) {
+    private Map<Long, PdbFile.TrackRow> indexTracks(final SortedMap<String, SortedSet<Long>> titleIndex,
+                                                    final SortedMap<Long, SortedSet<Long>> artistIndex,
+                                                    final SortedMap<Long, SortedSet<Long>> albumIndex,
+                                                    final SortedMap<Long, SortedSet<Long>> genreIndex) {
         final Map<Long, PdbFile.TrackRow> index = new HashMap<Long, PdbFile.TrackRow>();
 
         indexRows(PdbFile.PageType.TRACKS, new RowHandler() {
@@ -195,10 +230,28 @@ public class Database {
                 final long id = trackRow.id();
                 index.put(id, trackRow);
 
-                // Index the track ID by title as well.
+                // Index the track ID by title, artist (in all roles), album, and genre as well.
                 final String title = getText(trackRow.title());
                 if (title.length() > 0) {
                     addToSecondaryIndex(titleIndex, title, id);
+                }
+                if (trackRow.artistId() > 0) {
+                    addToSecondaryIndex(artistIndex, trackRow.artistId(), id);
+                }
+                if (trackRow.composerId() > 0) {
+                    addToSecondaryIndex(artistIndex, trackRow.composerId(), id);
+                }
+                if (trackRow.originalArtistId() > 0) {
+                    addToSecondaryIndex(artistIndex, trackRow.originalArtistId(), id);
+                }
+                if (trackRow.remixerId() > 0) {
+                    addToSecondaryIndex(artistIndex, trackRow.remixerId(), id);
+                }
+                if (trackRow.albumId() > 0) {
+                    addToSecondaryIndex(albumIndex, trackRow.albumId(), id);
+                }
+                if (trackRow.genreId() > 0) {
+                    addToSecondaryIndex(genreIndex, trackRow.genreId(), id);
                 }
             }
         });
@@ -304,13 +357,21 @@ public class Database {
     public final SortedMap<String, SortedSet<Long>> albumNameIndex;
 
     /**
+     * A sorted map from artist ID to the set of album IDs associated with that artist.
+     */
+    @SuppressWarnings("WeakerAccess")
+    public final SortedMap<Long, SortedSet<Long>> albumArtistIndex;
+
+    /**
      * Parse and index all the albums found in the database export.
      *
      * @param nameIndex the sorted map in which the secondary album name index should be built
+     * @param artistIndex the map in which the secondary track artist index should be built
      *
      * @return the populated and unmodifiable primary album index
      */
-    private Map<Long, PdbFile.AlbumRow> indexAlbums(final SortedMap<String, SortedSet<Long>> nameIndex) {
+    private Map<Long, PdbFile.AlbumRow> indexAlbums(final SortedMap<String, SortedSet<Long>> nameIndex,
+                                                    final SortedMap<Long, SortedSet<Long>> artistIndex) {
         final Map<Long, PdbFile.AlbumRow> index = new HashMap<Long, PdbFile.AlbumRow>();
 
         indexRows(PdbFile.PageType.ALBUMS, new RowHandler() {
@@ -320,10 +381,13 @@ public class Database {
                 final long id = albumRow.id();
                 index.put(id, albumRow);
 
-                // Index the album ID by name as well.
+                // Index the album ID by name and artist as well.
                 final String name = getText(albumRow.name());
                 if (name.length() > 0) {
                     addToSecondaryIndex(nameIndex, name, id);
+                }
+                if (albumRow.artistId() > 0) {
+                    addToSecondaryIndex(artistIndex, albumRow.artistId(), id);
                 }
             }
         });
@@ -455,6 +519,32 @@ public class Database {
         });
 
         logger.info("Indexed " + index.size() + " Genres.");
+        return Collections.unmodifiableMap(index);
+    }
+
+    /**
+     * A map from artwork ID to the artwork row containing its file path.
+     */
+    @SuppressWarnings("WeakerAccess")
+    public final Map<Long, PdbFile.ArtworkRow> artworkIndex;
+
+    /**
+     * Parse and index all the artwork paths found in the database export.
+     *
+     * @return the populated and unmodifiable artwork path index
+     */
+    private Map<Long, PdbFile.ArtworkRow> indexArtwork() {
+        final Map<Long, PdbFile.ArtworkRow> index = new HashMap<Long, PdbFile.ArtworkRow>();
+
+        indexRows(PdbFile.PageType.ARTWORK, new RowHandler() {
+            @Override
+            public void rowFound(KaitaiStruct row) {
+                PdbFile.ArtworkRow artworkRow = (PdbFile.ArtworkRow) row;
+                index.put(artworkRow.id(), artworkRow);
+            }
+        });
+
+        logger.info(("Indexed " + index.size() + " Artwork Paths."));
         return Collections.unmodifiableMap(index);
     }
 
