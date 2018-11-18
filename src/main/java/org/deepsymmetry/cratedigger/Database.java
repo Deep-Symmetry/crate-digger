@@ -11,7 +11,7 @@ import java.net.InetAddress;
 import java.util.*;
 
 /**
- * <p>Parses rekordbox database export and track analysis files, providing access to the information they contain.</p>
+ * <p>Parses rekordbox database export files, providing access to the information they contain.</p>
  */
 @SuppressWarnings("WeakerAccess")
 public class Database {
@@ -24,28 +24,34 @@ public class Database {
     private final PdbFile pdbFile;
 
     /**
+     * Holds a reference to the file this database was constructed from.
+     */
+    public final File sourceFile;
+
+    /**
      * Construct a database access instance from the specified recordbox export file.
      * The file can obtained either from the SD or USB media, or directly from a player
      * using {@link FileFetcher#fetch(InetAddress, String, String, File)}
      *
-     * @param pdbFile an export.pdb file
+     * @param sourceFile an export.pdb file
      *
      * @throws IOException if there is a problem reading the file
      */
     @SuppressWarnings("WeakerAccess")
-    public Database(File pdbFile) throws IOException {
-        this.pdbFile = PdbFile.fromFile(pdbFile.getAbsolutePath());
+    public Database(File sourceFile) throws IOException {
+        this.sourceFile = sourceFile;
+        pdbFile = PdbFile.fromFile(sourceFile.getAbsolutePath());
 
         final SortedMap<String, SortedSet<Long>> mutableTrackTitleIndex = new TreeMap<String, SortedSet<Long>>();
         final SortedMap<Long, SortedSet<Long>> mutableTrackArtistIndex = new TreeMap<Long, SortedSet<Long>>();
         final SortedMap<Long, SortedSet<Long>> mutableTrackAlbumIndex = new TreeMap<Long, SortedSet<Long>>();
-        final SortedMap<Long, SortedSet<Long>> mutableTracGenreIndex = new TreeMap<Long, SortedSet<Long>>();
-        trackIndex = indexTracks(mutableTrackTitleIndex, mutableTrackArtistIndex, mutableTrackAlbumIndex, mutableTracGenreIndex);
+        final SortedMap<Long, SortedSet<Long>> mutableTrackGenreIndex = new TreeMap<Long, SortedSet<Long>>();
+        trackIndex = indexTracks(mutableTrackTitleIndex, mutableTrackArtistIndex, mutableTrackAlbumIndex, mutableTrackGenreIndex);
         trackTitleIndex = freezeSecondaryIndex(mutableTrackTitleIndex);
         trackAlbumIndex = freezeSecondaryIndex(mutableTrackAlbumIndex);
         trackArtistIndex = freezeSecondaryIndex(mutableTrackArtistIndex);
 
-        trackGenreIndex = freezeSecondaryIndex(mutableTracGenreIndex);
+        trackGenreIndex = freezeSecondaryIndex(mutableTrackGenreIndex);
 
         final SortedMap<String, SortedSet<Long>> mutableArtistTitleIndex = new TreeMap<String, SortedSet<Long>>();
         artistIndex = indexArtists(mutableArtistTitleIndex);

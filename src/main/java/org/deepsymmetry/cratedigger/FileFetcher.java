@@ -254,7 +254,7 @@ public class FileFetcher {
         OncRpcUdpClient client = getNfsClient(player);
 
         // Iterate over the elements of the path to the file we want to find (the players can't handle multi-part
-        // pathnames themselves).
+        // path names themselves).
         String[] elements = filePath.split("/");
         FHandle fileHandle = root;
         DirOpRes result = null;
@@ -283,7 +283,7 @@ public class FileFetcher {
     }
 
     /**
-     * Downnload a file from a player, storing it locally.
+     * Download a file from a player, storing it locally.
      *
      * @param player the address of the player from which we are to retrieve a file
      * @param mountPath the mount path of the filesystem from which the file is to be retrieved
