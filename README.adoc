@@ -160,7 +160,7 @@ you can query it for track and other information:
 [source,java]
 ----
 Database database = new Database(downloadedFile);
-PdbFile.TrackRow track = database.findTrack(1);
+RekordboxPdb.TrackRow track = database.findTrack(1);
 System.out.println(database.getText(track.title()));
 ----
 

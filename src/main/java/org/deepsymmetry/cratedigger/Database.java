@@ -1,7 +1,7 @@
 package org.deepsymmetry.cratedigger;
 
 import io.kaitai.struct.KaitaiStruct;
-import org.deepsymmetry.cratedigger.pdb.PdbFile;
+import org.deepsymmetry.cratedigger.pdb.RekordboxPdb;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -21,7 +21,7 @@ public class Database {
     /**
      * Holds a reference to the parser for the file we were constructed with.
      */
-    private final PdbFile pdbFile;
+    private final RekordboxPdb pdb;
 
     /**
      * Holds a reference to the file this database was constructed from.
@@ -40,7 +40,7 @@ public class Database {
     @SuppressWarnings("WeakerAccess")
     public Database(File sourceFile) throws IOException {
         this.sourceFile = sourceFile;
-        pdbFile = PdbFile.fromFile(sourceFile.getAbsolutePath());
+        pdb = RekordboxPdb.fromFile(sourceFile.getAbsolutePath());
 
         final SortedMap<String, SortedSet<Long>> mutableTrackTitleIndex = new TreeMap<String, SortedSet<Long>>();
         final SortedMap<Long, SortedSet<Long>> mutableTrackArtistIndex = new TreeMap<Long, SortedSet<Long>>();
@@ -106,21 +106,21 @@ public class Database {
      *
      * @throws IllegalStateException if there is more than (or less than) one table of that type in the file
      */
-    private void indexRows(PdbFile.PageType type, RowHandler handler) {
+    private void indexRows(RekordboxPdb.PageType type, RowHandler handler) {
         boolean done = false;
-        for (PdbFile.Table table : pdbFile.tables()) {
+        for (RekordboxPdb.Table table : pdb.tables()) {
             if (table.type() == type) {
                 if (done) throw new IllegalStateException("More than one table found with type " + type);
                 final long lastIndex = table.lastPage().index();  // This is how we know when to stop.
-                PdbFile.PageRef currentRef = table.firstPage();
+                RekordboxPdb.PageRef currentRef = table.firstPage();
                 boolean moreLeft = true;
                 do {
-                    final PdbFile.Page page = currentRef.body();
+                    final RekordboxPdb.Page page = currentRef.body();
 
                     // Process only ordinary data pages.
                     if (page.isDataPage()) {
-                        for (PdbFile.RowGroup rowGroup : page.rowGroups()) {
-                            for (PdbFile.RowRef rowRef : rowGroup.rows()) {
+                        for (RekordboxPdb.RowGroup rowGroup : page.rowGroups()) {
+                            for (RekordboxPdb.RowRef rowRef : rowGroup.rows()) {
                                 if (rowRef.present()) {
                                     // We found a row, pass it to the handler to be indexed appropriately.
                                     handler.rowFound(rowRef.body());
@@ -186,7 +186,7 @@ public class Database {
      * building this at all.
      */
     @SuppressWarnings("WeakerAccess")
-    public final Map<Long, PdbFile.TrackRow> trackIndex;
+    public final Map<Long, RekordboxPdb.TrackRow> trackIndex;
 
     /**
      * A sorted map from track title to the set of track IDs with that title.
@@ -222,17 +222,17 @@ public class Database {
      *
      * @return the populated and unmodifiable primary track index
      */
-    private Map<Long, PdbFile.TrackRow> indexTracks(final SortedMap<String, SortedSet<Long>> titleIndex,
+    private Map<Long, RekordboxPdb.TrackRow> indexTracks(final SortedMap<String, SortedSet<Long>> titleIndex,
                                                     final SortedMap<Long, SortedSet<Long>> artistIndex,
                                                     final SortedMap<Long, SortedSet<Long>> albumIndex,
                                                     final SortedMap<Long, SortedSet<Long>> genreIndex) {
-        final Map<Long, PdbFile.TrackRow> index = new HashMap<Long, PdbFile.TrackRow>();
+        final Map<Long, RekordboxPdb.TrackRow> index = new HashMap<Long, RekordboxPdb.TrackRow>();
 
-        indexRows(PdbFile.PageType.TRACKS, new RowHandler() {
+        indexRows(RekordboxPdb.PageType.TRACKS, new RowHandler() {
             @Override
             public void rowFound(KaitaiStruct row) {
                 // We found a track; index it by its ID.
-                PdbFile.TrackRow trackRow = (PdbFile.TrackRow)row;
+                RekordboxPdb.TrackRow trackRow = (RekordboxPdb.TrackRow)row;
                 final long id = trackRow.id();
                 index.put(id, trackRow);
 
@@ -271,7 +271,7 @@ public class Database {
      * A map from artist ID to the actual artist object.
      */
     @SuppressWarnings("WeakerAccess")
-    public final Map<Long, PdbFile.ArtistRow> artistIndex;
+    public final Map<Long, RekordboxPdb.ArtistRow> artistIndex;
 
     /**
      * A sorted map from artist name to the set of artist IDs with that name.
@@ -286,13 +286,13 @@ public class Database {
      *
      * @return the populated and unmodifiable primary artist index
      */
-    private Map<Long, PdbFile.ArtistRow> indexArtists(final SortedMap<String, SortedSet<Long>> nameIndex) {
-        final Map<Long, PdbFile.ArtistRow> index = new HashMap<Long, PdbFile.ArtistRow>();
+    private Map<Long, RekordboxPdb.ArtistRow> indexArtists(final SortedMap<String, SortedSet<Long>> nameIndex) {
+        final Map<Long, RekordboxPdb.ArtistRow> index = new HashMap<Long, RekordboxPdb.ArtistRow>();
 
-        indexRows(PdbFile.PageType.ARTISTS, new RowHandler() {
+        indexRows(RekordboxPdb.PageType.ARTISTS, new RowHandler() {
             @Override
             public void rowFound(KaitaiStruct row) {
-                PdbFile.ArtistRow artistRow = (PdbFile.ArtistRow)row;
+                RekordboxPdb.ArtistRow artistRow = (RekordboxPdb.ArtistRow)row;
                 final long id = artistRow.id();
                 index.put(id, artistRow);
 
@@ -313,7 +313,7 @@ public class Database {
      * A map from color ID to the actual color object.
      */
     @SuppressWarnings("WeakerAccess")
-    public final Map<Long,PdbFile.ColorRow> colorIndex;
+    public final Map<Long,RekordboxPdb.ColorRow> colorIndex;
 
     /**
      * A sorted map from color name to the set of color IDs with that name.
@@ -328,13 +328,13 @@ public class Database {
      *
      * @return the populated and unmodifiable primary color index
      */
-    private Map<Long, PdbFile.ColorRow> indexColors(final SortedMap<String, SortedSet<Long>> nameIndex) {
-        final Map<Long, PdbFile.ColorRow> index = new HashMap<Long, PdbFile.ColorRow>();
+    private Map<Long, RekordboxPdb.ColorRow> indexColors(final SortedMap<String, SortedSet<Long>> nameIndex) {
+        final Map<Long, RekordboxPdb.ColorRow> index = new HashMap<Long, RekordboxPdb.ColorRow>();
 
-        indexRows(PdbFile.PageType.COLORS, new RowHandler() {
+        indexRows(RekordboxPdb.PageType.COLORS, new RowHandler() {
             @Override
             public void rowFound(KaitaiStruct row) {
-                PdbFile.ColorRow colorRow = (PdbFile.ColorRow)row;
+                RekordboxPdb.ColorRow colorRow = (RekordboxPdb.ColorRow)row;
                 final long id = colorRow.id();
                 index.put(id, colorRow);
 
@@ -354,7 +354,7 @@ public class Database {
      * A map from album ID to the actual album object.
      */
     @SuppressWarnings("WeakerAccess")
-    public final Map<Long, PdbFile.AlbumRow> albumIndex;
+    public final Map<Long, RekordboxPdb.AlbumRow> albumIndex;
 
     /**
      * A sorted map from album name to the set of album IDs with that name.
@@ -376,14 +376,14 @@ public class Database {
      *
      * @return the populated and unmodifiable primary album index
      */
-    private Map<Long, PdbFile.AlbumRow> indexAlbums(final SortedMap<String, SortedSet<Long>> nameIndex,
+    private Map<Long, RekordboxPdb.AlbumRow> indexAlbums(final SortedMap<String, SortedSet<Long>> nameIndex,
                                                     final SortedMap<Long, SortedSet<Long>> artistIndex) {
-        final Map<Long, PdbFile.AlbumRow> index = new HashMap<Long, PdbFile.AlbumRow>();
+        final Map<Long, RekordboxPdb.AlbumRow> index = new HashMap<Long, RekordboxPdb.AlbumRow>();
 
-        indexRows(PdbFile.PageType.ALBUMS, new RowHandler() {
+        indexRows(RekordboxPdb.PageType.ALBUMS, new RowHandler() {
             @Override
             public void rowFound(KaitaiStruct row) {
-                PdbFile.AlbumRow albumRow = (PdbFile.AlbumRow) row;
+                RekordboxPdb.AlbumRow albumRow = (RekordboxPdb.AlbumRow) row;
                 final long id = albumRow.id();
                 index.put(id, albumRow);
 
@@ -407,7 +407,7 @@ public class Database {
      * A map from label ID to the actual label object.
      */
     @SuppressWarnings("WeakerAccess")
-    public final Map<Long, PdbFile.LabelRow> labelIndex;
+    public final Map<Long, RekordboxPdb.LabelRow> labelIndex;
 
     /**
      * A sorted map from label name to the set of label IDs with that name.
@@ -422,13 +422,13 @@ public class Database {
      *
      * @return the populated and unmodifiable primary label index
      */
-    private Map<Long, PdbFile.LabelRow> indexLabels(final SortedMap<String, SortedSet<Long>> nameIndex) {
-        final Map<Long, PdbFile.LabelRow> index = new HashMap<Long, PdbFile.LabelRow>();
+    private Map<Long, RekordboxPdb.LabelRow> indexLabels(final SortedMap<String, SortedSet<Long>> nameIndex) {
+        final Map<Long, RekordboxPdb.LabelRow> index = new HashMap<Long, RekordboxPdb.LabelRow>();
 
-        indexRows(PdbFile.PageType.LABELS, new RowHandler() {
+        indexRows(RekordboxPdb.PageType.LABELS, new RowHandler() {
             @Override
             public void rowFound(KaitaiStruct row) {
-                PdbFile.LabelRow labelRow = (PdbFile.LabelRow) row;
+                RekordboxPdb.LabelRow labelRow = (RekordboxPdb.LabelRow) row;
                 final long id = labelRow.id();
                 index.put(id, labelRow);
 
@@ -449,7 +449,7 @@ public class Database {
      * A map from (musical) key ID to the actual key object.
      */
     @SuppressWarnings("WeakerAccess")
-    public final Map<Long, PdbFile.KeyRow> musicalKeyIndex;
+    public final Map<Long, RekordboxPdb.KeyRow> musicalKeyIndex;
 
     /**
      * A sorted map from musical key name to the set of musical key IDs with that name.
@@ -464,13 +464,13 @@ public class Database {
      *
      * @return the populated and unmodifiable primary musical key index
      */
-    private Map<Long, PdbFile.KeyRow> indexKeys(final SortedMap<String, SortedSet<Long>> nameIndex) {
-        final Map<Long, PdbFile.KeyRow> index = new HashMap<Long, PdbFile.KeyRow>();
+    private Map<Long, RekordboxPdb.KeyRow> indexKeys(final SortedMap<String, SortedSet<Long>> nameIndex) {
+        final Map<Long, RekordboxPdb.KeyRow> index = new HashMap<Long, RekordboxPdb.KeyRow>();
 
-        indexRows(PdbFile.PageType.KEYS, new RowHandler() {
+        indexRows(RekordboxPdb.PageType.KEYS, new RowHandler() {
             @Override
             public void rowFound(KaitaiStruct row) {
-                PdbFile.KeyRow keyRow = (PdbFile.KeyRow) row;
+                RekordboxPdb.KeyRow keyRow = (RekordboxPdb.KeyRow) row;
                 final long id = keyRow.id();
                 index.put(id, keyRow);
 
@@ -491,7 +491,7 @@ public class Database {
      * A map from genre ID to the actual genre object.
      */
     @SuppressWarnings("WeakerAccess")
-    public final Map<Long, PdbFile.GenreRow> genreIndex;
+    public final Map<Long, RekordboxPdb.GenreRow> genreIndex;
 
     /**
      * A sorted map from genre name to the set of genre IDs with that name.
@@ -506,13 +506,13 @@ public class Database {
      *
      * @return the populated and unmodifiable primary genre index
      */
-    private Map<Long, PdbFile.GenreRow> indexGenres(final SortedMap<String, SortedSet<Long>> nameIndex) {
-        final Map<Long, PdbFile.GenreRow> index = new HashMap<Long, PdbFile.GenreRow>();
+    private Map<Long, RekordboxPdb.GenreRow> indexGenres(final SortedMap<String, SortedSet<Long>> nameIndex) {
+        final Map<Long, RekordboxPdb.GenreRow> index = new HashMap<Long, RekordboxPdb.GenreRow>();
 
-        indexRows(PdbFile.PageType.GENRES, new RowHandler() {
+        indexRows(RekordboxPdb.PageType.GENRES, new RowHandler() {
             @Override
             public void rowFound(KaitaiStruct row) {
-                PdbFile.GenreRow genreRow = (PdbFile.GenreRow) row;
+                RekordboxPdb.GenreRow genreRow = (RekordboxPdb.GenreRow) row;
                 final long id = genreRow.id();
                 index.put(id, genreRow);
 
@@ -532,20 +532,20 @@ public class Database {
      * A map from artwork ID to the artwork row containing its file path.
      */
     @SuppressWarnings("WeakerAccess")
-    public final Map<Long, PdbFile.ArtworkRow> artworkIndex;
+    public final Map<Long, RekordboxPdb.ArtworkRow> artworkIndex;
 
     /**
      * Parse and index all the artwork paths found in the database export.
      *
      * @return the populated and unmodifiable artwork path index
      */
-    private Map<Long, PdbFile.ArtworkRow> indexArtwork() {
-        final Map<Long, PdbFile.ArtworkRow> index = new HashMap<Long, PdbFile.ArtworkRow>();
+    private Map<Long, RekordboxPdb.ArtworkRow> indexArtwork() {
+        final Map<Long, RekordboxPdb.ArtworkRow> index = new HashMap<Long, RekordboxPdb.ArtworkRow>();
 
-        indexRows(PdbFile.PageType.ARTWORK, new RowHandler() {
+        indexRows(RekordboxPdb.PageType.ARTWORK, new RowHandler() {
             @Override
             public void rowFound(KaitaiStruct row) {
-                PdbFile.ArtworkRow artworkRow = (PdbFile.ArtworkRow) row;
+                RekordboxPdb.ArtworkRow artworkRow = (RekordboxPdb.ArtworkRow) row;
                 index.put(artworkRow.id(), artworkRow);
             }
         });
@@ -564,13 +564,13 @@ public class Database {
      * @return the text it contains, which may have zero length, but will never be {@code null}
      */
     @SuppressWarnings("WeakerAccess")
-    public static String getText(PdbFile.DeviceSqlString string) {
-        if (string.body() instanceof PdbFile.DeviceSqlShortAscii) {
-            return ((PdbFile.DeviceSqlShortAscii) string.body()).text();
-        } else if (string.body() instanceof  PdbFile.DeviceSqlLongAscii) {
-            return ((PdbFile.DeviceSqlLongAscii) string.body()).text();
-        } else if (string.body() instanceof PdbFile.DeviceSqlLongUtf16be) {
-            return ((PdbFile.DeviceSqlLongUtf16be) string.body()).text();
+    public static String getText(RekordboxPdb.DeviceSqlString string) {
+        if (string.body() instanceof RekordboxPdb.DeviceSqlShortAscii) {
+            return ((RekordboxPdb.DeviceSqlShortAscii) string.body()).text();
+        } else if (string.body() instanceof  RekordboxPdb.DeviceSqlLongAscii) {
+            return ((RekordboxPdb.DeviceSqlLongAscii) string.body()).text();
+        } else if (string.body() instanceof RekordboxPdb.DeviceSqlLongUtf16be) {
+            return ((RekordboxPdb.DeviceSqlLongUtf16be) string.body()).text();
         }
         throw new IllegalArgumentException("Unrecognized DeviceSqlString subtype:" + string);
     }
