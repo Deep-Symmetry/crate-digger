@@ -37,7 +37,7 @@ where all four players are in use.
 
 == PDB Database
 
-The file link:src/main/kaitai/pdb.ksy[`pdb.ksy`] contains
+The file link:src/main/kaitai/rekordbox_pdb.ksy[`rekordbox_pdb.ksy`] contains
 the structure definitions needed to parse exported rekordbox databases
 (`export.pdb` files).
 
@@ -67,18 +67,19 @@ and check my work, or get a better understanding of how to use the
 generated parsers. To do that, simply upload the `.pdb` file you want
 to examine to the Web IDE (it doesn't actually go to the web, it just
 gets put in your local browser storage), then also upload my
-link:src/main/kaitai/pdb.ksy[`pdb.ksy`] file, and the Web
-IDE will parse the exported database, letting you explore the
+link:src/main/kaitai/rekordbox_pdb.ksy[`rekordbox_pdb.ksy`] file, and
+the Web IDE will parse the exported database, letting you explore the
 structures in the tree view, and see the corresponding raw bytes in
 the hex viewer.
 
 TIP: You can find the `export.pdb` file on a media stick prepared by
 rekordbox inside the `PIONEER` folder, which may be invisible in the
 Finder, but you can open it using Terminal commands if you have to. To
-download my link:src/main/kaitai/pdb.ksy[`pdb.ksy`], click
-on its link, then click on the `Raw` button in the header above the
-first line of the listing, then tell your browser to save it to disk.
-Be sure to keep the `.ksy` extension. Then you can upload it to the
+download my
+link:src/main/kaitai/rekordbox_pdb.ksy[`rekordbox_pdb.ksy`], click on
+its link, then click on the `Raw` button in the header above the first
+line of the listing, then tell your browser to save it to disk. Be
+sure to keep the `.ksy` extension. Then you can upload it to the
 Kaitai Struct Web IDE.
 
 
@@ -91,10 +92,10 @@ files, the waveforms, memory cues and loop points. The paths to these
 files are found inside the corresponding track record.
 
 The structure definitions for these files are in
-link:src/main/kaitai/anlz.ksy[`anlz.ksy`]. You can use it
-with the Kaitai Struct Web IDE as described
-<<exploring-the-analysis,above>> to explore analysis
-files found in your own exported media.
+link:src/main/kaitai/rekordbox_anlz.ksy[`rekordbox_anlz.ksy`]. You can
+use it with the Kaitai Struct Web IDE as described
+<<exploring-the-analysis,above>> to explore analysis files found in
+your own exported media.
 
 == Using the Library
 
