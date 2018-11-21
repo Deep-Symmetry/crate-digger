@@ -51,7 +51,7 @@ types:
       is determined by the type tag.
     seq:
       - id: fourcc
-        type: u4
+        type: s4
         # enum: section_tags  Can't use this until enums support default/unmatched value
         doc: |
           A tag value indicating what kind of section this is.
