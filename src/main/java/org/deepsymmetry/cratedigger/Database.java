@@ -50,7 +50,6 @@ public class Database {
         trackTitleIndex = freezeSecondaryIndex(mutableTrackTitleIndex);
         trackAlbumIndex = freezeSecondaryIndex(mutableTrackAlbumIndex);
         trackArtistIndex = freezeSecondaryIndex(mutableTrackArtistIndex);
-
         trackGenreIndex = freezeSecondaryIndex(mutableTrackGenreIndex);
 
         final SortedMap<String, SortedSet<Long>> mutableArtistNameIndex = new TreeMap<String, SortedSet<Long>>(String.CASE_INSENSITIVE_ORDER);
