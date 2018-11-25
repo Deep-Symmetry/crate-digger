@@ -42,7 +42,7 @@ public class Database {
         this.sourceFile = sourceFile;
         pdb = RekordboxPdb.fromFile(sourceFile.getAbsolutePath());
 
-        final SortedMap<String, SortedSet<Long>> mutableTrackTitleIndex = new TreeMap<String, SortedSet<Long>>();
+        final SortedMap<String, SortedSet<Long>> mutableTrackTitleIndex = new TreeMap<String, SortedSet<Long>>(String.CASE_INSENSITIVE_ORDER);
         final SortedMap<Long, SortedSet<Long>> mutableTrackArtistIndex = new TreeMap<Long, SortedSet<Long>>();
         final SortedMap<Long, SortedSet<Long>> mutableTrackAlbumIndex = new TreeMap<Long, SortedSet<Long>>();
         final SortedMap<Long, SortedSet<Long>> mutableTrackGenreIndex = new TreeMap<Long, SortedSet<Long>>();
@@ -53,29 +53,29 @@ public class Database {
 
         trackGenreIndex = freezeSecondaryIndex(mutableTrackGenreIndex);
 
-        final SortedMap<String, SortedSet<Long>> mutableArtistTitleIndex = new TreeMap<String, SortedSet<Long>>();
-        artistIndex = indexArtists(mutableArtistTitleIndex);
-        artistNameIndex = freezeSecondaryIndex(mutableArtistTitleIndex);
+        final SortedMap<String, SortedSet<Long>> mutableArtistNameIndex = new TreeMap<String, SortedSet<Long>>(String.CASE_INSENSITIVE_ORDER);
+        artistIndex = indexArtists(mutableArtistNameIndex);
+        artistNameIndex = freezeSecondaryIndex(mutableArtistNameIndex);
 
-        final SortedMap<String, SortedSet<Long>> mutableColorNameIndex = new TreeMap<String, SortedSet<Long>>();
+        final SortedMap<String, SortedSet<Long>> mutableColorNameIndex = new TreeMap<String, SortedSet<Long>>(String.CASE_INSENSITIVE_ORDER);
         colorIndex = indexColors(mutableColorNameIndex);
         colorNameIndex = freezeSecondaryIndex(mutableColorNameIndex);
 
-        final SortedMap<String, SortedSet<Long>> mutableAlbumNameIndex = new TreeMap<String, SortedSet<Long>>();
+        final SortedMap<String, SortedSet<Long>> mutableAlbumNameIndex = new TreeMap<String, SortedSet<Long>>(String.CASE_INSENSITIVE_ORDER);
         final SortedMap<Long, SortedSet<Long>> mutableAlbumArtistIndex = new TreeMap<Long, SortedSet<Long>>();
         albumIndex = indexAlbums(mutableAlbumNameIndex, mutableAlbumArtistIndex);
         albumNameIndex = freezeSecondaryIndex(mutableAlbumNameIndex);
         albumArtistIndex = freezeSecondaryIndex(mutableAlbumArtistIndex);
 
-        final SortedMap<String, SortedSet<Long>> mutableLabelNameIndex = new TreeMap<String, SortedSet<Long>>();
+        final SortedMap<String, SortedSet<Long>> mutableLabelNameIndex = new TreeMap<String, SortedSet<Long>>(String.CASE_INSENSITIVE_ORDER);
         labelIndex = indexLabels(mutableLabelNameIndex);
         labelNameIndex = freezeSecondaryIndex(mutableLabelNameIndex);
 
-        final SortedMap<String, SortedSet<Long>> mutableMusicalKeyNameIndex = new TreeMap<String, SortedSet<Long>>();
+        final SortedMap<String, SortedSet<Long>> mutableMusicalKeyNameIndex = new TreeMap<String, SortedSet<Long>>(String.CASE_INSENSITIVE_ORDER);
         musicalKeyIndex = indexKeys(mutableMusicalKeyNameIndex);
         musicalKeyNameIndex = freezeSecondaryIndex(mutableMusicalKeyNameIndex);
 
-        final SortedMap<String, SortedSet<Long>> mutableGenreNameIndex = new TreeMap<String, SortedSet<Long>>();
+        final SortedMap<String, SortedSet<Long>> mutableGenreNameIndex = new TreeMap<String, SortedSet<Long>>(String.CASE_INSENSITIVE_ORDER);
         genreIndex = indexGenres(mutableGenreNameIndex);
         genreNameIndex = freezeSecondaryIndex(mutableGenreNameIndex);
 
