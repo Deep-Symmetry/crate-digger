@@ -79,6 +79,9 @@ public class Database {
         genreNameIndex = freezeSecondaryIndex(mutableGenreNameIndex);
 
         artworkIndex = indexArtwork();
+
+        playlistIndex = indexPlaylists();
+        playlistFolderIndex = indexPlaylistFolders();
     }
 
     /**
@@ -553,6 +556,112 @@ public class Database {
         return Collections.unmodifiableMap(index);
     }
 
+    /**
+     * A map from playlist ID to the list of tracks IDs making up a playlist.
+     */
+    public final Map<Long, List<Long>> playlistIndex;
+
+    /**
+     * Playlist folders can either contain playlists or other folders. Each
+     * entry has a flag explaining how the ID should be interpreted.
+     */
+    public static class PlaylistFolderEntry {
+        /**
+         * The name by which this playlist or folder is known.
+         */
+        public final String name;
+
+        /**
+         * Indicates whether this entry links to another folder or a playlist.
+         */
+        public final boolean isFolder;
+
+        /**
+         * The ID of the folder or playlist linked to by this entry.
+         */
+        public final long id;
+
+        /**
+         * Constructor simply sets the immutable fields.
+         *
+         * @param name the name by which this folder is known.
+         * @param isFolder indicates whether this entry links to another folder or a playlist
+         * @param id the id of the folder or playlist linked to by this entry
+         */
+        PlaylistFolderEntry(String name, boolean isFolder, long id) {
+            this.name = name;
+            this.isFolder = isFolder;
+            this.id = id;
+        }
+
+        @Override
+        public String toString() {
+            return "PlaylistFolderEntry[name:" + name + ", id:" + id + ", isFolder? " + isFolder + "]";
+        }
+    }
+
+    public final Map<Long, List<PlaylistFolderEntry>> playlistFolderIndex;
+
+    /**
+     * Parse and index all the playlists found in the database export.
+     *
+     * @return the populated and unmodifiable playlist index
+     */
+    private Map<Long, List<Long>> indexPlaylists() {
+        final Map<Long, List<Long>> result = new HashMap<Long, List<Long>>();
+        indexRows(RekordboxPdb.PageType.PLAYLIST_ENTRIES, new RowHandler() {
+            @Override
+            public void rowFound(KaitaiStruct row) {
+                RekordboxPdb.PlaylistEntryRow entryRow = (RekordboxPdb.PlaylistEntryRow) row;
+                ArrayList<Long> playlist = (ArrayList<Long>) result.get(entryRow.playlistId());
+                if (playlist == null) {
+                    playlist = new ArrayList<Long>();
+                    result.put(entryRow.playlistId(), playlist);
+                }
+                while (playlist.size() <= entryRow.entryIndex()) {  // Grow to hold the new entry we are going to set.
+                    playlist.add(0L);
+                }
+                playlist.set((int) entryRow.entryIndex(), entryRow.trackId());
+            }
+        });
+        // Freeze the finished lists and overall map
+        for (Map.Entry<Long, List<Long>> entry : result.entrySet()) {
+            result.put(entry.getKey(), Collections.unmodifiableList(entry.getValue()));
+        }
+        logger.info("Indexed " + result.size() + " playlists.");
+        return Collections.unmodifiableMap(result);
+    }
+
+    /**
+     * Parse and index the tree that organizes playlists into folders found in the database export.
+     *
+     * @return the populated and unmodifiable playlist folder index
+     */
+    private Map<Long, List<PlaylistFolderEntry>> indexPlaylistFolders() {
+        final Map<Long, List<PlaylistFolderEntry>> result = new HashMap<Long, List<PlaylistFolderEntry>>();
+        indexRows(RekordboxPdb.PageType.PLAYLIST_TREE, new RowHandler() {
+            @Override
+            public void rowFound(KaitaiStruct row) {
+                RekordboxPdb.PlaylistTreeRow treeRow = (RekordboxPdb.PlaylistTreeRow) row;
+                ArrayList<PlaylistFolderEntry> parent = (ArrayList<PlaylistFolderEntry>) result.get(treeRow.parentId());
+                if (parent == null) {
+                    parent = new ArrayList<PlaylistFolderEntry>();
+                    result.put(treeRow.parentId(), parent);
+                }
+                while (parent.size() <= treeRow.sortOrder()) {  // Grow to hold the new entry we are going to set.
+                    parent.add(null);
+                }
+                parent.set((int) treeRow.sortOrder(), new PlaylistFolderEntry(Database.getText(treeRow.name()),
+                        treeRow.isFolder(), treeRow.id()));
+            }
+        });
+        // Freeze the finished lists and overall map
+        for (Map.Entry<Long, List<PlaylistFolderEntry>> entry : result.entrySet()) {
+            result.put(entry.getKey(), Collections.unmodifiableList(entry.getValue()));
+        }
+        logger.info("Indexed " + result.size() + " playlist folders.");
+        return Collections.unmodifiableMap(result);
+    }
 
     /**
      * Helper function to extract the text value from one of the strings found in the database, which
