@@ -292,7 +292,7 @@ public class FileFetcher {
      *
      * @throws IOException if there is a problem retrieving the file
      */
-    public synchronized void fetch(InetAddress player, String mountPath, String sourcePath, File destination) throws IOException {
+    public void fetch(InetAddress player, String mountPath, String sourcePath, File destination) throws IOException {
         FileOutputStream outputStream = new FileOutputStream(destination);
         try {
             // Make sure the file exists on the player, and find its file handle.
