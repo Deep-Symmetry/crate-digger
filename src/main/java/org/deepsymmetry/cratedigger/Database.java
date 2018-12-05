@@ -1,10 +1,12 @@
 package org.deepsymmetry.cratedigger;
 
 import io.kaitai.struct.KaitaiStruct;
+import io.kaitai.struct.RandomAccessFileKaitaiStream;
 import org.deepsymmetry.cratedigger.pdb.RekordboxPdb;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.Closeable;
 import java.io.File;
 import java.io.IOException;
 import java.net.InetAddress;
@@ -14,7 +16,7 @@ import java.util.*;
  * <p>Parses rekordbox database export files, providing access to the information they contain.</p>
  */
 @SuppressWarnings("WeakerAccess")
-public class Database {
+public class Database implements Closeable {
 
     private static final Logger logger = LoggerFactory.getLogger(Database.class);
 
@@ -31,7 +33,11 @@ public class Database {
     /**
      * Construct a database access instance from the specified recordbox export file.
      * The file can obtained either from the SD or USB media, or directly from a player
-     * using {@link FileFetcher#fetch(InetAddress, String, String, File)}
+     * using {@link FileFetcher#fetch(InetAddress, String, String, File)}.
+     *
+     * Be sure to call {@link #close()} when you are done using the parsed database
+     * to close the underlying file or users will be unable to unmount the drive holding
+     * it until they quit your program.
      *
      * @param sourceFile an export.pdb file
      *
@@ -40,7 +46,7 @@ public class Database {
     @SuppressWarnings("WeakerAccess")
     public Database(File sourceFile) throws IOException {
         this.sourceFile = sourceFile;
-        pdb = RekordboxPdb.fromFile(sourceFile.getAbsolutePath());
+        pdb = new RekordboxPdb(new RandomAccessFileKaitaiStream(sourceFile.getAbsolutePath()));
 
         final SortedMap<String, SortedSet<Long>> mutableTrackTitleIndex = new TreeMap<String, SortedSet<Long>>(String.CASE_INSENSITIVE_ORDER);
         final SortedMap<Long, SortedSet<Long>> mutableTrackArtistIndex = new TreeMap<Long, SortedSet<Long>>();
@@ -661,6 +667,18 @@ public class Database {
         }
         logger.info("Indexed " + result.size() + " playlist folders.");
         return Collections.unmodifiableMap(result);
+    }
+
+    /**
+     * Close the file underlying the parsed database. This needs to be called if you want to be able
+     * to unmount the media on which that file resides, but once it is done, you can no longer access
+     * lazy elements within the database which have not already been parsed.
+     *
+     * @throws IOException if there is a problem closing the file
+     */
+    @Override
+    public void close() throws IOException {
+        pdb._io().close();
     }
 
     /**
