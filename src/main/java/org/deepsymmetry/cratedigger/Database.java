@@ -691,13 +691,18 @@ public class Database implements Closeable {
      */
     @SuppressWarnings("WeakerAccess")
     public static String getText(RekordboxPdb.DeviceSqlString string) {
+        String text = null;
         if (string.body() instanceof RekordboxPdb.DeviceSqlShortAscii) {
-            return ((RekordboxPdb.DeviceSqlShortAscii) string.body()).text();
+            text = ((RekordboxPdb.DeviceSqlShortAscii) string.body()).text();
         } else if (string.body() instanceof  RekordboxPdb.DeviceSqlLongAscii) {
-            return ((RekordboxPdb.DeviceSqlLongAscii) string.body()).text();
+            text = ((RekordboxPdb.DeviceSqlLongAscii) string.body()).text();
         } else if (string.body() instanceof RekordboxPdb.DeviceSqlLongUtf16be) {
-            return ((RekordboxPdb.DeviceSqlLongUtf16be) string.body()).text();
+            text = ((RekordboxPdb.DeviceSqlLongUtf16be) string.body()).text();
         }
-        throw new IllegalArgumentException("Unrecognized DeviceSqlString subtype:" + string);
+        if (text != null) {
+            return text;
+        }
+        logger.warn("Received unusable DeviceSqlString returning empty string; lengthAndKind: " + string.lengthAndKind());
+        return "";
     }
 }
