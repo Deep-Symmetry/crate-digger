@@ -43,7 +43,6 @@ public class Database implements Closeable {
      *
      * @throws IOException if there is a problem reading the file
      */
-    @SuppressWarnings("WeakerAccess")
     public Database(File sourceFile) throws IOException {
         this.sourceFile = sourceFile;
         pdb = new RekordboxPdb(new RandomAccessFileKaitaiStream(sourceFile.getAbsolutePath()));
@@ -123,6 +122,7 @@ public class Database implements Closeable {
                 RekordboxPdb.PageRef currentRef = table.firstPage();
                 boolean moreLeft = true;
                 do {
+                    // logger.info("Indexing page " + currentRef.index());
                     final RekordboxPdb.Page page = currentRef.body();
 
                     // Process only ordinary data pages.
@@ -304,8 +304,13 @@ public class Database implements Closeable {
                 final long id = artistRow.id();
                 index.put(id, artistRow);
 
-                // Index the artist ID by name as well.
-                final String name = getText(artistRow.name());
+                // Index the artist ID by name as well, handling the special case of extra long names.
+                String name;
+                if (artistRow.longName() != null) {
+                   name = getText(artistRow.longName());
+                } else {
+                    name = getText(artistRow.name());
+                }
                 if (name.length() > 0) {
                     addToSecondaryIndex(nameIndex, name, id);
                 }
@@ -702,7 +707,29 @@ public class Database implements Closeable {
         if (text != null) {
             return text;
         }
-        logger.warn("Received unusable DeviceSqlString returning empty string; lengthAndKind: " + string.lengthAndKind());
+        logger.warn("Received unusable DeviceSqlString, returning empty string; lengthAndKind: " + string.lengthAndKind());
+        return "";
+    }
+
+    /**
+     * Helper function to extract the text value from one of the strings found in the database, which
+     * have a variety of obscure representations.
+     *
+     * @param string the string-encoding structure
+     *
+     * @return the text it contains, which may have zero length, but will never be {@code null}
+     */
+    public static String getText(RekordboxPdb.DeviceSqlLongString string) {
+        String text = null;
+        if (string.body() instanceof  RekordboxPdb.DeviceSqlLongAscii) {
+            text = ((RekordboxPdb.DeviceSqlLongAscii) string.body()).text();
+        } else if (string.body() instanceof  RekordboxPdb.DeviceSqlLongUtf16be) {
+            text = ((RekordboxPdb.DeviceSqlLongUtf16be) string.body()).text();
+        }
+        if (text != null) {
+            return text;
+        }
+        logger.warn("Received unusable DeviceSqlLongString, returning empty string; kind: " + string.kind());
         return "";
     }
 }
