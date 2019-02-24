@@ -11,6 +11,7 @@
 
     <name>Crate Digger</name>
     <description>Java library for parsing rekordbox collection exports and track analysis files.</description>
+    <url>https://github.com/Deep-Symmetry/crate-digger</url>
 
     <organization>
         <name>Deep Symmetry, LLC</name>
