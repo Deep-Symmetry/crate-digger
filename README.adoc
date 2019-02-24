@@ -99,7 +99,17 @@ your own exported media.
 
 == Using the Library
 
-TODO: Add Maven Badge link once the library is published.
+Crate Digger is available through Maven Central, so to use it in your
+Maven project, all you need is to include the appropriate dependency.
+
+[link=https://maven-badges.herokuapp.com/maven-central/org.deepsymmetry/crate-digger]
+image:https://maven-badges.herokuapp.com/maven-central/org.deepsymmetry/crate-digger/badge.svg[Maven Central]
+
+Click the **maven central** badge above to view the repository entry
+for crate-digger. The proper format for including the latest release as a
+dependency in a variety of tools, including Leiningen if you are using
+beat-link from Clojure, can be found in the **Dependency Information**
+section.
 
 There are two halves to what Crate Digger offers. The first is an
 ability to talk to the nonstandard Network File System servers that
@@ -223,7 +233,7 @@ link:CONTRIBUTING.md[guidelines] and get in touch!
 
 +++<a href="http://deepsymmetry.org"><img src="doc/assets/DS-logo-bw-200-padded-left.png"
       align="right" alt="Deep Symmetry logo" width="216" height="123"></a>+++
-Copyright © 2018 http://deepsymmetry.org[Deep Symmetry, LLC]
+Copyright © 2018–2019 http://deepsymmetry.org[Deep Symmetry, LLC]
 
 Distributed under the
 http://opensource.org/licenses/eclipse-1.0.php[Eclipse Public License

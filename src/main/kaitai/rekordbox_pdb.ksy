@@ -875,8 +875,6 @@ types:
   device_sql_long_ascii:
     doc: |
       An ASCII-encoded string preceded by a two-byte length field.
-      TODO May need to skip a byte after the length!
-           Have not found any test data.
     seq:
       - id: length
         type: u2
