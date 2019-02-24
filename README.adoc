@@ -102,8 +102,9 @@ your own exported media.
 Crate Digger is available through Maven Central, so to use it in your
 Maven project, all you need is to include the appropriate dependency.
 
-[link=https://maven-badges.herokuapp.com/maven-central/org.deepsymmetry/crate-digger]
-image:https://maven-badges.herokuapp.com/maven-central/org.deepsymmetry/crate-digger/badge.svg[Maven Central]
++++<a href="https://maven-badges.herokuapp.com/maven-central/org.deepsymmetry/crate-digger"><img
+ src="https://maven-badges.herokuapp.com/maven-central/org.deepsymmetry/crate-digger/badge.svg"
+  alt="Maven Central"></a>+++
 
 Click the **maven central** badge above to view the repository entry
 for crate-digger. The proper format for including the latest release as a
