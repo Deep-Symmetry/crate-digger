@@ -121,6 +121,7 @@ Lesniak\footnote{\url{https://github.com/flesniak/python-prodj-link}},
 to whom I am hugely grateful.
 
 \subsection{File Header}
+\label{sec:fileHeader}
 
 \begin{figure}
   \begin{bytefield}[bitwidth=1.9em, leftcurly=., leftcurlyspace=0pt, boxformatting={\baselinealign}]{16}
@@ -285,8 +286,30 @@ pointers is unused.
 
   \end{bytefield}
   \caption{Table Page}
-  \label{fig:fileHeader}
+  \label{fig:tablePage}
 \end{figure}
+
+The table header is followed by the table pages themselves. These each
+have the size specified by $len\_page$ in Figure~\ref{fig:fileHeader},
+and the structure shown in Figure~\ref{fig:tablePage}. The first four
+bytes always seem to be zero. This is followed by a four-byte value
+$page\_index$ which identifies the index of this page within the list
+of table pages (the header has index 0, the first actual data page the
+index 1, and so on). This value seems to be redundant, because it can
+be calculated by dividing the offset of the start of the page by
+$len\_page$, but perhaps it serves as a sanity check.
+
+This is followed by another four-byte value, $type$, which identifies
+the type of the page, using the values shown in
+Table~\ref{table:tableTypes}. This again seems redundant because the
+table header which was followed to reach this page also identified the
+table type, but perhaps it is another sanity check, or an alternate
+way to tell, when following page links, that you have reached the end
+of the table you are interested in. Speaking of which, the next
+four-byte value, $next\_page$, is that link: it identifies the index
+at which the next page of this table can be found, as long as we have
+not already reached the final page of the table, as described in
+Section~\ref{sec:fileHeader}.
 
 To be continued...
 
