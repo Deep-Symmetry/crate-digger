@@ -198,14 +198,14 @@ types:
       - id: num_rows_large
         type: u2
         doc: |
-          Holds the value used for `num_rows` (see below) when that is
-          too large to fit into `num_rows_small`, and that situation
-          seems to be indicated when this value is larger than
-          `num_rows_small`, but not equal to `0x1fff`. This seems like
-          some strange mechanism to deal with the fact that lots of
-          tiny entries, such as are found in the `playlist_entries`
-          table, are too big to count with a single byte. But why not
-          just always use this value, then?
+          Holds the value used for `num_rows` (as described above)
+          when that is too large to fit into `num_rows_small`, and
+          that situation seems to be indicated when this value is
+          larger than `num_rows_small`, but not equal to `0x1fff`.
+          This seems like some strange mechanism to deal with the fact
+          that lots of tiny entries, such as are found in the
+          `playlist_entries` table, are too big to count with a single
+          byte. But why not just always use this value, then?
       - type: u2
         doc: |
           @flesniak said: "1004 for strange blocks, 0 otherwise"

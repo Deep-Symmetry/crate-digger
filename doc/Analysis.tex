@@ -266,10 +266,10 @@ pointers is unused.
     \end{leftwordgroup} \\
     \begin{leftwordgroup}{\tiny\bfseries 10}
       \bitbox{4}{$unknown_1$} & \bitbox{4}{$unknown_2$} & \bitbox{1}{$n_{rs}$} & \bitbox{1}{$u_3$} &
-      \bitbox{1}{$u_3$} & \bitbox{1}{$p_f$} & \bitbox{2}{$free_s$} & \bitbox{2}{$used_s$}
+      \bitbox{1}{$u_4$} & \bitbox{1}{$p_f$} & \bitbox{2}{$free_s$} & \bitbox{2}{$used_s$}
     \end{leftwordgroup} \\
     \begin{leftwordgroup}{\tiny\bfseries 20}
-      \bitbox{2}{$u_4$} & \bitbox{2}{$num_{rl}$} & \bitbox{2}{$u_5$} & \bitbox{2}{$u_6$} &
+      \bitbox{2}{$u_5$} & \bitbox{2}{$num_{rl}$} & \bitbox{2}{$u_6$} & \bitbox{2}{$u_7$} &
       \bitbox[lrt]{8}{}
     \end{leftwordgroup} \\
     \begin{leftwordgroup}{}
@@ -277,11 +277,11 @@ pointers is unused.
       \skippedwords \\
       \wordbox[lr]{1}{$row\_groups$} \\
       \bitbox[lb]{6}{} & \bitbox[]{2}{\ldots} &
-      \bitbox{2}{$ofs_{17}$} & \bitbox{2}{$ofs_{16}$} & \bitbox{2}{$row_{pf\_1}$} & \bitbox{2}{$ofs_{15}$} \\
+      \bitbox{2}{$ofs_{17}$} & \bitbox{2}{$ofs_{16}$} & \bitbox{2}{$row_{pf_1}$} & \bitbox{2}{$ofs_{15}$} \\
       \bitbox{2}{$ofs_{14}$} & \bitbox{2}{$ofs_{13}$} & \bitbox{2}{$ofs_{12}$} & \bitbox{2}{$ofs_{11}$} &
       \bitbox{2}{$ofs_{10}$} & \bitbox{2}{$ofs_{9}$} & \bitbox{2}{$ofs_{8}$} & \bitbox{2}{$ofs_{7}$} \\
       \bitbox{2}{$ofs_{6}$} & \bitbox{2}{$ofs_{5}$} & \bitbox{2}{$ofs_{4}$} & \bitbox{2}{$ofs_{3}$} &
-      \bitbox{2}{$ofs_{2}$} & \bitbox{2}{$ofs_{1}$} & \bitbox{2}{$ofs_{0}$} & \bitbox{2}{$row_{pf\_0}$}
+      \bitbox{2}{$ofs_{2}$} & \bitbox{2}{$ofs_{1}$} & \bitbox{2}{$ofs_{0}$} & \bitbox{2}{$row_{pf_0}$}
     \end{leftwordgroup}
 
   \end{bytefield}
@@ -291,13 +291,20 @@ pointers is unused.
 
 The table header is followed by the table pages themselves. These each
 have the size specified by $len\_page$ in Figure~\ref{fig:fileHeader},
-and the structure shown in Figure~\ref{fig:tablePage}. The first four
-bytes always seem to be zero. This is followed by a four-byte value
-$page\_index$ which identifies the index of this page within the list
-of table pages (the header has index 0, the first actual data page the
-index 1, and so on). This value seems to be redundant, because it can
-be calculated by dividing the offset of the start of the page by
-$len\_page$, but perhaps it serves as a sanity check.
+and the structure shown in Figure~\ref{fig:tablePage}.
+
+Data pages all seem to have the header structure described here, but
+not all of them actually store data. Some of them are ``strange'' and
+we have not yet figured out why. The discussion below describes how to
+recognize a strange page, and avoid trying to read it as a data page.
+
+The first four bytes of a table page always seem to be zero. This is
+followed by a four-byte value $page\_index$ which identifies the index
+of this page within the list of table pages (the header has index 0,
+the first actual data page the index 1, and so on). This value seems
+to be redundant, because it can be calculated by dividing the offset
+of the start of the page by $len\_page$, but perhaps it serves as a
+sanity check.
 
 This is followed by another four-byte value, $type$, which identifies
 the type of the page, using the values shown in
@@ -310,6 +317,108 @@ four-byte value, $next\_page$, is that link: it identifies the index
 at which the next page of this table can be found, as long as we have
 not already reached the final page of the table, as described in
 Section~\ref{sec:fileHeader}.
+
+The exact meaning of $unknown_1$ is unclear. Mr. Flesinak said
+``sequence number (0$\rightarrow$1: 8$\rightarrow$13, 1$\rightarrow$2:
+22, 2$\rightarrow$3: 27)'' but I don't know how to interpret that.
+Even less is known about $unknown_2$. But $num\_rows\_small$ at
+byte~{\tt 18} within the page (abbrviated $n_{rs}$ in
+Figure~\ref{fig:tablePage}) holds the number of rows that are present
+in the page, unless $num\_rows\_large$ (below) holds a value that is
+larger (but not equal to {\tt 1fff}). This seems like a strange
+mechanism for dealing with the fact that some tables (like playlist
+entries) have a lot of very small rows, too many to count with a
+single byte. But then why not just always use $num\_rows\_large$?
+
+The purpose of the next two bytes are is also unclear. Of $u_3$ Mr.
+Flesniak said ``a bitmask (first track: 32)'', and he described $u_4$
+as often 0, sometimes larger, especially for pages with a high number
+of rows (e.g. 12 for 101 rows).
+
+Byte~{\tt 1b} is called $page\_flags$ (abbrviated $p_f$ in
+Figure~\ref{fig:tablePage}). According to Mr. Flesniak, ``strange''
+(non-data) pages will have the value {\tt 44} or {\tt 64}, and other
+pages have had the values {\tt 24} or {\tt 34}. Crate Digger considers
+a page to be a data page if $page\_flags \& {\tt 40} = 0$.
+
+Bytes~{\tt 1c-1d} are called $free\_size$ (abbrviated $free_s$ in
+Figure~\ref{fig:tablePage}), and store the amount of unused space in
+the page heap (excluding the row index which is built backwards from
+the end of the page); $used\_size$ at bytes~{\tt 1c-1d} (abbrviated
+$used_s$) stores the number of bytes that are in use in the page heap.
+
+Bytes~{\tt 20-21}, $u_5$, are of unclear purpose. Mr. Flesniak labeled
+them ``(0$\rightarrow$1: 2).''
+
+Bytes~{\tt 20-21}, $num\_rows\_large$ (abbrviated $num_{rl}$ in
+Figure~\ref{fig:tablePage}) hold the number of entries in the row
+index at the end of the page when that value is too large to fit into
+$num\_rows\_small$ (as mentioned above), and that situation seems to
+be indicated when this value is larger than $num\_rows\_small$, but
+not equal to {\tt 1fff}.
+
+$u_6$ at bytes~{\tt 24-25} seems to have the value {\tt 1004} for
+strange pages, and {\tt 0000} for data pages. And Mr. Flesniak
+describes $u_7$ at bytes~{\tt 26-27} as ``always 0 except 1 for
+history pages, num entries for strange pages?''
+
+After these header fields comes the page heap. Rows are allocated
+within this heap starting at byte~{\tt 28}. Since rows can be
+different sizes, there needs to be a way to locate them. This takes
+the form of a row index, which is built from the end of the page
+backwards, in groups of up to sixteen row pointers along with a
+bitmask saying which of those rows are still part of the table (they
+might have been deleted).
+
+The number of row index entries is determined by the value of either
+$num\_rows\_small$ or $num\_rows\_large$ as described above.
+
+The bit mask for the first group of up to sixteen rows, labeled
+$row_{pf_0}$ in Figure~\ref{fig:tablePage} (meaning ``row presence
+flags group 0''), is found in the last two bytes of the page. The low
+order bit of this value will be set if row 0 is really present, the
+next bit if row 1 is really present, and so on. The two bytes before
+these flags, labeled $ofs_0$, store the offset of the first row in the
+page. This offset is the number of bytes past the end of the page
+header at which the row itself can be found. So if row 0 begins at the
+very beginning of the heap, at byte~{\tt 28} in the page, $ofs_0$
+would have the value {\tt 0000}.
+
+As more rows are added to the page, space is allocated for them in the
+heap, and additional index entries are added at the end of the heap,
+growing backwards. Once there have been sixteen rows added, all of the
+bits in $row_{pf_0}$ are accounted for, and when another row is added,
+before its offset entry $ofs_{16}$ can be added, another row bit-mask
+entry $row_{pf_1}$ needs to be allocated. And so the row index grows
+backwards towards the rows that are being added forwards, and once
+they are too close for a new row to fit, the page is full, and another
+page gets allocated to the table.
+
+\subsection{Table Rows}
+
+The structure of the rows themselves is determined by the $type$ of
+the table, using the values shown in Table~\ref{table:tableTypes}.
+
+\subsubsection{Album Rows}
+
+Album rows hold an album name and ID along with an artist association.
+
+\begin{figure}
+  \begin{bytefield}[bitwidth=1.9em, leftcurly=., leftcurlyspace=0pt, boxformatting={\baselinealign}]{16}
+    \hexhead \\
+
+    \begin{leftwordgroup}{\tiny\bfseries 00}
+      \bitbox{2}{$u_1$} & \bitbox{2}{$index_s$} & \bitbox{4}{$unknown_2$} &
+      \bitbox{4}{$artist\_id$} & \bitbox{4}{$id$}
+    \end{leftwordgroup} \\
+    \begin{leftwordgroup}{\tiny\bfseries 10}
+      \bitbox{4}{$unknown_3$} & \bitbox{1}{$u_4$} & \bitbox{1}{$o_n$} &
+      \bitbox[lt]{10}{}
+    \end{leftwordgroup} \\
+  \end{bytefield}
+  \caption{Album Row}
+  \label{fig:albumRow}
+\end{figure}
 
 To be continued...
 
