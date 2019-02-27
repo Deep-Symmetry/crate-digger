@@ -209,7 +209,8 @@ is ever garbage collected, but this is speculation on my part.
   1 & genres & Musical genres, for reference by tracks and searching.
   \\
 
-  2 & artists & Artists, for reference by tracks and searching. \\
+  2 & artists & Artists, for reference by tracks and searching,
+  Section~\ref{sec:artistRows}. \\
 
   3 & albums & Albums, for reference by tracks and searching,
   Section~\ref{sec:albumRows}. \\
@@ -227,7 +228,8 @@ is ever garbage collected, but this is speculation on my part.
   8 & playlist\_entries & Links tracks to playlists, in the rightp
   order. \\
 
-  13 & artwork & File paths of album artwork images. \\
+  13 & artwork & File paths of album artwork images,
+  Section~\ref{sec:artworkRows}. \\
 
   16 & columns & Details not yet confirmed. \\
 
@@ -426,7 +428,6 @@ way, explained in Section~\ref{sec:deviceSqlStrings}
 \begin{figure}
   \begin{bytefield}[bitwidth=1.9em, leftcurly=., leftcurlyspace=0pt, boxformatting={\baselinealign}]{16}
     \hexhead \\
-
     \begin{leftwordgroup}{\tiny\bfseries 00}
       \bitbox{2}{$u_1$} & \bitbox{2}{$index_s$} & \bitbox{4}{$unknown_2$} &
       \bitbox{4}{$artist\_id$} & \bitbox{4}{$id$}
@@ -434,21 +435,99 @@ way, explained in Section~\ref{sec:deviceSqlStrings}
     \begin{leftwordgroup}{\tiny\bfseries 10}
       \bitbox{4}{$unknown_3$} & \bitbox{1}{$u_4$} & \bitbox{1}{$o_n$} &
       \bitbox[lt]{10}{}
-    \end{leftwordgroup} \\
+    \end{leftwordgroup}
   \end{bytefield}
   \caption{Album Row}
   \label{fig:albumRow}
 \end{figure}
 
+\subsubsection{Artist Rows}
+\label{sec:artistRows}
+
+Artist rows hold an Artist name and ID, with the structure shown in
+Figure~\ref{fig:artistRowNear} or Figure~\ref{fig:artistRowFar}. The
+$subtype$ value at bytes~{\tt 00-01} determines which variant is used.
+If the artist name was allocated close enough to the row to be reached
+by a single byte offset, offset, $subtype$ has the value {\tt 0060},
+and the row has the structure in Figure~\ref{fig:artistRowNear}. If
+the name is too far away for that, $subtype$ has the value {\tt 0064}
+and the row has the structure in Figure~\ref{fig:artistRowFar}.
+
+In either case, $subtype$ is followed by the unexplained two-byte
+value found in all row types that Mr. Flesniak called $index\_shift$,
+and then by $id$, the ID of this artist row itself, at bytes~{\tt
+  04-07}, an unknown value, and $ofs\_name\_near$ (labeled $o_n$ in
+Figure~\ref{fig:artistRowNear}), the one-byte name offset used only in
+the first variant.
+
+If $subtype$ is {\tt 0064}, the value of $ofs\_name\_near$ is ignored,
+and instead the two-byte value $ofs\_name\_far$ (labeled $o_{far}$ in
+Figure~\ref{fig:artistRowFar}) is used.
+
+Whichever name offset is used, it is a pointer to the artist name. To
+find the location of the name, add the value of the offset to the
+address of the start of the artist row itself. This gives the address
+of a DeviceSQL string holding the name, with the structure explained
+in Section~\ref{sec:deviceSqlStrings}
+
+\begin{figure}
+  \begin{bytefield}[bitwidth=1.9em, leftcurly=., leftcurlyspace=0pt, boxformatting={\baselinealign}]{16}
+    \hexhead \\
+    \bitbox{2}{\tt 0060} & \bitbox{2}{$index_s$} & \bitbox{4}{$id$} &
+    \bitbox{1}{$u_1$} & \bitbox{1}{$o_n$} & \bitbox[]{6}{}
+  \end{bytefield}
+  \caption{Artist Row with Nearby Name}
+  \label{fig:artistRowNear}
+\end{figure}
+
+\begin{figure}
+  \begin{bytefield}[bitwidth=1.9em, leftcurly=., leftcurlyspace=0pt, boxformatting={\baselinealign}]{16}
+    \hexhead \\
+    \bitbox{2}{\tt 0064} & \bitbox{2}{$index_s$} & \bitbox{4}{$id$} &
+    \bitbox{1}{$u_1$} & \bitbox{1}{$o_n$} & \bitbox{2}{$o_{far}$} & \bitbox[]{4}{}
+  \end{bytefield}
+  \caption{Artist Row with Far Name}
+  \label{fig:artistRowFar}
+\end{figure}
+
+\subsubsection{Artwork Rows}
+\label{sec:artworkRows}
+
+Artwork rows hold an $id$ (which tracks refer to) and the path at
+which the corresponding album art image file can be found, with the
+structure shown in Figure~\ref{fig:artworkRow}. Note that in this
+case, the DeviceSQL string $path$ is embedded directly into the row
+itself, rather than being located elsewhere in the heap through an
+offset. The structure of the string itself is still as described in
+Section~\ref{sec:deviceSqlStrings}.
+
+\begin{figure}
+  \begin{bytefield}[bitwidth=1.9em, leftcurly=., leftcurlyspace=0pt, boxformatting={\baselinealign}]{16}
+    \hexhead \\
+    \begin{leftwordgroup}{\tiny\bfseries 00}
+      \bitbox{4}{$id$} & \bitbox[lrt]{12}{$path$}
+    \end{leftwordgroup} \\
+    \begin{leftwordgroup}{}
+      \skippedwords \\
+      \wordbox[lrb]{1}{}
+    \end{leftwordgroup}
+  \end{bytefield}
+  \caption{Artwork Row}
+  \label{fig:artworkRow}
+\end{figure}
+
+
 \subsection{DeviceSQL Strings}
 \label{sec:deviceSqlStrings}
 
-Many row types store string values, by storing an offset to the
-strange structure described in this section. The strings can be stored
-in a variety of formats. The first byte of the structure, labeled
-$length\_and\_kind$ in the parsed Kaitai Struct, identifies the
-encoding type and, when it is odd, also the length (for short ASCII
-strings), as detailed in Section~\ref{sec:shortAscii}.
+Many row types store string values, sometimes by directly embedding
+them, but more often by storing an offset to a location elsewhere in
+the heap. In either case the string itself uses the strange structure
+described in this section. Strings can be stored in a variety of
+formats. The first byte of the structure, labeled $length\_and\_kind$
+in the parsed Kaitai Struct, identifies the encoding type and, when
+the value is odd, also the length (for short ASCII strings), as
+detailed in Section~\ref{sec:shortAscii}.
 
 \subsubsection{Long ASCII Strings}
 
@@ -459,7 +538,6 @@ ASCII-encoded string data, as shown in Figure~\ref{fig:longAscii}.
 \begin{figure}
   \begin{bytefield}[bitwidth=1.9em, leftcurly=., leftcurlyspace=0pt, boxformatting={\baselinealign}]{16}
     \hexhead \\
-
     \begin{leftwordgroup}{\tiny\bfseries 00}
       \bitbox{1}{\tt 40} & \bitbox{2}{$length$} & \bitbox[lrt]{13}{ASCII data}
     \end{leftwordgroup} \\
@@ -481,7 +559,6 @@ UTF-16 big-endian encoded string data, as shown in Figure~\ref{fig:longUTF16BE}.
 \begin{figure}
   \begin{bytefield}[bitwidth=1.9em, leftcurly=., leftcurlyspace=0pt, boxformatting={\baselinealign}]{16}
     \hexhead \\
-
     \begin{leftwordgroup}{\tiny\bfseries 00}
       \bitbox{1}{\tt 90} & \bitbox{2}{$length$} &
       \bitbox[lrt]{13}{UTF-16 Big-Endian data}
@@ -502,12 +579,11 @@ If $length\_and\_kind$ has an odd value it is a $mangled\_length$,
 labeled $m_l$ in Figure~\ref{fig:shortAscii}. This means we are
 dealing with a short ASCII DeviceSQL string. To find the length of the
 string data (which immediately follows this byte), subtract 1 from
-$mangled\_length$, divide it by two, and subtract 1 again.
+$mangled\_length$, divide it by 2, and subtract 1 again.
 
 \begin{figure}
   \begin{bytefield}[bitwidth=1.9em, leftcurly=., leftcurlyspace=0pt, boxformatting={\baselinealign}]{16}
     \hexhead \\
-
     \begin{leftwordgroup}{\tiny\bfseries 00}
       \bitbox{1}{$m_l$} & \bitbox[lrt]{15}{ASCII data}
     \end{leftwordgroup} \\
