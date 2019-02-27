@@ -211,7 +211,8 @@ is ever garbage collected, but this is speculation on my part.
 
   2 & artists & Artists, for reference by tracks and searching. \\
 
-  3 & albums & Albums, for reference by tracks and searching. \\
+  3 & albums & Albums, for reference by tracks and searching,
+  Section~\ref{sec:albumRows}. \\
 
   4 & labels & Music labels, for reference by tracks and searching. \\
 
@@ -400,8 +401,27 @@ The structure of the rows themselves is determined by the $type$ of
 the table, using the values shown in Table~\ref{table:tableTypes}.
 
 \subsubsection{Album Rows}
+\label{sec:albumRows}
 
-Album rows hold an album name and ID along with an artist association.
+Album rows hold an album name and ID along with an artist association,
+with the structure shown in Figure~\ref{fig:albumRow}. The unknown
+value at bytes~{\tt 00-01} seems to usually have the values {\tt 80
+  00}. It is followed by a two-byte value Mr. Flesniak called
+$index\_shift$, although I don't know what that means, and another
+four bytes of unknown purpose. But at bytes~{\tt 08-0b} we finally
+find a value we have a use for: $artist\_id$ holds the ID of an artist
+row associated with this track row. This is followed by $id$, the ID
+of this track row itself, at bytes~{\tt 0c-0f}. We assume that there
+are index tables somewhere that would let us locate the page and row
+index of a record given its table type and ID, but we have not yet
+found and figured them out.
+
+This is followed by five more bytes with unknown meaning, and the
+final byte in the row, $ofs\_name$ is a pointer to the track name
+(labeled $o_n$ in Figure~\ref{fig:albumRow}. To find the location of
+the name, add $ofs\_name$ bytes to the address of the start of the
+track row itself. The name itself is encoded in a surprisingly baroque
+way, explained in Section~\ref{sec:deviceSqlStrings}
 
 \begin{figure}
   \begin{bytefield}[bitwidth=1.9em, leftcurly=., leftcurlyspace=0pt, boxformatting={\baselinealign}]{16}
@@ -420,7 +440,14 @@ Album rows hold an album name and ID along with an artist association.
   \label{fig:albumRow}
 \end{figure}
 
-To be continued...
+\subsection{DeviceSQL Strings}
+\label{sec:deviceSqlStrings}
+
+To be written...
+
+\section{Analysis Files}
+
+To be written...
 
 \section{Crate Digger}
 
