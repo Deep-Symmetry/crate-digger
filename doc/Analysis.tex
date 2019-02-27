@@ -443,7 +443,82 @@ way, explained in Section~\ref{sec:deviceSqlStrings}
 \subsection{DeviceSQL Strings}
 \label{sec:deviceSqlStrings}
 
-To be written...
+Many row types store string values, by storing an offset to the
+strange structure described in this section. The strings can be stored
+in a variety of formats. The first byte of the structure, labeled
+$length\_and\_kind$ in the parsed Kaitai Struct, identifies the
+encoding type and, when it is odd, also the length (for short ASCII
+strings), as detailed in Section~\ref{sec:shortAscii}.
+
+\subsubsection{Long ASCII Strings}
+
+If $length\_and\_kind$ has the value {\tt 40}, it is followed by a
+two-byte $length$ field, and then followed by that many bytes of
+ASCII-encoded string data, as shown in Figure~\ref{fig:longAscii}.
+
+\begin{figure}
+  \begin{bytefield}[bitwidth=1.9em, leftcurly=., leftcurlyspace=0pt, boxformatting={\baselinealign}]{16}
+    \hexhead \\
+
+    \begin{leftwordgroup}{\tiny\bfseries 00}
+      \bitbox{1}{\tt 40} & \bitbox{2}{$length$} & \bitbox[lrt]{13}{ASCII data}
+    \end{leftwordgroup} \\
+    \begin{leftwordgroup}{}
+      \skippedwords \\
+      \wordbox[lrb]{1}{}
+    \end{leftwordgroup}
+  \end{bytefield}
+  \caption{Long ASCII DeviceSQL String}
+  \label{fig:longAscii}
+\end{figure}
+
+\subsubsection{Long UTF-16 Big-Endian Strings}
+
+If $length\_and\_kind$ has the value {\tt 90}, it is followed by a
+two-byte $length$ field, and then followed by that many bytes of
+UTF-16 big-endian encoded string data, as shown in Figure~\ref{fig:longUTF16BE}.
+
+\begin{figure}
+  \begin{bytefield}[bitwidth=1.9em, leftcurly=., leftcurlyspace=0pt, boxformatting={\baselinealign}]{16}
+    \hexhead \\
+
+    \begin{leftwordgroup}{\tiny\bfseries 00}
+      \bitbox{1}{\tt 90} & \bitbox{2}{$length$} &
+      \bitbox[lrt]{13}{UTF-16 Big-Endian data}
+    \end{leftwordgroup} \\
+    \begin{leftwordgroup}{}
+      \skippedwords \\
+      \wordbox[lrb]{1}{}
+    \end{leftwordgroup}
+  \end{bytefield}
+  \caption{Long UTF-16-BE DeviceSQL String}
+  \label{fig:longUTF16BE}
+\end{figure}
+
+\subsubsection{Short ASCII Strings}
+\label{sec:shortAscii}
+
+If $length\_and\_kind$ has an odd value it is a $mangled\_length$,
+labeled $m_l$ in Figure~\ref{fig:shortAscii}. This means we are
+dealing with a short ASCII DeviceSQL string. To find the length of the
+string data (which immediately follows this byte), subtract 1 from
+$mangled\_length$, divide it by two, and subtract 1 again.
+
+\begin{figure}
+  \begin{bytefield}[bitwidth=1.9em, leftcurly=., leftcurlyspace=0pt, boxformatting={\baselinealign}]{16}
+    \hexhead \\
+
+    \begin{leftwordgroup}{\tiny\bfseries 00}
+      \bitbox{1}{$m_l$} & \bitbox[lrt]{15}{ASCII data}
+    \end{leftwordgroup} \\
+    \begin{leftwordgroup}{}
+      \skippedwords \\
+      \wordbox[lrb]{1}{}
+    \end{leftwordgroup}
+  \end{bytefield}
+  \caption{Short ASCII DeviceSQL String}
+  \label{fig:shortAscii}
+\end{figure}
 
 \section{Analysis Files}
 
