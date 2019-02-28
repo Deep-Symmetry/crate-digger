@@ -215,10 +215,11 @@ is ever garbage collected, but this is speculation on my part.
   3 & albums & Albums, for reference by tracks and searching,
   Section~\ref{sec:albumRows}. \\
 
-  4 & labels & Music labels, for reference by tracks and searching. \\
+  4 & labels & Music labels, for reference by tracks and searching,
+  Section~\ref{sec:labelRows}. \\
 
   5 & keys & Musical keys, for reference by tracks, searching, and key
-  matching. \\
+  matching, Section~\ref{sec:keyRows}. \\
 
   6 & colors & Color labels, for reference by tracks and searching,
   Section~\ref{sec:colorRows}. \\
@@ -564,9 +565,43 @@ Section~\ref{sec:deviceSqlStrings}.
       \wordbox[lrb]{1}{}
     \end{leftwordgroup}
   \end{bytefield}
-  \caption{Genre Row}
+  \caption{Genre or Label Row}
   \label{fig:genreRow}
 \end{figure}
+
+\subsubsection{Key Rows}
+\label{sec:keyRows}
+
+Key rows represent musical keys. They hold a numeric $id$ (which
+tracks can be assigned) at bytes~{\tt 00-03} and a text $name$
+starting at byte~{\tt 08} which is a DeviceSQL string. (There seems to
+be a second copy of the ID at bytes~{\tt 04-07}.) The rows have the
+structure shown in Figure~\ref{fig:keyRow}. The structure of $name$ is
+described in Section~\ref{sec:deviceSqlStrings}.
+
+\begin{figure}
+  \begin{bytefield}[bitwidth=1.9em, leftcurly=., leftcurlyspace=0pt, boxformatting={\baselinealign}]{16}
+    \hexhead \\
+    \begin{leftwordgroup}{\tiny\bfseries 00}
+      \bitbox{4}{$id$} & \bitbox{4}{$id2$} & \bitbox[lrt]{8}{$name$}
+    \end{leftwordgroup} \\
+    \begin{leftwordgroup}{}
+      \skippedwords \\
+      \wordbox[lrb]{1}{}
+    \end{leftwordgroup}
+  \end{bytefield}
+  \caption{Key Row}
+  \label{fig:keyRow}
+\end{figure}
+
+\subsubsection{Label Rows}
+\label{sec:labelRows}
+
+Label rows represent record labels. They hold a numeric $id$ (which
+tracks can be assigned) at bytes~{\tt 00-03} and a text $name$
+starting at byte~{\tt 04} which is a DeviceSQL string. The rows have
+the structure shown in Figure~\ref{fig:genreRow}. The structure of
+$name$ is described in Section~\ref{sec:deviceSqlStrings}.
 
 
 \subsection{DeviceSQL Strings}
