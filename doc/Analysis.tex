@@ -151,7 +151,8 @@ in little-endian byte order. Field names used in the Figures match the
 IDs assigned to them in the Kaitai Struct
 specification\footnote{\url{https://github.com/Deep-Symmetry/crate-digger/blob/master/src/main/kaitai/rekordbox_pdb.ksy}},
 unless that is too long to fit, in which case a subscripted
-abbreviation is used, and the text will mention the actual ID.
+abbreviation is used, and the text will mention the actual struct
+field name.
 
 The first page begins with the file header, shown in
 Figure~\ref{fig:fileHeader}. The header starts with four zero bytes,
@@ -204,7 +205,8 @@ is ever garbage collected, but this is speculation on my part.
   \caption{Table Types} \endfoot
 
   0 & tracks & Track metadata: title, artist, genre, artwork ID,
-  playing time, etc. \label{table:tableTypes} \\
+  playing time, etc.,
+  Section~\ref{sec:trackRows}. \label{table:tableTypes} \\
 
   1 & genres & Musical genres, for reference by tracks and searching,
   Section~\ref{sec:genreRows}. \\
@@ -225,10 +227,11 @@ is ever garbage collected, but this is speculation on my part.
   Section~\ref{sec:colorRows}. \\
 
   7 & playlist\_tree & Describes the hierarchical tree structure of
-  available playlists and folders grouping them. \\
+  available playlists and folders grouping them,
+  Section~\ref{sec:playlistTreeRows}. \\
 
-  8 & playlist\_entries & Links tracks to playlists, in the rightp
-  order. \\
+  8 & playlist\_entries & Links tracks to playlists, in the right
+  order, Section~\ref{sec:playlistEntryRows}. \\
 
   13 & artwork & File paths of album artwork images,
   Section~\ref{sec:artworkRows}. \\
@@ -431,7 +434,7 @@ way, explained in Section~\ref{sec:deviceSqlStrings}
   \begin{bytefield}[bitwidth=1.9em, leftcurly=., leftcurlyspace=0pt, boxformatting={\baselinealign}]{16}
     \hexhead \\
     \begin{leftwordgroup}{\tiny\bfseries 00}
-      \bitbox{2}{$u_1$} & \bitbox{2}{$index_s$} & \bitbox{4}{$unknown_2$} &
+      \bitbox{2}{$u_1$} & \bitbox{2}{$i_{shift}$} & \bitbox{4}{$unknown_2$} &
       \bitbox{4}{$artist\_id$} & \bitbox{4}{$id$}
     \end{leftwordgroup} \\
     \begin{leftwordgroup}{\tiny\bfseries 10}
@@ -456,7 +459,7 @@ the name is too far away for that, $subtype$ has the value {\tt 0064}
 and the row has the structure in Figure~\ref{fig:artistRowFar}.
 
 In either case, $subtype$ is followed by the unexplained two-byte
-value found in all row types that Mr. Flesniak called $index\_shift$,
+value found in many row types that Mr. Flesniak called $index\_shift$,
 and then by $id$, the ID of this artist row itself, at bytes~{\tt
   04-07}, an unknown value, and $ofs\_name\_near$ (labeled $o_n$ in
 Figure~\ref{fig:artistRowNear}), the one-byte name offset used only in
@@ -475,7 +478,7 @@ in Section~\ref{sec:deviceSqlStrings}
 \begin{figure}
   \begin{bytefield}[bitwidth=1.9em, leftcurly=., leftcurlyspace=0pt, boxformatting={\baselinealign}]{16}
     \hexhead \\
-    \bitbox{2}{\tt 0060} & \bitbox{2}{$index_s$} & \bitbox{4}{$id$} &
+    \bitbox{2}{\tt 0060} & \bitbox{2}{$i_{shift}$} & \bitbox{4}{$id$} &
     \bitbox{1}{$u_1$} & \bitbox{1}{$o_n$} & \bitbox[]{6}{}
   \end{bytefield}
   \caption{Artist Row with Nearby Name}
@@ -485,7 +488,7 @@ in Section~\ref{sec:deviceSqlStrings}
 \begin{figure}
   \begin{bytefield}[bitwidth=1.9em, leftcurly=., leftcurlyspace=0pt, boxformatting={\baselinealign}]{16}
     \hexhead \\
-    \bitbox{2}{\tt 0064} & \bitbox{2}{$index_s$} & \bitbox{4}{$id$} &
+    \bitbox{2}{\tt 0064} & \bitbox{2}{$i_{shift}$} & \bitbox{4}{$id$} &
     \bitbox{1}{$u_1$} & \bitbox{1}{$o_n$} & \bitbox{2}{$o_{far}$} & \bitbox[]{4}{}
   \end{bytefield}
   \caption{Artist Row with Far Name}
@@ -667,7 +670,7 @@ playlist, and also establish the order in which they should be played.
 They have a very simple structure, shown in
 Figure~\ref{fig:playlistEntryRow}, containing only three values. The
 $entry\_index$ at bytes~{\tt 00-03} specifies the position within the
-playlist at which this entry belongs. The $track\_id$ at bytes {\tt
+playlist at which this entry belongs. The $track\_id$ at bytes~{\tt
   04-07} identifies the track to be played at this position in the
 playlist, by corresponding to the $id$ of a row in the Track table
 described in Section~\ref{sec:trackRows}, and the $playlist\_id$ at
@@ -687,8 +690,192 @@ Section~\ref{sec:playlistTreeRows}.
 \subsubsection{Track Rows}
 \label{sec:trackRows}
 
-To be continued...
+Track rows describe audio tracks that can be played from the media
+export, and provide many details about the music inluding links to
+other tables like artists, albums, keys, and others. They have the
+structure shown in Figure~\ref{fig:trackRow}.
 
+\begin{figure}
+  \begin{bytefield}[bitwidth=1.9em, leftcurly=., leftcurlyspace=0pt, boxformatting={\baselinealign}]{16}
+    \hexhead \\
+    \begin{leftwordgroup}{\tiny\bfseries 00}
+      \bitbox{2}{$u_1$} & \bitbox{2}{$i_{shift}$} & \bitbox{4}{$bitmask$} & \bitbox{4}{$sample\_rate$} &
+      \bitbox{4}{$composer\_id$}
+    \end{leftwordgroup} \\
+    \begin{leftwordgroup}{\tiny\bfseries 10}
+      \bitbox{4}{$file\_size$} & \bitbox{4}{$u_2$} & \bitbox{2}{$u_3$} & \bitbox{2}{$u_4$} &
+      \bitbox{4}{$artwork\_id$}
+    \end{leftwordgroup} \\
+    \begin{leftwordgroup}{\tiny\bfseries 20}
+      \bitbox{4}{$key\_id$} & \bitbox{4}{$orig\_artist\_id$} & \bitbox{4}{$label\_id$} & \bitbox{4}{$remixer\_id$}
+    \end{leftwordgroup} \\
+    \begin{leftwordgroup}{\tiny\bfseries 30}
+      \bitbox{4}{$bitrate$} & \bitbox{4}{$track\_number$} & \bitbox{4}{$tempo$} & \bitbox{4}{$genre\_id$}
+    \end{leftwordgroup} \\
+    \begin{leftwordgroup}{\tiny\bfseries 40}
+      \bitbox{4}{$album\_id$} & \bitbox{4}{$artist\_id$} & \bitbox{4}{$id$} & \bitbox{2}{$disc_n$} &
+      \bitbox{2}{$play_c$}
+    \end{leftwordgroup} \\
+    \begin{leftwordgroup}{\tiny\bfseries 50}
+      \bitbox{2}{$year$} & \bitbox{2}{$s_{depth}$} & \bitbox{2}{$dur$} & \bitbox{2}{$u_5$} &
+      \bitbox{1}{$c_{id}$} & \bitbox{1}{$r$} & \bitbox{2}{$u_6$} & \bitbox{2}{$u_7$} & \bitbox{2}{$ofs_0$}
+    \end{leftwordgroup} \\
+    \begin{leftwordgroup}{\tiny\bfseries 60}
+      \bitbox{2}{$ofs_1$} & \bitbox{2}{$ofs_2$} & \bitbox{2}{$ofs_3$} & \bitbox{2}{$ofs_4$} &
+      \bitbox{2}{$ofs_5$} & \bitbox{2}{$ofs_6$} & \bitbox{2}{$ofs_7$} & \bitbox{2}{$ofs_8$}
+    \end{leftwordgroup} \\
+    \begin{leftwordgroup}{\tiny\bfseries 70}
+      \bitbox{2}{$ofs_9$} & \bitbox{2}{$ofs_{10}$} & \bitbox{2}{$ofs_{11}$} & \bitbox{2}{$ofs_{12}$} &
+      \bitbox{2}{$ofs_{13}$} & \bitbox{2}{$ofs_{14}$} & \bitbox{2}{$ofs_{15}$} & \bitbox{2}{$ofs_{16}$}
+    \end{leftwordgroup} \\
+    \begin{leftwordgroup}{\tiny\bfseries 70}
+      \bitbox{2}{$ofs_{17}$} & \bitbox{2}{$ofs_{18}$} & \bitbox{2}{$ofs_{19}$} & \bitbox{2}{$ofs_{20}$} & \bitbox[]{8}{}
+    \end{leftwordgroup} \\
+  \end{bytefield}
+  \caption{Track Row}
+  \label{fig:trackRow}
+\end{figure}
+
+The first two bytes, labeled $u_1$, have an unknown purpose; they
+usually are {\tt 24} followed by {\tt 00}. They are followed by the
+unexplained two-byte value found in many row types that Mr. Flesniak
+called $index\_shift$, and a four-byte value he called $bitmask$,
+although we do not know what the bits mean. The value $sample\_rate$
+at bytes~{\tt 08-0b} is the first one we have a solid understanding
+of: it holds the playback sample rate of the audio file, in samples
+per second.
+
+Bytes~{\tt 0c-0f} hold the value $composer\_id$ which identifies the
+composer of the track, if known, as a non-zero $id$ value of an Artist
+row, as discussed in Section~\ref{sec:artistRows}. The size of the
+audio file, in bytes, is found in $file\_size$ at bytes~{\tt 10-13}.
+This is followed by an unknown four-byte value, $u_2$, which may be
+another ID, and two unknown two-byte values, $u_3$ (about which Mr.
+Flesniak says ``always 19048?'') and $u_4$ (``always 30967?'').
+
+If there is cover art for the track, there will be a non-zero value in
+$artwork\_id$ (bytes~{\tt 1c-1f}), identifying the $id$ of an Artwork
+row, as discussed in section~\ref{sec:artworkRows}.
+
+If a dominant musical key was identified for the track there will be a
+non-zero value in $key\_id$ (bytes~{\tt 20-23}), which represents the
+$id$ of a Key row, as discussed in Section~\ref{sec:keyRows}. If the
+track is known to be a remake, the non-zero Artist row $id$
+(Section~\ref{sec:artistRows}) of the original performer will be found
+in $original\_artist\_id$ at bytes~{\tt 24-27}. If there is a known
+record label for the track, the non-zero value in $label\_id$ will
+link to the $id$ of a Label row $id$ as described in
+Section~\ref{sec:labelRows}. Similarly, if there is a known remixer,
+there will be a non-zero value in $remixer\_id$ (bytes~{\tt 2c-2f})
+linking to the $id$ of an Artist row (Section~\ref{sec:artistRows}).
+
+The field $bitrate$ at bytes~{\tt 30-33} stores the playback bit rate
+of the track, and $track\_number$ at bytes~{\tt 34-37} holds the
+position of the track within its album. $tempo$ at bytes~{\tt 38-3b}
+holds the playback tempo of the start of the track in beats per
+minute, multiplied by 100 (in order to support a precision of
+$\frac{1}{100}$ BPM). If there is a known genre for the track, there
+will be a non-zero value in $genre\_id$ at bytes~{\tt 3c-3f},
+representing the $id$ of a Genre row as discussed in
+Section~\ref{sec:genreRows}.
+
+If the track is part of an album, there will be a non-zero value in
+$album\_id$ at bytes~{\tt 40-43}, and this will be the $id$ of an
+Album row as discussed in Section~\ref{sec:albumRows}. The Artist row
+$id$ (Section~\ref{sec:artistRows}) of the primary performer
+associated with the track is found in $artist\_id$ at bytes~{\tt
+  44-47}. And the $id$ of the track itself is found in $id$ at
+bytes~{\tt 48-4b}. If the album is known to consist of multiple discs,
+the disc number on which this track is found will be in $disc\_number$
+at bytes~{\tt 4c-4d}. And the number of times the track has been
+played is found in $play\_count$ (bytes~{\tt 4e-4f}).
+
+The year in which the track was recorded, if known, is in $year$ at
+bytes~{\tt 50-51}. The sample depth of the track audio file (bits per
+sample) is in $sample\_depth$ at bytes~{\tt 52-53}. The playback time
+of the track (in seconds, at normal speed) is in $duration$ at
+bytes~{\tt 54-55}. The purpose of the next two bytes, labeled $u_5$,
+is unknown, they seem to always hold the value 41.
+
+Byte~{\tt 58}, $color\_id$ (labeled $c_{id}$ in
+Figure~\ref{fig:trackRow}), holds the color assigned to the track in
+rekordbox, as the $id$ of a Color row (described in
+Section~\ref{sec:colorRows}), or zero if no color has been assigned.
+Byte~{\tt 59}, $rating$ (labeled $r$ in Figure~\ref{fig:trackRow})
+holds the rating (0 to 5 stars) assigned the track. The next two
+bytes, labeled $u_6$, have an unknown purpose, and seem to always have
+the value 1. The two bytes after them, labeled $u_7$, are also
+unknown; Mr. Flesniak said ``alternating 2 and 3''.
+
+The rest of the track row is an array of 21 two-byte offsets that
+point to DeviceSQL strings. To find the start of the string, add the
+address of the start of the track row to the offset. The purpose of
+each string is described in Table~\ref{table:trackStrings}, and the
+structure of the strings themselves is explained in
+Section~\ref{sec:deviceSqlStrings}.
+
+For convenience, the strings can be accessed as Kaitai Struct instance
+values with the names shown in the table.
+
+\begin{longtabu}{rlX}
+
+  \toprule
+  {\bfseries Index} & {\bfseries Name} & {\bfseries Content} \endhead
+
+  \bottomrule \\
+  \caption{Track Offset Strings} \endfoot
+
+  0 & $unknown\_string\_1$ \label{table:trackStrings} & Unknown, so far always empty. \\
+
+  1 & $texter$ & Unknown, named by {\tt @flesniak}. \\
+
+  2 & $unknown\_string\_2$ & Unknown, ``thought track number, wrong''. \\
+
+  3 & $unknown\_string\_3$ & Unknown, ``Strange
+  strings.''\footnote{Often zero length, sometimes low binary values,
+    ASCII {\tt 01} or {\tt 02} as content.}. \\
+
+  4 & $unknown\_string\_4$ & ``Strange strings'' (as above). \\
+
+  5 & $messsage$ & Unknown, named by {\tt @flesniak}. \\
+
+  6 & $kuvo\_public$ & Empty or {\tt "ON"}.\footnote{Apparently
+    used rather than a simple bit flag to control whether the track
+    information is visible on Kuvo.} \\
+
+  7 & $autoload\_hotcues$ & Empty or {\tt
+    "ON"}.\footnote{Apparently used rather than a simple bit flag to
+    control whether hot cues are automatically loaded for the track.}
+  \\
+
+  8 & $unknown\_string\_5$ & Unknown. \\
+
+  9 & $unknown\_string\_6$ & Unknown, usually empty. \\
+
+  10 & $date\_added$ & When track was added to collection. \\
+
+  11 & $release\_date$ & When track was released. \\
+
+  12 & $mix\_name$ & Name of the track remix. \\
+
+  13 & $unknown\_string\_7$ & Unknown, usually empty. \\
+
+  14 & $analyze\_path$ & File path of track analysis, see
+  Section~\ref{sec:analysisFiles}. \\
+
+  15 & $analyze\_date$ & When track analysis was performed. \\
+
+  16 & $comment$ & Track comment assigned by DJ. \\
+
+  17 & $title$ & Track title. \\
+
+  18 & $unknown\_string\_8$ & Unknown, usually empty. \\
+
+  19 & $filename$ & Name of track audio file. \\
+
+  20 & $file\_path$ & File path of track audio. \\
+
+\end{longtabu}
 
 \subsection{DeviceSQL Strings}
 \label{sec:deviceSqlStrings}
@@ -770,6 +957,7 @@ $mangled\_length$, divide it by 2, and subtract 1 again.
 \end{figure}
 
 \section{Analysis Files}
+\label{sec:analysisFiles}
 
 To be written...
 
