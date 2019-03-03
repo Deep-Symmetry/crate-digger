@@ -603,6 +603,92 @@ starting at byte~{\tt 04} which is a DeviceSQL string. The rows have
 the structure shown in Figure~\ref{fig:genreRow}. The structure of
 $name$ is described in Section~\ref{sec:deviceSqlStrings}.
 
+\subsubsection{Playlist Tree Rows}
+\label{sec:playlistTreeRows}
+
+Playlist tree rows are used to organize the hierarchical structure of
+the playlist menu. There is probably an index somewhere that makes it
+possible to find the right rows directly when loading a playlist, but
+we have not yet figured out how indices work in DeviceSQL databases,
+so Crate Digger simply reads all the rows and builds its own in-memory
+index of the tree.
+
+Playlist tree rows can either represent a playlist ``folder'' which
+contains other folders and playlists, or a regular playlist which
+holds only tracks. The rows are identified by an $id$ at bytes~{\tt
+  0c-0f}, and also contain a $parent\_id$ at bytes~{\tt 00-03} which
+is how the hierarchical structure is represented: the contents of a
+folder are the other rows in this table whose $parent\_id$ folder is
+equal to the $id$ of the folder.
+
+Similarly, the tracks that make up a regular playlist are the Playlist
+Entry Rows (described in Section~\ref{sec:playlistEntryRows}) whose
+$playlist\_id$ is equal to this row's $id$.
+
+\begin{figure}
+  \begin{bytefield}[bitwidth=1.9em, leftcurly=., leftcurlyspace=0pt, boxformatting={\baselinealign}]{16}
+    \hexhead \\
+    \begin{leftwordgroup}{\tiny\bfseries 00}
+      \bitbox{4}{$parent\_id$} & \bitbox{4}{} & \bitbox{4}{$sort\_order$} & \bitbox{4}{$id$}
+    \end{leftwordgroup} \\
+    \begin{leftwordgroup}{\tiny\bfseries 10}
+      \bitbox{4}{$raw\_is\_folder$} & \bitbox[lrt]{12}{name}
+    \end{leftwordgroup} \\
+    \begin{leftwordgroup}{}
+      \skippedwords \\
+      \wordbox[lrb]{1}{}
+    \end{leftwordgroup}
+  \end{bytefield}
+  \caption{Playlist Tree Row}
+  \label{fig:playlistTreeRow}
+\end{figure}
+
+Each playlist tree row also has a text $name$ starting at byte~{\tt
+  14} which is a DeviceSQL string displayed when navigating the
+hierarchy, a $sort\_order$ indicator at bytes~{\tt 08-0b} (this may be
+the same value used to select sort orders when requesting menus using
+the {\tt dbserver} protocol, shown in Table~7 of the dysentery
+Protocol Analysis paper, but this has not yet been confirmed), and a
+value that specifies whether the row defines a folder or a playlist.
+In the Kaitai Struct, this value is called $raw\_is\_folder$, is found
+at bytes~{\tt 10-13}, and has a non-zero value for folders. For
+convenience, the struct also defines a derived value, $is\_folder$,
+which is a boolean.
+
+The rows have the structure shown in Figure~\ref{fig:playlistTreeRow}.
+The structure of $name$ is described in
+Section~\ref{sec:deviceSqlStrings}.
+
+\subsubsection{Playlist Entry Rows}
+\label{sec:playlistEntryRows}
+
+Playlist entry rows list the tracks that belong to a particular
+playlist, and also establish the order in which they should be played.
+They have a very simple structure, shown in
+Figure~\ref{fig:playlistEntryRow}, containing only three values. The
+$entry\_index$ at bytes~{\tt 00-03} specifies the position within the
+playlist at which this entry belongs. The $track\_id$ at bytes {\tt
+  04-07} identifies the track to be played at this position in the
+playlist, by corresponding to the $id$ of a row in the Track table
+described in Section~\ref{sec:trackRows}, and the $playlist\_id$ at
+bytes~{\tt 08-0b} identifies the playlist to which it belongs, by
+corresponding to the $id$ of a row in the Playlist Tree described in
+Section~\ref{sec:playlistTreeRows}.
+
+\begin{figure}
+  \begin{bytefield}[bitwidth=1.9em, leftcurly=., leftcurlyspace=0pt, boxformatting={\baselinealign}]{16}
+    \hexhead \\
+    \bitbox{4}{$entry\_index$} & \bitbox{4}{$track\_id$} & \bitbox{4}{$playlist\_id$} & \bitbox[]{4}{}
+  \end{bytefield}
+  \caption{Playlist Entry Row}
+  \label{fig:playlistEntryRow}
+\end{figure}
+
+\subsubsection{Track Rows}
+\label{sec:trackRows}
+
+To be continued...
+
 
 \subsection{DeviceSQL Strings}
 \label{sec:deviceSqlStrings}

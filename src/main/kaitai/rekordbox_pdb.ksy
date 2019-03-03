@@ -511,8 +511,8 @@ types:
       - id: id
         type: u4
         doc: |
-          The unique identifier by which this playlist can be requested
-          and linked from other rows (such as tracks).
+          The unique identifier by which this playlist or folder can
+          be requested and linked from other rows.
       - id: raw_is_folder
         type: u4
         doc: |
