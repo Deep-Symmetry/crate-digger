@@ -1070,6 +1070,62 @@ start immediately after $len\_tag$, it is simply easier to ignore
 $len\_header$, and model the tag body as beginning at byte~{\tt 0c} of
 the tag.
 
+\subsubsection{Beat Grid Tag}
+
+This section holds a list of all beats found within the track,
+recording their bar position, the time at which they occur, and the
+tempo at that point. It is identified by the four-character code {\tt
+  PQTZ}, which may stand for ``Pioneer Quantization''. It has the
+structure shown in Figure~\ref{fig:beatGridTagStructure}.
+$len\_header$ is {\tt 18}. The tag-specific content starts with two
+unknown values, although Mr. Flesniak says that $unknown_2$ seems to
+always have the value {\tt 00800000}.
+
+\begin{figure}
+  \begin{bytefield}[bitwidth=1.9em, leftcurly=., leftcurlyspace=0pt, boxformatting={\baselinealign}]{16}
+    \hexhead \\
+    \begin{leftwordgroup}{\tiny\bfseries 00}
+      \bitbox{4}{\tt PQTZ} & \bitbox{4}{$len\_header$} & \bitbox{4}{$len\_tag$} & \bitbox{4}{$unknown_1$}
+    \end{leftwordgroup} \\
+    \begin{leftwordgroup}{\tiny\bfseries 10}
+      \bitbox{4}{$unknown_2$} & \bitbox{4}{$len\_beats$} & \bitbox[lrt]{8}{Beat Entries}
+    \end{leftwordgroup} \\
+    \begin{leftwordgroup}{}
+      \skippedwords \\
+      \wordbox[lrb]{1}{}
+    \end{leftwordgroup}
+  \end{bytefield}
+  \caption{Beat Grid Tag Structure}
+  \label{fig:beatGridTagStructure}
+\end{figure}
+
+$len\_beats$ at bytes~{\tt 14-17} specifies the number of beats were
+found in the track, and thus the number of beat entries that will be
+present in this section. The beat entries come next, and each has the
+structure shown in Figure~\ref{fig:beatEntry}.
+
+\begin{figure}
+  \begin{bytefield}[bitwidth=1.9em, leftcurly=., leftcurlyspace=0pt, boxformatting={\baselinealign}]{16}
+    \hexhead \\
+    \bitbox{2}{$b_{nun}$} & \bitbox{2}{$tempo$} & \bitbox{4}{$time$} & \bitbox[]{8}{} \\
+  \end{bytefield}
+  \caption{Beat Grid Beat Entry}
+  \label{fig:beatEntry}
+\end{figure}
+
+Each beat entry is four bytes long. It starts with a two-byte number,
+$beat\_number$ (abbreviated $b_{num}$ in Figure~\ref{fig:beatEntry})
+which specifies where the beat falls within its measure. So the value
+is always 1, 2, 3, or 4. This is followed by a two-byte $tempo$ value,
+which records the track tempo at the point where this beat occurs, in
+beats per minute multiplied by 100 (to allow a precision of
+$\frac{1}{100}$ BPM). Finally, there is a four-byte $time$ value,
+which specifies the time at which this beat would occur, in
+milliseconds, when playing the track at its normal speed.
+
+As noted above, there will be as many beat entries as $len\_beats$
+specifies. They continue to the end of the tag.
+
 To be continued...
 
 \section{Crate Digger}
