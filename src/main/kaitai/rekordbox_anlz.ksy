@@ -128,7 +128,7 @@ types:
         type: u4
         enum: cue_list_type
         doc: |
-          Identifies whether this tag stors ordinary or hot cues.
+          Identifies whether this tag stores ordinary or hot cues.
       - id: len_cues
         type: u4
         doc: |

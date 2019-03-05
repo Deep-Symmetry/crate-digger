@@ -959,7 +959,118 @@ $mangled\_length$, divide it by 2, and subtract 1 again.
 \section{Analysis Files}
 \label{sec:analysisFiles}
 
-To be written...
+When rekordbox analyzes tracks there is some data that is too big to
+fit in the database itself. We have already seen some of that (the
+album art images, and of course the track audio is left in the
+filesystem as well). The other analysis data is organized into
+``anlz'' files, whose path can be found in the DeviceSQL string
+pointed to by index 14 in the string offsets found at the end of the
+corresponding track row (see Table~\ref{table:trackStrings} in
+Section~\ref{sec:trackRows}). These files have names like {\tt
+  ANLZ0001.DAT} and their structure is described in this section.
+
+The files are ``tagged type'' files, where there is an overall file
+header section, and then each entry in the file has its own header
+which identifies the type and length of that section.
+
+Later player hardware added support for things like colored and
+higher-resolution waveforms. Apparently these were deemed too large to
+fit in the {\tt .DAT} files, so another file was introduced, which
+shares the same base filename as the {\tt .DAT} file, but uses an
+extension of {\tt .EXT} instead. Both kinds of file share the same
+structure, but different sets of tags can be found in each.
+
+\subsection{Analysis File Header}
+
+For some reason the analysis files store their numbers in big-endian
+byte order, the opposite of the {\tt export.pdb} database file. Field
+names used in the Figures match the IDs assigned to them in the Kaitai
+Struct
+specification\footnote{\url{https://github.com/Deep-Symmetry/crate-digger/blob/master/src/main/kaitai/rekordbox_anlz.ksy}},
+unless that is too long to fit, in which case a subscripted
+abbreviation is used, and the text will mention the actual struct
+field name.
+
+The file itself starts with the four-character code {\tt PMAI} that
+identifies its format. This file format identifier is followed a
+four-byte value at bytes~{\tt 04-07}, $len\_header$, that specifies
+the length of the file header in bytes. This is followed by another
+four-byte value, $len\_file$, at bytes~{\tt 08-0b} that specifies the
+length of the whole file in bytes.
+
+The header seems to usually be {\tt 1c} bytes long, though we do not
+yet know the purpose of any of the header values that come after
+$len\_file$. After the header, the file consists of a series of tagged
+sections, each with their own four-character code identifying the
+seciton type, followed by a header and the section content. This
+overall structure is illustrated in
+Figure~\ref{fig:anlzFileStructure}, and the structure of the known tag
+types is described next.
+
+\begin{figure}
+  \begin{bytefield}[bitwidth=1.9em, leftcurly=., leftcurlyspace=0pt, boxformatting={\baselinealign}]{16}
+    \hexhead \\
+    \begin{leftwordgroup}{\tiny\bfseries 00}
+      \bitbox{4}{\tt PMAI} & \bitbox{4}{$len\_header$} & \bitbox{4}{$len\_file$} & \bitbox{4}{}
+    \end{leftwordgroup} \\
+    \begin{leftwordgroup}{\tiny\bfseries 10}
+      \bitbox{12}{} & \bitbox[lrt]{4}{}
+    \end{leftwordgroup} \\
+    \begin{leftwordgroup}{\tiny\bfseries 20}
+      \wordbox[lr]{1}{Tagged Sections} \\
+      \skippedwords \\
+      \wordbox[lrb]{1}{}
+    \end{leftwordgroup}
+  \end{bytefield}
+  \caption{Analysis File Structure}
+  \label{fig:anlzFileStructure}
+\end{figure}
+
+\subsection{Analysis File Sections}
+
+The structure of each tagged section has an ``envelope'' that can be
+understood even if the internal structure of the section is unknown,
+making it easy to navigate through the file looking for the section
+you need. This structure is very similar to the file itself, and is
+illustrated in Figure~\ref{fig:anlzTagStructure}.
+
+\begin{figure}
+  \begin{bytefield}[bitwidth=1.9em, leftcurly=., leftcurlyspace=0pt, boxformatting={\baselinealign}]{16}
+    \hexhead \\
+    \begin{leftwordgroup}{\tiny\bfseries 00}
+      \bitbox{4}{$fourcc$} & \bitbox{4}{$len\_header$} & \bitbox{4}{$len\_tag$} & \bitbox[lrt]{4}{}
+    \end{leftwordgroup} \\
+    \begin{leftwordgroup}{\tiny\bfseries 10}
+      \wordbox[lr]{1}{Tag-Specific Content}
+    \end{leftwordgroup} \\
+    \begin{leftwordgroup}{}
+      \skippedwords \\
+      \wordbox[lrb]{1}{}
+    \end{leftwordgroup}
+  \end{bytefield}
+  \caption{Tagged Section Structure}
+  \label{fig:anlzTagStructure}
+\end{figure}
+
+Every section begins with a four-character code, $fourcc$, identifying
+its specific structure and content, as described in the sections
+below. This is followed by a four-byte value, $len\_header$, which
+specifies how many bytes there are in the section header, and another
+four-byte value, $len\_tag$, which specifies the length of the entire
+tagged section (including the header), in bytes. This value can be
+added to the address of the start of the tag to find the start of the
+next tag.
+
+There is not much value to $len\_header$. If you study the structure
+of each type of tagged section, you can see some sense of where the
+``header-like stuff'' ends, and ``content-like stuff'' begins, and
+this seems to line up with the value of $len\_header$. But because
+there are important values in each tag's header, and those always
+start immediately after $len\_tag$, it is simply easier to ignore
+$len\_header$, and model the tag body as beginning at byte~{\tt 0c} of
+the tag.
+
+To be continued...
 
 \section{Crate Digger}
 
