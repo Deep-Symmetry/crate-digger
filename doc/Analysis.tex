@@ -1095,7 +1095,7 @@ always have the value {\tt 00800000}.
       \wordbox[lrb]{1}{}
     \end{leftwordgroup}
   \end{bytefield}
-  \caption{Beat Grid Tag Structure}
+  \caption{Beat Grid Tag}
   \label{fig:beatGridTagStructure}
 \end{figure}
 
@@ -1107,13 +1107,13 @@ structure shown in Figure~\ref{fig:beatEntry}.
 \begin{figure}
   \begin{bytefield}[bitwidth=1.9em, leftcurly=., leftcurlyspace=0pt, boxformatting={\baselinealign}]{16}
     \hexhead \\
-    \bitbox{2}{$b_{nun}$} & \bitbox{2}{$tempo$} & \bitbox{4}{$time$} & \bitbox[]{8}{} \\
+    \bitbox{2}{$b_{nun}$} & \bitbox{2}{$tempo$} & \bitbox{4}{$time$} & \bitbox[]{8}{}
   \end{bytefield}
-  \caption{Beat Grid Beat Entry}
+  \caption{Beat Grid Beat}
   \label{fig:beatEntry}
 \end{figure}
 
-Each beat entry is four bytes long. It starts with a two-byte number,
+Each beat entry is eight bytes long. It starts with a two-byte number,
 $beat\_number$ (abbreviated $b_{num}$ in Figure~\ref{fig:beatEntry})
 which specifies where the beat falls within its measure. So the value
 is always 1, 2, 3, or 4. This is followed by a two-byte $tempo$ value,
