@@ -1068,11 +1068,13 @@ this seems to line up with the value of $len\_header$. But because
 there are important values in each tag's header, and those always
 start immediately after $len\_tag$, it is simply easier to ignore
 $len\_header$, and model the tag body as beginning at byte~{\tt 0c} of
-the tag.
+the tag. To show where the boundary occurs, in the diagrams that
+follow, values that fall inside the byte range of the header are
+colored yellow.
 
 \subsubsection{Beat Grid Tag}
 
-This section holds a list of all beats found within the track,
+This kind of section holds a list of all beats found within the track,
 recording their bar position, the time at which they occur, and the
 tempo at that point. It is identified by the four-character code {\tt
   PQTZ}, which may stand for ``Pioneer Quantization''. It has the
@@ -1085,10 +1087,11 @@ always have the value {\tt 00800000}.
   \begin{bytefield}[bitwidth=1.9em, leftcurly=., leftcurlyspace=0pt, boxformatting={\baselinealign}]{16}
     \hexhead \\
     \begin{leftwordgroup}{\tiny\bfseries 00}
-      \bitbox{4}{\tt PQTZ} & \bitbox{4}{$len\_header$} & \bitbox{4}{$len\_tag$} & \bitbox{4}{$unknown_1$}
+      \colorbitbox{yellow}{4}{\tt PQTZ} & \colorbitbox{yellow}{4}{$len\_header$} &
+      \colorbitbox{yellow}{4}{$len\_tag$} & \colorbitbox{yellow}{4}{$unknown_1$}
     \end{leftwordgroup} \\
     \begin{leftwordgroup}{\tiny\bfseries 10}
-      \bitbox{4}{$unknown_2$} & \bitbox{4}{$len\_beats$} & \bitbox[lrt]{8}{Beat Entries}
+      \colorbitbox{yellow}{4}{$unknown_2$} & \colorbitbox{yellow}{4}{$len\_beats$} & \bitbox[lrt]{8}{Beat Entries}
     \end{leftwordgroup} \\
     \begin{leftwordgroup}{}
       \skippedwords \\
@@ -1125,6 +1128,103 @@ milliseconds, when playing the track at its normal speed.
 
 As noted above, there will be as many beat entries as $len\_beats$
 specifies. They continue to the end of the tag.
+
+\subsubsection{Cue List Tag}
+
+This kind of section holds either a list of ordinary memory cues and
+loop points, or a list of hot cues and loop points. It is identified
+by the four-character code {\tt PCOB}, and has the structure shown in
+Figure~\ref{fig:cueTagStructure}. $len\_header$ is {\tt 18}.
+
+\begin{figure}
+  \begin{bytefield}[bitwidth=1.9em, leftcurly=., leftcurlyspace=0pt, boxformatting={\baselinealign}]{16}
+    \hexhead \\
+    \begin{leftwordgroup}{\tiny\bfseries 00}
+      \colorbitbox{yellow}{4}{\tt PCOB} & \colorbitbox{yellow}{4}{$len\_header$} &
+      \colorbitbox{yellow}{4}{$len\_tag$} & \colorbitbox{yellow}{4}{$type$}
+    \end{leftwordgroup} \\
+    \begin{leftwordgroup}{\tiny\bfseries 10}
+      \colorbitbox{yellow}{4}{$len\_cues$} & \colorbitbox{yellow}{4}{$memory\_count$} & \bitbox[lrt]{8}{Cue Entries}
+    \end{leftwordgroup} \\
+    \begin{leftwordgroup}{}
+      \skippedwords \\
+      \wordbox[lrb]{1}{}
+    \end{leftwordgroup}
+  \end{bytefield}
+  \caption{Cue List Tag}
+  \label{fig:cueTagStructure}
+\end{figure}
+
+The $type$ value at bytes~{\tt 0c-0f} determines whether this section
+holds memory cues (if $type$ is {\tt 0}) or hot cues (if $type$ is
+{\tt 1}). The number of cue entries present in the section is reported
+in $len\_cues$ at bytes~{\tt 10-13}, and we don't yet know the meaning
+of $memory\_count$ at bytes~{\tt 14-17}. The remainder of the section,
+from byte~{\tt 18} through $len\_tag$ holds the cue entries
+themselves, with the structure shown in Figure~\ref{fig:cueEntry}.
+
+\begin{figure}
+  \begin{bytefield}[bitwidth=1.9em, leftcurly=., leftcurlyspace=0pt, boxformatting={\baselinealign}]{16}
+    \hexhead \\
+    \begin{leftwordgroup}{\tiny\bfseries 00}
+      \colorbitbox{yellow}{4}{\tt PCPT} & \colorbitbox{yellow}{4}{$len\_header$} &
+      \colorbitbox{yellow}{4}{$len\_entry$} & \colorbitbox{yellow}{4}{$hot\_cue$}
+    \end{leftwordgroup} \\
+    \begin{leftwordgroup}{\tiny\bfseries 10}
+      \colorbitbox{yellow}{4}{$status$} & \colorbitbox{yellow}{4}{$unknown_1$} &
+      \colorbitbox{yellow}{2}{$o_{first}$} & \colorbitbox{yellow}{2}{$o_{last}$} &
+      \bitbox{1}{$t$} & \bitbox{3}{$unknown_2$}
+    \end{leftwordgroup} \\
+    \begin{leftwordgroup}{\tiny\bfseries 20}
+      \bitbox{4}{$time$} & \bitbox{4}{$loop\_time$} & \bitbox{8}{$unknown_3$}
+    \end{leftwordgroup} \\
+    \begin{leftwordgroup}{\tiny\bfseries 30}
+      \bitbox{8}{} & \bitbox[]{8}{}
+    \end{leftwordgroup}
+  \end{bytefield}
+  \caption{Cue List Entry}
+  \label{fig:cueEntry}
+\end{figure}
+
+Each cue entry is {\tt 38} bytes long. It is structured as its own
+miniature tag for unknown reasons, starting with the four-character
+code {\tt PCPT} (Pioneer Cue Point?), and its own internal four-byte
+$len\_header$ and $len\_entry$ values ({\tt 1c} and {\tt 38}
+respectively).
+
+If the cue is an ordinary memory point, $hot\_cue$ at bytes~{\tt
+  0c-0f} will be zero, otherwise it identifies the number of the hot
+cue that this entry represents (Hot Cue A is number 1, B is 2, and so
+on). The $status$ value at bytes~{\tt 10-13} seems to be a deletion
+indicator; if it is zero, the entry is ignored. Cues which the players
+pay attention to have the value 1 here.
+
+The next four bytes have an unknown purpose, but seem to always have
+the value {\tt 00100000}. They are followed by two two-byte values,
+which seem to be for sorting the cues in the proper order in some
+strange way. $order\_first$ at bytes~{\tt 1a-1b} (labeled $o_{first}$
+in Figure~\ref{fig:cueEntry}) has the value {\tt ffff} for the first
+cue, {\tt 0000} for the second, then 2, 3 and on. $order\_last$ at
+bytes~{\tt 1a-1b} (labeled $o_{last}$) has the value 1 for the first
+cue, 2 for the second, and so on, but {\tt ffff} for the last. It
+would seem that the cues could be perfectly well sorted by just one of
+these fields, or indeed, by their $time$ values.
+
+The first ``non-header'' field is $time$ at byte~{\tt 1c} (labeled $t$
+in Figure~\ref{fig:cueEntry}), and it specifies whether the entry
+records a simple position (if it has the value 1) or a loop (if it has
+the value 2). The next three bytes have an unknown purpose, but seem
+to always have the values {\tt 0003e8}, or decimal 1000.
+
+The value $time$ at bytes~{\tt 20-23} records the position of the cue
+within the track, as a number of milliseconds (representing when the
+cue would occur if the track is being played at normal speed). If
+$type$ is 2, so this cue stores a loop, then $loop\_time$ at
+bytes~{\tt 24-27} stores the track time in milliseconds at which the
+player should loop back to $time$.
+
+We do not know what, if anything, is stored in the remaining bytes of
+the cue entry.
 
 To be continued...
 
