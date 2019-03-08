@@ -280,8 +280,7 @@ types:
         type: u4
         doc: |
           The number of columns of waveform data (this matches the
-          non-color waveform length), but we do not yet know how to
-          translate the payload into color columns.
+          non-color waveform length.
       - type: u4
       - id: entries
         size: len_entries * len_entry_bytes

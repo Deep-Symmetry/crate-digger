@@ -1289,6 +1289,7 @@ and $len\_header$ is {\tt 10}.
 \end{figure}
 
 \subsubsection{Waveform Preview Tag}
+\label{sec:waveformPreviewTag}
 
 This kind of section holds a fixed-width monochrome preview of the
 track waveform, displayed above the touch strip on original nexus
@@ -1341,8 +1342,138 @@ pixel-wide column of the waveform preview. The height of the column is
 represented by the four low-order bits of the byte (so it can only
 range from 0 to 15 pixels high), and no other bits are used.
 
+\subsubsection{Waveform Detail Tag}
 
-To be continued...
+This kind of section holds a variable-width and much larger monochrome
+preview of the track waveform, which scrolls along while the track
+plays, giving a detailed glimpse of the neighborhood of the current
+playback position. Since this is potentially much larger than other
+analysis elements, and is not supported by older players, it is stored
+in the extended analyis file (with extension {\tt .EXT}). It is
+identified by the four-character code {\tt PWV3} and has the structure
+shown in Figure~\ref{fig:waveDetailTagStructure}. $len\_header$ is
+{\tt 18}.
+
+\begin{figure}
+  \begin{bytefield}[bitwidth=1.9em, leftcurly=., leftcurlyspace=0pt, boxformatting={\baselinealign}]{16}
+    \hexhead \\
+    \begin{leftwordgroup}{\tiny\bfseries 00}
+      \colorbitbox{yellow}{4}{\tt PWV3} & \colorbitbox{yellow}{4}{$len\_header$} &
+      \colorbitbox{yellow}{4}{$len\_tag$} & \colorbitbox{yellow}{4}{$len\_entry\_bytes$}
+    \end{leftwordgroup} \\
+    \begin{leftwordgroup}{\tiny\bfseries 10}
+      \colorbitbox{yellow}{4}{$len\_entries$} & \colorbitbox{yellow}{4}{$unknown$} & \bitbox[lrt]{8}{$entries$}
+    \end{leftwordgroup} \\
+    \begin{leftwordgroup}{}
+      \skippedwords \\
+      \wordbox[lrb]{1}{}
+    \end{leftwordgroup}
+  \end{bytefield}
+  \caption{Waveform Detail Tag}
+  \label{fig:waveDetailTagStructure}
+\end{figure}
+
+$len\_entry\_bytes$ identifies how many bytes each waveform detail
+entry takes up; for this kind of tag it always has the value 1.
+$len\_entries$ specifies how many entries are present in the tag. Each
+entry represents one half-frame of audio data, and there are 75 frames
+per second, so for each second of track audio there are 150 waveform
+detail entries. The purpose of the header bytes~{\tt 14-17} is
+unknown; they always seem to have the value {\tt 00960000}. The
+waveform detail entries begin at byte~{\tt 18}. The interpretation of
+each byte is the same as for the Waveform Preview data described in
+Section~\ref{sec:waveformPreviewTag}.
+
+\subsubsection{Waveform Color Preview Tag}
+
+This kind of section holds a fixed-width color preview of the track
+waveform, displayed above the touch strip on nexus 2 players,
+providing a birds-eye view of the current playback position, and
+supporting direct needle jump to specific track sections. It is also
+used in rekordbox itself. This is stored in the extended analyis file
+(with extension {\tt .EXT}). It is identified by the four-character
+code {\tt PWV4} and has the structure shown in
+Figure~\ref{fig:colorPreviewTagStructure}. $len\_header$ is {\tt 18}.
+
+\begin{figure}
+  \begin{bytefield}[bitwidth=1.9em, leftcurly=., leftcurlyspace=0pt, boxformatting={\baselinealign}]{16}
+    \hexhead \\
+    \begin{leftwordgroup}{\tiny\bfseries 00}
+      \colorbitbox{yellow}{4}{\tt PWV4} & \colorbitbox{yellow}{4}{$len\_header$} &
+      \colorbitbox{yellow}{4}{$len\_tag$} & \colorbitbox{yellow}{4}{$len\_entry\_bytes$}
+    \end{leftwordgroup} \\
+    \begin{leftwordgroup}{\tiny\bfseries 10}
+      \colorbitbox{yellow}{4}{$len\_entries$} & \colorbitbox{yellow}{4}{$unknown$} & \bitbox[lrt]{8}{$entries$}
+    \end{leftwordgroup} \\
+    \begin{leftwordgroup}{}
+      \skippedwords \\
+      \wordbox[lrb]{1}{}
+    \end{leftwordgroup}
+  \end{bytefield}
+  \caption{Waveform Color Preview Tag}
+  \label{fig:colorPreviewTagStructure}
+\end{figure}
+
+$len\_entry\_bytes$ identifies how many bytes each waveform preview
+entry takes up; for this kind of tag it always has the value 6.
+$len\_entries$ specifies how many entries are present in the tag. Each
+entry represents one half-frame of audio data, and there are 75 frames
+per second, so for each second of track audio there are 150 waveform
+detail entries. The purpose of the header bytes~{\tt 14-17} is
+unknown. The waveform color preview data begins at byte~{\tt 18} and
+is 1,200 (decimal) bytes long.
+
+The color waveform preview entries are the most complex of any of the
+waveform tags. See the discussion at
+\url{https://github.com/Deep-Symmetry/dysentery/issues/9} for an
+analysis of them until that can be polished up for inclusion here.
+
+\subsubsection{Waveform Color Detail Tag}
+
+This kind of section holds a variable-width and much larger color
+preview of the track waveform, introduced with the nexus 2 line, which
+scrolls along while the track plays, giving a detailed glimpse of the
+neighborhood of the current playback position. This is stored in the
+extended analyis file (with extension {\tt .EXT}). It is identified by
+the four-character code {\tt PWV5} and has the structure shown in
+Figure~\ref{fig:colorDetailTagStructure}. $len\_header$ is {\tt 18}.
+
+\begin{figure}
+  \begin{bytefield}[bitwidth=1.9em, leftcurly=., leftcurlyspace=0pt, boxformatting={\baselinealign}]{16}
+    \hexhead \\
+    \begin{leftwordgroup}{\tiny\bfseries 00}
+      \colorbitbox{yellow}{4}{\tt PWV5} & \colorbitbox{yellow}{4}{$len\_header$} &
+      \colorbitbox{yellow}{4}{$len\_tag$} & \colorbitbox{yellow}{4}{$len\_entry\_bytes$}
+    \end{leftwordgroup} \\
+    \begin{leftwordgroup}{\tiny\bfseries 10}
+      \colorbitbox{yellow}{4}{$len\_entries$} & \colorbitbox{yellow}{4}{$unknown$} & \bitbox[lrt]{8}{$entries$}
+    \end{leftwordgroup} \\
+    \begin{leftwordgroup}{}
+      \skippedwords \\
+      \wordbox[lrb]{1}{}
+    \end{leftwordgroup}
+  \end{bytefield}
+  \caption{Waveform Color Detail Tag}
+  \label{fig:colorDetailTagStructure}
+\end{figure}
+
+$len\_entry\_bytes$ identifies how many bytes each waveform detail
+entry takes up; for this kind of tag it always has the value 2.
+$len\_entries$ specifies how many entries are present in the tag. Each
+entry represents one half-frame of audio data, and there are 75 frames
+per second, so for each second of track audio there are 150 waveform
+detail entries. The purpose of the header bytes~{\tt 14-17} is
+unknown; they may always have the value {\tt 00960305}. The color
+waveform detail entries begin at byte~{\tt 18}.
+
+Color detail entries are much simpler than color preview entries. They
+consist of three-bit red, green, and blue components and a five-bit
+height component packed into the sixteen bits of the two entry bytes.
+Considering each entry as a two-byte big-endian integer, the red
+component is the three high-order bits. The next three bits are the
+green component, followed by the three bits of blue intensity, and
+finally five bits of height. The two low-order bits do not seem to be
+used.
 
 \section{Crate Digger}
 
