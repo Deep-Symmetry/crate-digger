@@ -1226,6 +1226,122 @@ player should loop back to $time$.
 We do not know what, if anything, is stored in the remaining bytes of
 the cue entry.
 
+\subsubsection{Path Tag}
+
+This kind of section holds the file path of the audio file for which
+the track analysis was performed. It is identified by the
+four-character code {\tt PPTH} and has the structure shown in
+Figure~\ref{fig:pathTagStructure}. $len\_header$ is {\tt 10}.
+
+\begin{figure}
+  \begin{bytefield}[bitwidth=1.9em, leftcurly=., leftcurlyspace=0pt, boxformatting={\baselinealign}]{16}
+    \hexhead \\
+    \begin{leftwordgroup}{\tiny\bfseries 00}
+      \colorbitbox{yellow}{4}{\tt PPTH} & \colorbitbox{yellow}{4}{$len\_header$} &
+      \colorbitbox{yellow}{4}{$len\_tag$} & \colorbitbox{yellow}{4}{$len\_path$}
+    \end{leftwordgroup} \\
+    \begin{leftwordgroup}{\tiny\bfseries 10}
+      \wordbox[lrt]{1}{$path$}
+    \end{leftwordgroup} \\
+    \begin{leftwordgroup}{}
+      \skippedwords \\
+      \wordbox[lrb]{1}{}
+    \end{leftwordgroup}
+  \end{bytefield}
+  \caption{Path Tag}
+  \label{fig:pathTagStructure}
+\end{figure}
+
+$len\_path$ at bytes~{\tt 0c-0f} holds the length of the file path
+value, which makes up the entire tag body. $path$, which starts at
+byte~{\tt 10}, is a DeviceSQL string with the structure described in
+Section~\ref{sec:deviceSqlStrings}.
+
+\subsubsection{VBR Tag}
+
+This kind of section has not yet been explained, but it is believed to
+hold an index allowing rapid seeking to particular times within
+variable-bit-rate tracks. (Without such a structure, it would be
+necessary to scan the entire file from the beginning to find a frame
+starting at a particular time, which would be too slow for jumping to
+memory points or hot cues deep within the track.) What is known of the
+structure is shown in Figure~\ref{fig:vbrTagStructure}. The
+four-character code that identifies this type of section is {\tt PVBR}
+and $len\_header$ is {\tt 10}.
+
+\begin{figure}
+  \begin{bytefield}[bitwidth=1.9em, leftcurly=., leftcurlyspace=0pt, boxformatting={\baselinealign}]{16}
+    \hexhead \\
+    \begin{leftwordgroup}{\tiny\bfseries 00}
+      \colorbitbox{yellow}{4}{\tt PVBR} & \colorbitbox{yellow}{4}{$len\_header$} &
+      \colorbitbox{yellow}{4}{$len\_tag$} & \colorbitbox{yellow}{4}{$unknown_1$}
+    \end{leftwordgroup} \\
+    \begin{leftwordgroup}{\tiny\bfseries 10}
+      \wordbox[lrt]{1}{$unknown_2$}
+    \end{leftwordgroup} \\
+    \begin{leftwordgroup}{}
+      \skippedwords \\
+      \wordbox[lrb]{1}{}
+    \end{leftwordgroup}
+  \end{bytefield}
+  \caption{VBR Tag}
+  \label{fig:vbrTagStructure}
+\end{figure}
+
+\subsubsection{Waveform Preview Tag}
+
+This kind of section holds a fixed-width monochrome preview of the
+track waveform, displayed above the touch strip on original nexus
+players, providing a birds-eye view of the current playback position,
+and supporting direct needle jump to specific track sections. It is
+identified by the four-character code {\tt PWAV} and has the structure
+shown in Figure~\ref{fig:wavePreviewTagStructure}. $len\_header$ is
+{\tt 14}.
+
+\begin{figure}
+  \begin{bytefield}[bitwidth=1.9em, leftcurly=., leftcurlyspace=0pt, boxformatting={\baselinealign}]{16}
+    \hexhead \\
+    \begin{leftwordgroup}{\tiny\bfseries 00}
+      \colorbitbox{yellow}{4}{\tt PWAV} & \colorbitbox{yellow}{4}{$len\_header$} &
+      \colorbitbox{yellow}{4}{$len\_tag$} & \colorbitbox{yellow}{4}{$len\_preview$}
+    \end{leftwordgroup} \\
+    \begin{leftwordgroup}{\tiny\bfseries 10}
+      \colorbitbox{yellow}{4}{$unknown$} & \bitbox[lrt]{12}{$data$}
+    \end{leftwordgroup} \\
+    \begin{leftwordgroup}{}
+      \skippedwords \\
+      \wordbox[lrb]{1}{}
+    \end{leftwordgroup}
+  \end{bytefield}
+  \caption{Waveform Preview Tag}
+  \label{fig:wavePreviewTagStructure}
+\end{figure}
+
+The purpose of the header bytes~{\tt 10-13} is unknown; they always
+seem to have the value {\tt 00100000}. The waveform preview data
+begins at byte~{\tt 14} and is 400 (decimal) bytes long. Each byte
+encodes one vertical pixel-wide column of the waveform preview. The
+height of the column is represented by the five low-order bits of the
+byte (so it can range from 0 to 31 pixels high), and the whiteness of
+the segment is represented by the three high-order bits. Segments with
+higher values in these bits sections are drawn in a less saturated
+(whiter) shade of blue.
+
+\subsubsection{Tiny Waveform Preview Tag}
+
+This kind of section holds an even smaller fixed-width monochrome
+preview of the track waveform, which seems to be displayed on the
+CDJ-900. It is identified by the four-character code {\tt PWV2} but
+otherwise has the same structure as the larger waveform preview tags
+shown in Figure~\ref{fig:wavePreviewTagStructure}. $len\_header$ is
+still {\tt 14}, and header bytes~{\tt 10-13} also seem to have the
+value {\tt 00100000}. The waveform preview data begins at byte~{\tt
+  14} and is 100 (decimal) bytes long. Each byte encodes one vertical
+pixel-wide column of the waveform preview. The height of the column is
+represented by the four low-order bits of the byte (so it can only
+range from 0 to 15 pixels high), and no other bits are used.
+
+
 To be continued...
 
 \section{Crate Digger}
