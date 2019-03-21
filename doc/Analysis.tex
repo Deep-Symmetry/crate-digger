@@ -165,8 +165,8 @@ present in the file. Each table will have a table pointer entry in the
 identifies and locates the table.
 
 The four-byte integer $next_u$ at byte~{\tt 0c} has an unknown
-purpose, but Mr. Lesniak named it {\tt next\_unused\_page} and said
-``Not used as any {\tt empty\_candidate}, points past the end of the
+purpose, but Mr. Lesniak named it next\_unused\_page and said
+``Not used as any empty\_candidate, points past the end of the
 file.'' The four-byte integer $sequence$, at byte~{\tt 14}, was
 described ``Always incremented by at least one, sometimes by two or
 three.'' and I assume this means it reflects a version number that
@@ -193,7 +193,7 @@ each has the structure shown in Figure~\ref{fig:tablePointer}.
 Each Table Pointer is a series of four four-byte integers. The first,
 $type$, identifies the type of table being defined. The known table
 types are shown in Table~\ref{table:tableTypes}. The second value, at
-byte~{\tt 04} of the Table Pointer, was called {\tt empty\_candidate}
+byte~{\tt 04} of the Table Pointer, was called $empty\_candidate$
 by Mr. Lesniak. It may link to a chain of empty pages if the database
 is ever garbage collected, but this is speculation on my part.
 
@@ -347,12 +347,12 @@ Byte~{\tt 1b} is called $page\_flags$ (abbrviated $p_f$ in
 Figure~\ref{fig:tablePage}). According to Mr. Flesniak, ``strange''
 (non-data) pages will have the value {\tt 44} or {\tt 64}, and other
 pages have had the values {\tt 24} or {\tt 34}. Crate Digger considers
-a page to be a data page if $page\_flags \& {\tt 40} = 0$.
+a page to be a data page if $page\_flags \& {\tt 40} = {\tt 0}$.
 
-Bytes~{\tt 1c-1d} are called $free\_size$ (abbrviated $free_s$ in
+Bytes~{\tt 1c-1d} are called $free\_size$ (abbreviated $free_s$ in
 Figure~\ref{fig:tablePage}), and store the amount of unused space in
 the page heap (excluding the row index which is built backwards from
-the end of the page); $used\_size$ at bytes~{\tt 1c-1d} (abbrviated
+the end of the page); $used\_size$ at bytes~{\tt 1c-1d} (abbreviated
 $used_s$) stores the number of bytes that are in use in the page heap.
 
 Bytes~{\tt 20-21}, $u_5$, are of unclear purpose. Mr. Flesniak labeled
