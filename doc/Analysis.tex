@@ -793,7 +793,7 @@ non-zero value in $key\_id$ (bytes~{\tt 20-23}), which represents the
 $id$ of a Key row, as discussed in Section~\ref{sec:keyRows}. If the
 track is known to be a remake, the non-zero Artist row $id$
 (Section~\ref{sec:artistRows}) of the original performer will be found
-in $original\_artist\_id$ at bytes~{\tt 24-27}. If there is a known
+at bytes~{\tt 24-27} in $original\_artist\_id$. If there is a known
 record label for the track, the non-zero value in $label\_id$ will
 link to the $id$ of a Label row $id$ as described in
 Section~\ref{sec:labelRows}. Similarly, if there is a known remixer,
@@ -1005,7 +1005,7 @@ header section, and then each entry in the file has its own header
 which identifies the type and length of that section.
 
 Later player hardware added support for things like colored and
-higher-resolution waveforms. Apparently these were deemed too large to
+more-detailed waveforms. Apparently these were deemed too large to
 fit in the {\tt .DAT} files, so another file was introduced, which
 shares the same base filename as the {\tt .DAT} file, but uses an
 extension of {\tt .EXT} instead. Both kinds of file share the same
@@ -1024,7 +1024,7 @@ field name.
 
 The file itself starts with the four-character code {\tt PMAI} that
 identifies its format. This file format identifier is followed a
-four-byte value at bytes~{\tt 04-07}, $len\_header$, that specifies
+four-byte value, $len\_header$ (at bytes~{\tt 04-07}) that specifies
 the length of the file header in bytes. This is followed by another
 four-byte value, $len\_file$, at bytes~{\tt 08-0b} that specifies the
 length of the whole file in bytes.
