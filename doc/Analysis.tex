@@ -409,8 +409,8 @@ backwards, in groups of up to sixteen row pointers along with a
 bitmask saying which of those rows are still part of the table (they
 might have been deleted).
 
-The number of row index entries is determined by the value of either
-$num\_rows\_small$ or $num\_rows\_large$ as described above.
+The number of row index entries is determined, as described above, by
+the value of either $num\_rows\_small$ or $num\_rows\_large$.
 
 The bit mask for the first group of up to sixteen rows, labeled
 $row_{pf_0}$ in Figure~\ref{fig:tablePage} (meaning ``row presence
@@ -492,9 +492,9 @@ and the row has the structure in Figure~\ref{fig:artistRowFar}.
 In either case, $subtype$ is followed by the unexplained two-byte
 value found in many row types that Mr. Flesniak called $index\_shift$,
 and then by $id$, the ID of this artist row itself, at bytes~{\tt
-  04-07}, an unknown value, and $ofs\_name\_near$ (labeled $o_n$ in
-Figure~\ref{fig:artistRowNear}), the one-byte name offset used only in
-the first variant.
+  04-07}, an unknown value at byte~{\tt 08}, and $ofs\_name\_near$ at
+byte~{\tt 09} (labeled $o_n$ in Figure~\ref{fig:artistRowNear}), the
+one-byte name offset used only in the first variant.
 
 If $subtype$ is {\tt 0064}, the value of $ofs\_name\_near$ is ignored,
 and instead the two-byte value $ofs\_name\_far$ (labeled $o_{far}$ in
