@@ -52,10 +52,10 @@ Purkhiser] posted on
 https://reverseengineering.stackexchange.com/questions/4311/help-reversing-a-edb-database-file-for-pioneers-rekordbox-software[Stack
 Exchange].
 
-There is a link:doc/Analysis.pdf[Structure Analysis] article describing
-the details of what we have learned about these file formats. Reading
-that will help make sense of the exploration tools and the objects
-returned by this library.
+There is a http://deepsymmetry.org/cratedigger/Analysis.pdf[Structure
+Analysis] article describing the details of what we have learned about
+these file formats. Reading that will help make sense of the
+exploration tools and the objects returned by this library.
 
 === Exploring the Analysis
 
