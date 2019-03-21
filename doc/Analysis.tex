@@ -1097,11 +1097,11 @@ of each type of tagged section, you can see some sense of where the
 ``header-like stuff'' ends, and ``content-like stuff'' begins, and
 this seems to line up with the value of $len\_header$. But because
 there are important values in each tag's header, and those always
-start immediately after $len\_tag$, it is simply easier to ignore
-$len\_header$, and model the tag body as beginning at byte~{\tt 0c} of
-the tag. To show where the boundary occurs, in the diagrams that
-follow, values that fall inside the byte range of the header are
-colored yellow.
+start immediately after $len\_tag$, it is simply easier to ignore the
+value of $len\_header$, and model the tag body as beginning at
+byte~{\tt 0c} of the tag. To show where the boundary occurs, in the
+diagrams that follow, values that fall inside the byte range of the
+header are colored yellow.
 
 \subsubsection{Beat Grid Tag}
 
@@ -1147,8 +1147,8 @@ structure shown in Figure~\ref{fig:beatEntry}.
   \label{fig:beatEntry}
 \end{figure}
 
-Each beat entry is eight bytes long. It starts with a two-byte number,
-$beat\_number$ (abbreviated $b_{num}$ in Figure~\ref{fig:beatEntry})
+Each beat entry is eight bytes long. It starts with $beat\_number$, a
+two-byte number (abbreviated $b_{num}$ in Figure~\ref{fig:beatEntry})
 which specifies where the beat falls within its measure. So the value
 is always 1, 2, 3, or 4. This is followed by a two-byte $tempo$ value,
 which records the track tempo at the point where this beat occurs, in
