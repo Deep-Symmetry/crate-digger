@@ -1,17 +1,43 @@
 \documentclass[11pt]{article}
 
-\usepackage[utf8]{inputenc}
-\usepackage[english]{babel}
-\usepackage{courier}
+\usepackage{ifxetex}
+\ifxetex
+    % XeLaTeX
+    \usepackage{polyglossia}
+    \setmainlanguage[]{english}
+    \usepackage{fontspec}
+    \usepackage[]{unicode-math}
+    %\setmainfont{Hoefler Text}
+    \setmainfont{Garamond Premier Pro}
+    \setmonofont{Andale Mono}
+    %\setmathfont
+    %    [ Extension = .otf,
+    %      BoldFont = *bold,
+    %    ]{xits-math}
+\else
+    % default: pdfLaTeX
+    \usepackage[utf8]{inputenc}
+    \usepackage[english]{babel}
+    \usepackage{courier}
+    %\usepackage[babel=true]{microtype}
+\fi
+
 \usepackage{graphicx}
 \usepackage[bottom]{footmisc}
 \usepackage{bytefield}
-\usepackage{hyperref}
 \usepackage{bookmark}
 \usepackage{color}
 \usepackage{alltt}
 \usepackage{tabu, booktabs}
 \usepackage{longtable}
+\usepackage{hyperxmp}
+\hypersetup{%
+  pdfcontactemail={james@deepsymmetry.org},
+  pdfcontacturl={http://deepsymmetry.org},
+  pdflang={en},
+  pdfmetalang={en}
+}
+\usepackage{hyperref}
 
 \newcommand{\rmst}{{\it\small rmst}}
 
