@@ -106,11 +106,16 @@
 
 The starting point for finding track metadata from a player is the
 database export file, which can be found within rekordbox media at the
-path {\tt PIONEER/rekordbox/export.pdb} (if you are using the Crate
-Digger {\tt FileFetcher} to request this file, use that path as the
-{\tt filePath} argument, and use a {\tt mountPath} value of {\tt /B/}
-if you want to read it from the SD slot, or {\tt /C/} to obtain it
-from the USB slot).
+following path:
+
+\begin{center}
+  {\tt /PIONEER/rekordbox/export.pdb}
+\end{center}
+
+(If you are using the Crate Digger {\tt FileFetcher} to request this
+file, use that path as the {\tt filePath} argument, and use a {\tt
+  mountPath} value of {\tt /B/} if you want to read it from the SD
+slot, or {\tt /C/} to obtain it from the USB slot).
 
 The file is a relational database format designed to be efficiently
 used by very low power devices (there were deployments on 16 bit
