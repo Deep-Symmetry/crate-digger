@@ -8,6 +8,7 @@ dependency-reduced-pom.xml
 buildNumber.properties
 .mvn/timing.properties
 .idea/
+doc/Analysis.pdf
 doc/*.aux
 doc/*.log
 doc/*.lof
