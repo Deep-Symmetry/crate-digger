@@ -722,7 +722,7 @@ Section~\ref{sec:playlistTreeRows}.
 \label{sec:trackRows}
 
 Track rows describe audio tracks that can be played from the media
-export, and provide many details about the music inluding links to
+export, and provide many details about the music including links to
 other tables like artists, albums, keys, and others. They have the
 structure shown in Figure~\ref{fig:trackRow}.
 
@@ -771,10 +771,10 @@ The first two bytes, labeled $u_1$, have an unknown purpose; they
 usually are {\tt 24} followed by {\tt 00}. They are followed by the
 unexplained two-byte value found in many row types that Mr. Flesniak
 called $index\_shift$, and a four-byte value he called $bitmask$,
-although we do not know what the bits mean. The value $sample\_rate$
-at bytes~{\tt 08-0b} is the first one we have a solid understanding
-of: it holds the playback sample rate of the audio file, in samples
-per second.
+although we do not know what the bits mean. The value at bytes~{\tt
+  08-0b}, $sample\_rate$, is the first one we have a solid
+understanding of: it holds the playback sample rate of the audio file,
+in samples per second.
 
 Bytes~{\tt 0c-0f} hold the value $composer\_id$ which identifies the
 composer of the track, if known, as a non-zero $id$ value of an Artist
