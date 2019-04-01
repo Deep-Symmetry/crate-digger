@@ -194,9 +194,6 @@ your class path.
 
 == Unfinished Tasks
 
-* A document explaining the structures with diagrams, along the lines
-of the Dysentery Packet Analysis, will be part of this project as well.
-
 * There are still more tables to be figured out. `Columns` looks like
 the list of things that can be searched by, so perhaps it will hold
 some clues for how to find and use the index tables, which must exist
@@ -223,6 +220,24 @@ These things happen for you automatically during the code generation
 phase of the Maven build. If you want to use something other than
 Maven, you will need to figure out how to configure and run the
 tools yourself.
+
+== Building the Structure Analysis
+
+The source is found in `doc/Analysis.tex`. I started out using
+pdfLaTeX to write and format the document, but then, at the
+recommendation of one of the Kaitai Struct developers, switched to
+XeLaTeX in order to take advantage of newer fonts, Unicode, and
+ligatures. I tried setting up the document preamble so that both
+processors will still work, although the line breaks have now been
+optimized for XeLaTex, and if you want to use that you will either
+need to have the Garamond Premier Pro and Andale Mono font packages
+available on your system, or choose different font families that you
+actually do own in the `\ifxetex` section at the top.
+
+The easiest way to get all the TeX and LaTeX pieces you need is
+probably via [TeX Live](https://www.tug.org/texlive/), which is how I
+obtained it when I started working on the protocol analysis document
+for dysentery.
 
 == Contributing
 
