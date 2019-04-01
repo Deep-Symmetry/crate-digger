@@ -180,10 +180,10 @@ Strings (like titles, artist names, etc.) are represented by a variety
 of structures with different encodings, so a `getText()` method is
 provided to convert them into ordinary Java strings.
 
-See the http://deepsymmetry.org/cratedigger/apidocs/[API documentation]
-for more details about these classes, and the
-link:doc/Analysis.pdf[Structure Analysis] for more details about the
-file formats.
+See the http://deepsymmetry.org/cratedigger/apidocs/[API
+documentation] for more details about these classes, and the
+http://deepsymmetry.org/cratedigger/Analysis.pdf[Structure Analysis]
+for more details about the file formats.
 
 == Logging
 
@@ -235,7 +235,7 @@ available on your system, or choose different font families that you
 actually do own in the `\ifxetex` section at the top.
 
 The easiest way to get all the TeX and LaTeX pieces you need is
-probably via [TeX Live](https://www.tug.org/texlive/), which is how I
+probably via https://www.tug.org/texlive/[TeX Live], which is how I
 obtained it when I started working on the protocol analysis document
 for dysentery.
 
