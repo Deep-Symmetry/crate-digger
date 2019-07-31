@@ -77,6 +77,7 @@ types:
             0x50575633: wave_scroll_tag         #'section_tags::wave_scroll'  (PWV3, seen in .EXT)
             0x50575634: wave_color_preview_tag  #'section_tags::wave_color_preview' (PWV4, in .EXT)
             0x50575635: wave_color_scroll_tag   #'section_tags::wave_color_scroll'  (PWV5, in .EXT)
+            0x50535349: song_structure_tag      #'section_tags::song_structure'  (PSSI, in .EXT)
             _: unknown_tag
     -webide-representation: '{fourcc}'
 
@@ -285,6 +286,68 @@ types:
       - id: entries
         size: len_entries * len_entry_bytes
 
+  song_structure_tag:
+    doc: |
+      Stores the song structure, also known as phrases (intro, verse, 
+      bridge, chorus, up, down, outro).
+    seq:
+      - id: len_entry_bytes
+        type: u4
+        doc: |
+          The size of each entry, in bytes. Seems to always be 24.
+      - id: len_entries
+        type: u2
+        doc: |
+          The number of phrases.
+      - id: style
+        type: u2
+        enum: phrase_style
+        doc: |
+          The phrase style. 1 is the up-down style
+          (white label text in rekordbox) where the main phrases consist
+          of up, down, and chorus. 2 is the bridge-verse style
+          (black label text in rekordbox) where the main phrases consist
+          of verse, chorus, and bridge.
+      - size: 12
+      - id: entries
+        type: song_structure_entry
+        repeat: expr
+        repeat-expr: len_entries
+
+  song_structure_entry:
+    doc: |
+      A song structure entry, represents a single phrase.
+    seq:
+      - id: phrase_number
+        type: u2
+        doc: |
+          The absolute number of the phrase, starting at one.
+      - id: beat_number
+        type: u2
+        doc: |
+          The beat number at which the phrase starts.
+      - id: phrase_id
+        type:
+          switch-on: _parent.style
+          cases:
+            'phrase_style::up_down': phrase_up_down
+            'phrase_style::verse_bridge': phrase_verse_bridge
+        doc: |
+          Identifier of the phrase label.
+      - size: 18
+
+  phrase_up_down:
+    seq:
+      - id: id
+        type: u2
+        enum: phrase_up_down_id
+
+  phrase_verse_bridge:
+    seq:
+      - id: id
+        type: u2
+        enum: phrase_verse_bridge_id
+
   unknown_tag: {}
 
 enums:
@@ -299,6 +362,7 @@ enums:
     0x50575633: wave_scroll         # PWV3 (seen in .EXT)
     0x50575634: wave_color_preview  # PWV4 (seen in .EXT)
     0x50575635: wave_color_scroll   # PWV5 (seen in .EXT)
+    0x50535349: song_structure      # PSSI (seen in .EXT)
 
   cue_list_type:
     0: memory_cues
@@ -311,3 +375,26 @@ enums:
   cue_entry_status:
     0: disabled
     1: enabled
+    
+  phrase_style:
+    1: up_down
+    2: verse_bridge
+    
+  phrase_verse_bridge_id:
+    1: intro
+    2: verse1
+    3: verse2
+    4: verse3
+    5: verse4
+    6: verse5
+    7: verse6
+    8: bridge
+    9: chorus
+    10: outro
+    
+  phrase_up_down_id:
+    1: intro
+    2: up
+    3: down
+    5: chorus
+    6: outro
