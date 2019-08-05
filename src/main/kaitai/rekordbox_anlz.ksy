@@ -68,6 +68,7 @@ types:
         type:
           switch-on: fourcc
           cases:
+            0x50434f32: cue_comment_tag         #'section_tags::cues_2' (PCO2)
             0x50434f42: cue_tag                 #'section_tags::cues' (PCOB)
             0x50505448: path_tag                #'section_tags::path' (PPTH)
             0x5051545a: beat_grid_tag           #'section_tags::beat_grid' (PQTZ)
@@ -188,6 +189,68 @@ types:
           The position, in milliseconds, at which the player loops
           back to the cue time if this is a loop.
       - size: 16
+
+  cue_comment_tag:
+    doc: |
+      A variation of cue_tag which was introduced with the nxs2 line,
+      and adds descriptive names. (Still comes in two forms, either
+      holding memory cues and loop points, or holding hot cues and
+      loop points.)
+    seq:
+      - id: type
+        type: u4
+        enum: cue_list_type
+        doc: |
+          Identifies whether this tag stores ordinary or hot cues.
+      - id: len_comments
+        type: u2
+        doc: |
+          The length of the cue comment list.
+      - size: 2
+      - id: comments
+        type: cue_comment_entry
+        repeat: expr
+        repeat-expr: len_comments
+
+  cue_comment_entry:
+    doc: |
+      A cue comment list entry. Can either describe a memory cue or a
+      loop.
+    seq:
+      - contents: "PCP2"
+      - id: len_header
+        type: u4
+      - id: len_entry
+        type: u4
+      - id: hot_cue
+        type: u4
+        doc: |
+          If zero, this is an ordinary memory cue, otherwise this a
+          hot cue with the specified number.
+      - id: type
+        type: u1
+        enum: cue_entry_type
+        doc: |
+          Indicates whether this is a memory cue or a loop.
+      - size: 3  # seems to always be 1000
+      - id: time
+        type: u4
+        doc: |
+          The position, in milliseconds, at which the cue point lies
+          in the track.
+      - id: loop_time
+        type: u4
+        doc: |
+          The position, in milliseconds, at which the player loops
+          back to the cue time if this is a loop.
+      - size: 12  # Loops seem to have some non-zero values in the last four bytes of this.
+      - id: len_text
+        type: u4
+      - id: text
+        type: str
+        size: len_text
+        encoding: utf-16be
+      - size: len_entry - 44 - len_text  # The remainder after the comment
 
   path_tag:
     doc: |
