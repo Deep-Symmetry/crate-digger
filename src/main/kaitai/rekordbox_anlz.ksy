@@ -334,7 +334,7 @@ types:
             'phrase_style::verse_bridge': phrase_verse_bridge
         doc: |
           Identifier of the phrase label.
-      - size: 18
+      - size: _parent.len_entry_bytes - 6
 
   phrase_up_down:
     seq:
