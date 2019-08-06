@@ -202,15 +202,15 @@ types:
         enum: cue_list_type
         doc: |
           Identifies whether this tag stores ordinary or hot cues.
-      - id: len_comments
+      - id: len_cues
         type: u2
         doc: |
           The length of the cue comment list.
       - size: 2
-      - id: comments
+      - id: cues
         type: cue_comment_entry
         repeat: expr
-        repeat-expr: len_comments
+        repeat-expr: len_cues
 
   cue_comment_entry:
     doc: |
@@ -244,13 +244,15 @@ types:
           The position, in milliseconds, at which the player loops
           back to the cue time if this is a loop.
       - size: 12  # Loops seem to have some non-zero values in the last four bytes of this.
-      - id: len_text
+      - id: len_comment
         type: u4
-      - id: text
+      - id: comment
         type: str
-        size: len_text
+        size: len_comment
         encoding: utf-16be
-      - size: len_entry - 44 - len_text  # The remainder after the comment
+        doc: |
+          The comment assigned to this cue by the DJ, if any.
+      - size: len_entry - 44 - len_comment  # The remainder after the comment
 
   path_tag:
     doc: |
