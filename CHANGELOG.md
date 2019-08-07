@@ -14,7 +14,8 @@ This change log follows the conventions of
   performed by rekord box with a Performance license. (As this is not
   currently included when tracks are exported to removable media,
   nor available through a `dbserver` query, it cannot be used by
-  Beat Link.) Many thanks to @mganss for this contribution!
+  Beat Link.) Many thanks to [@mganss](https://github.com/mganss) for
+  this contribution!
 
 ## 0.1.0 - 2019-02-23
 
