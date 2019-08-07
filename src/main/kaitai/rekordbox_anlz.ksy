@@ -251,7 +251,7 @@ types:
         size: len_comment
         encoding: utf-16be
         doc: |
-          The comment assigned to this cue by the DJ, if any.
+          The comment assigned to this cue by the DJ, if any, with a trailing NUL.
       - size: len_entry - 44 - len_comment  # The remainder after the comment
 
   path_tag:
