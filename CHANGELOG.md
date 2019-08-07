@@ -23,4 +23,4 @@ This change log follows the conventions of
 - Initial release.
 
 
-[unreleased]: https://github.com/Deep-Symmetry/beat-link/compare/v0.1.0...HEAD
+[unreleased]: https://github.com/Deep-Symmetry/crate-digger/compare/v0.1.0...HEAD
