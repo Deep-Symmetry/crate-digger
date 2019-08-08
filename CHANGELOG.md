@@ -9,7 +9,7 @@ This change log follows the conventions of
 ### Added
 
 - Ability to parse `PCO2` tags, which hold cues and loops along with
-  DJ-assigned comment labels, displayable on nxs2 players.
+  DJ-assigned comment labels and colors, displayable on nxs2 players.
 - Ability to parse `PSSI` tags, which hold phrase structure analysis
   performed by rekord box with a Performance license. (As this is not
   currently included when tracks are exported to removable media,

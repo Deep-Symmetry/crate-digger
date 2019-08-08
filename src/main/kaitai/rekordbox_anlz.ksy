@@ -68,7 +68,7 @@ types:
         type:
           switch-on: fourcc
           cases:
-            0x50434f32: cue_comment_tag         #'section_tags::cues_2' (PCO2)
+            0x50434f32: cue_extended_tag        #'section_tags::cues_2' (PCO2)
             0x50434f42: cue_tag                 #'section_tags::cues' (PCOB)
             0x50505448: path_tag                #'section_tags::path' (PPTH)
             0x5051545a: beat_grid_tag           #'section_tags::beat_grid' (PQTZ)
@@ -190,12 +190,12 @@ types:
           back to the cue time if this is a loop.
       - size: 16
 
-  cue_comment_tag:
+  cue_extended_tag:
     doc: |
       A variation of cue_tag which was introduced with the nxs2 line,
       and adds descriptive names. (Still comes in two forms, either
       holding memory cues and loop points, or holding hot cues and
-      loop points.)
+      loop points.) Also includes hot cues D through H and color assignment.
     seq:
       - id: type
         type: u4
@@ -208,13 +208,13 @@ types:
           The length of the cue comment list.
       - size: 2
       - id: cues
-        type: cue_comment_entry
+        type: cue_extended_entry
         repeat: expr
         repeat-expr: len_cues
 
-  cue_comment_entry:
+  cue_extended_entry:
     doc: |
-      A cue comment list entry. Can either describe a memory cue or a
+      A cue extended list entry. Can either describe a memory cue or a
       loop.
     seq:
       - contents: "PCP2"
@@ -252,7 +252,23 @@ types:
         encoding: utf-16be
         doc: |
           The comment assigned to this cue by the DJ, if any, with a trailing NUL.
-      - size: len_entry - 44 - len_comment  # The remainder after the comment
+      - id: color_code
+        type: u1
+        doc: |
+          A lookup value for a color table? We use this to index to the colors shown in rekordbox.
+      - id: color_red
+        type: u1
+        doc: |
+          The red component of the color to be displayed.
+      - id: color_green
+        type: u1
+        doc: |
+          The green component of the color to be displayed.
+      - id: color_blue
+        type: u1
+        doc: |
+          The blue component of the color to be displayed.
+      - size: len_entry - 48 - len_comment  # The remainder after the color
 
   path_tag:
     doc: |
