@@ -415,7 +415,15 @@ types:
             'phrase_style::verse_bridge': phrase_verse_bridge
         doc: |
           Identifier of the phrase label.
-      - size: _parent.len_entry_bytes - 6
+      - size: _parent.len_entry_bytes - 9
+      - id: fill_in
+        type: u1
+        doc: |
+          If nonzero, fill-in is present.
+      - id: fill_in_beat_number
+        type: u2
+        doc: |
+          The beat number at which fill-in starts.
 
   phrase_up_down:
     seq:
