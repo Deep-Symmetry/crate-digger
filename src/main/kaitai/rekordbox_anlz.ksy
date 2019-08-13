@@ -388,8 +388,17 @@ types:
           (white label text in rekordbox) where the main phrases consist
           of up, down, and chorus. 2 is the bridge-verse style
           (black label text in rekordbox) where the main phrases consist
-          of verse, chorus, and bridge.
-      - size: 12
+          of verse, chorus, and bridge. Style 3 is mostly identical to
+          bridge-verse style except verses 1-3 are labeled VERSE1 and verses
+          4-6 are labeled VERSE2 in rekordbox.
+      - size: 6
+      - id: end_beat
+        type: u2
+        doc: |
+          The beat number at which the last phrase ends. The track may
+          continue after the last phrase ends. If this is the case, it will
+          mostly be silence.
+      - size: 4
       - id: entries
         type: song_structure_entry
         repeat: expr
@@ -413,6 +422,7 @@ types:
           cases:
             'phrase_style::up_down': phrase_up_down
             'phrase_style::verse_bridge': phrase_verse_bridge
+            _: phrase_verse_bridge
         doc: |
           Identifier of the phrase label.
       - size: _parent.len_entry_bytes - 9
