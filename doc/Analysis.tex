@@ -1645,13 +1645,13 @@ used.
 
 \subsubsection{Song Structure Tag}
 
-This kind of section is used only in rekordbox's Performance Mode, and
+This kind of section is used only in rekordbox Performance Mode, and
 so does not get exported to external media. If you want to work with
 song structure data, you will need to find the extended analysis file
 on the computer hosting rekordbox. Within that file, the section is
 identified by the four-character code {\tt PSSI} and has the structure
 shown in Figure~\ref{fig:songStructureTagStructure}. $len\_header$ is
-{\tt 18}. Many thanks to Michael Ganss,
+{\tt 20}. Many thanks to Michael Ganss,
 \url{https://github.com/mganss}, for contributing this analysis.
 
 \begin{figure}
@@ -1663,7 +1663,10 @@ shown in Figure~\ref{fig:songStructureTagStructure}. $len\_header$ is
     \end{leftwordgroup} \\
     \begin{leftwordgroup}{\tiny\bfseries 10}
       \colorbitbox{yellow}{2}{$len_e$} & \colorbitbox{yellow}{2}{$style$} & \colorbitbox{yellow}{6}{$unknown$} &
-      \colorbitbox{yellow}{2}{$end$} & \bitbox[lrt]{4}{$entries$}
+      \colorbitbox{yellow}{2}{$end$} & \colorbitbox{yellow}{4}{$unknown_2$}
+    \end{leftwordgroup} \\
+    \begin{leftwordgroup}{\tiny\bfseries 20}
+      \wordbox[lrt]{1}{$entries$}
     \end{leftwordgroup} \\
     \begin{leftwordgroup}{}
       \skippedwords \\
@@ -1675,19 +1678,20 @@ shown in Figure~\ref{fig:songStructureTagStructure}. $len\_header$ is
 \end{figure}
 
 $len\_entry\_bytes$ identifies how many bytes each phrase entry takes
-up; for this kind of tag it always has the value 24. $len\_entries$ at
-bytes~{\tt 10-11} (labeled $len_e$ in
-Figure~\ref{fig:songStructureTagStructure}) specifies how many entries
-are present in the tag. Each entry represents one recognized phrase.
-$phrase\_style$ at bytes~{\tt 12-13} (labeled $phrase$) specifies the
-overall type of phrase structure that rekordbox chose to represent the
-song. The value $1$ is an ``up-down'' style where the main phrases
-consist of ``up'', ``down'', and ``chorus'', and is represented in
-rekordbox by white label text. The value $2$ is a ``bridge-verse''
-style where the main phrasesare labeled ``verse'', ``chorus'', and
-``bridge'', and the label text in rekordbox is black. Style $3$ is
-mostly identical to bridge-verse, except verses 1--3 are labeled
-``VERSE1'' and verses 4--6 are labeled ``VERSE2'' in rekordbox.
+up; so far it always has the value {\tt 18}, so each entry takes
+twenty four bytes. $len\_entries$ at bytes~{\tt 10-11} (labeled
+$len_e$ in Figure~\ref{fig:songStructureTagStructure}) specifies how
+many entries are present in the tag. Each entry represents one
+recognized phrase. $phrase\_style$ at bytes~{\tt 12-13} (labeled
+$phrase$) specifies the overall type of phrase structure that
+rekordbox chose to represent the song. The value $1$ is an ``up-down''
+style where the main phrases consist of ``UP'', ``DOWN'', and
+``CHORUS'', and is represented in rekordbox by white label text. The
+value $2$ is a ``bridge-verse'' style where the main phrases are
+labeled ``VERSE'', ``CHORUS'', and ``BRIDGE'', and the label text in
+rekordbox is black. Style $3$ is mostly identical to bridge-verse,
+except verses 1--3 are labeled ``VERSE1'' and verses 4--6 are labeled
+``VERSE2'' in rekordbox.
 
 The purpose of the header bytes~{\tt 14-19} is unknown. $end\_beat$ at
 bytes~{\tt 1a-1b} (labeled $end$ in
@@ -1695,7 +1699,10 @@ Figure~\ref{fig:songStructureTagStructure}) holds the beat number at
 which the last recognized phrase ends. The track may continue beyond
 this, but will mostly be silence from then on.
 
-The phrase entries begin at byte~{\tt 1c}, and
+The final four bytes of the header, {\tt 1c-1f}, also have an unknown
+purpose.
+
+The phrase entries begin at byte~{\tt 20}, and
 each has the structure shown in Figure~\ref{fig:songStructureEntry}.
 
 \begin{figure}
@@ -1723,8 +1730,8 @@ identified by $end$ in the tag header if this is the last entry.
 $phrase\_id$ at bytes~{\tt 4-5} (labeled $phr_{id}$ in
 Figure~\ref{fig:songStructureEntry}) specifies what kind of phrase
 rekordbox has identified here. The interpretation depends on the value
-of $phrase\_style$ in the tag header, as is detailed in the table
-below.
+of $phrase\_style$ in the tag header, as is detailed in
+Table~\ref{table:phraseLabels} below.
 
 The purpose of the entry bytes~{\tt 6-14} is unknown. $fill\_in$ at
 byte~{\tt 15} (labeled $f$ in Figure~\ref{fig:songStructureEntry}) is
@@ -1740,7 +1747,46 @@ little dots on the full waveform. The manual says:
   Chorus (up to 4 beats).
 \end{quote}
 
-TODO: Add phrase ID table here, and make actual reference to it above.
+\begin{longtabu}{rrl}
+  \toprule
+  {\bfseries Phrase Style} & {\bfseries Phrase ID} & {\bfseries Label} \endhead
+
+  \bottomrule \\
+  \caption{Phrase Labels} \endfoot
+
+  1 & 1 & INTRO \label{table:phraseLabels} \\
+  1 & 2 & UP \\
+  1 & 3 & DOWN \\
+  1 & 5 & CHORUS \\
+  1 & 6 & OUTRO \\
+  \midrule
+  2 & 1 & INTRO \\
+  2 & 2 & VERSE1 \\
+  2 & 3 & VERSE2 \\
+  2 & 4 & VERSE3 \\
+  2 & 5 & VERSE4 \\
+  2 & 6 & VERSE5 \\
+  2 & 7 & VERSE6 \\
+  2 & 8 & BRIDGE \\
+  2 & 9 & CHORUS \\
+  2 & 10 & OUTRO \\
+  \midrule
+  3 & 1 & INTRO \\
+  3 & 2 & VERSE1 \\
+  3 & 3 & VERSE1 \\
+  3 & 4 & VERSE1 \\
+  3 & 5 & VERSE2 \\
+  3 & 6 & VERSE2 \\
+  3 & 7 & VERSE2 \\
+  3 & 8 & BRIDGE \\
+  3 & 9 & CHORUS \\
+  3 & 10 & OUTRO \\
+
+\end{longtabu}
+
+Note that because Kaitai Struct does not allow multiple enum values to
+share the same label, style 3 is modeled in Crate Digger as identical
+to style 2.
 
 \section{Crate Digger}
 
