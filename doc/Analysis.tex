@@ -1643,6 +1643,105 @@ green component, followed by the three bits of blue intensity, and
 finally five bits of height. The two low-order bits do not seem to be
 used.
 
+\subsubsection{Song Structure Tag}
+
+This kind of section is used only in rekordbox's Performance Mode, and
+so does not get exported to external media. If you want to work with
+song structure data, you will need to find the extended analysis file
+on the computer hosting rekordbox. Within that file, the section is
+identified by the four-character code {\tt PSSI} and has the structure
+shown in Figure~\ref{fig:songStructureTagStructure}. $len\_header$ is
+{\tt 18}. Many thanks to Michael Ganss,
+\url{https://github.com/mganss}, for contributing this analysis.
+
+\begin{figure}
+  \begin{bytefield}[bitwidth=1.9em, leftcurly=., leftcurlyspace=0pt, boxformatting={\baselinealign}]{16}
+    \hexhead \\
+    \begin{leftwordgroup}{\tiny\bfseries 00}
+      \colorbitbox{yellow}{4}{\tt PSSI} & \colorbitbox{yellow}{4}{$len\_header$} &
+      \colorbitbox{yellow}{4}{$len\_tag$} & \colorbitbox{yellow}{4}{$len\_entry\_bytes$}
+    \end{leftwordgroup} \\
+    \begin{leftwordgroup}{\tiny\bfseries 10}
+      \colorbitbox{yellow}{2}{$len_e$} & \colorbitbox{yellow}{2}{$style$} & \colorbitbox{yellow}{6}{$unknown$} &
+      \colorbitbox{yellow}{2}{$end$} & \bitbox[lrt]{4}{$entries$}
+    \end{leftwordgroup} \\
+    \begin{leftwordgroup}{}
+      \skippedwords \\
+      \wordbox[lrb]{1}{}
+    \end{leftwordgroup}
+  \end{bytefield}
+  \caption{Song Structure Tag}
+  \label{fig:songStructureTagStructure}
+\end{figure}
+
+$len\_entry\_bytes$ identifies how many bytes each phrase entry takes
+up; for this kind of tag it always has the value 24. $len\_entries$ at
+bytes~{\tt 10-11} (labeled $len_e$ in
+Figure~\ref{fig:songStructureTagStructure}) specifies how many entries
+are present in the tag. Each entry represents one recognized phrase.
+$phrase\_style$ at bytes~{\tt 12-13} (labeled $phrase$) specifies the
+overall type of phrase structure that rekordbox chose to represent the
+song. The value $1$ is an ``up-down'' style where the main phrases
+consist of ``up'', ``down'', and ``chorus'', and is represented in
+rekordbox by white label text. The value $2$ is a ``bridge-verse''
+style where the main phrasesare labeled ``verse'', ``chorus'', and
+``bridge'', and the label text in rekordbox is black. Style $3$ is
+mostly identical to bridge-verse, except verses 1--3 are labeled
+``VERSE1'' and verses 4--6 are labeled ``VERSE2'' in rekordbox.
+
+The purpose of the header bytes~{\tt 14-19} is unknown. $end\_beat$ at
+bytes~{\tt 1a-1b} (labeled $end$ in
+Figure~\ref{fig:songStructureTagStructure}) holds the beat number at
+which the last recognized phrase ends. The track may continue beyond
+this, but will mostly be silence from then on.
+
+The phrase entries begin at byte~{\tt 1c}, and
+each has the structure shown in Figure~\ref{fig:songStructureEntry}.
+
+\begin{figure}
+  \begin{bytefield}[bitwidth=1.9em, leftcurly=., leftcurlyspace=0pt, boxformatting={\baselinealign}]{16}
+    \hexhead \\
+    \begin{leftwordgroup}{\tiny\bfseries 00}
+      \bitbox{2}{$phr_{num}$} & \bitbox{2}{$beat$} & \bitbox{2}{$phr_{id}$} & \bitbox{10}{$unknown$}
+    \end{leftwordgroup} \\
+    \begin{leftwordgroup}{\tiny\bfseries 10}
+      \bitbox{5}{} & \bitbox{1}{$f$} & \bitbox{2}{$f_b$} & \bitbox[]{8}{}
+    \end{leftwordgroup}
+  \end{bytefield}
+  \caption{Song Structure Entry}
+  \label{fig:songStructureEntry}
+\end{figure}
+
+The first two bytes of each song structure entry hold $phrase\_number$
+(labeled $phr_{num}$ in Figure~\ref{fig:songStructureEntry}) which
+numbers each phrase, starting at one and incrementing with each entry.
+That is followed by $beat\_number$ (labeled $beat$), a two-byte value
+that specifies the beat at which this phrase begins in the track. It
+continues until either the beat number of the next phrase, or the beat
+identified by $end$ in the tag header if this is the last entry.
+
+$phrase\_id$ at bytes~{\tt 4-5} (labeled $phr_{id}$ in
+Figure~\ref{fig:songStructureEntry}) specifies what kind of phrase
+rekordbox has identified here. The interpretation depends on the value
+of $phrase\_style$ in the tag header, as is detailed in the table
+below.
+
+The purpose of the entry bytes~{\tt 6-14} is unknown. $fill\_in$ at
+byte~{\tt 15} (labeled $f$ in Figure~\ref{fig:songStructureEntry}) is
+a flag that indicates whether there are fill (non-phrase) beats at the
+end of the phrase. If it is non-zero, then $fill\_in\_beat\_number$ at
+bytes~{\tt 16-17} (labeled $f_b$) holds the beat number at which the
+fill begins. When fill-in is present, it is indicated in rekordbox by
+little dots on the full waveform. The manual says:
+
+\begin{quote}
+  [Fill in] is a section that provides improvisational changes at the
+  end of phrase. [Fill in] is detected at the end of Intro, Up, and
+  Chorus (up to 4 beats).
+\end{quote}
+
+TODO: Add phrase ID table here, and make actual reference to it above.
+
 \section{Crate Digger}
 
 You can find a Java library that can parse the structures described in
