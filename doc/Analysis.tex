@@ -1584,17 +1584,60 @@ Figure~\ref{fig:colorPreviewTagStructure}. $len\_header$ is {\tt 18}.
 
 $len\_entry\_bytes$ identifies how many bytes each waveform preview
 entry takes up; for this kind of tag it always has the value 6.
-$len\_entries$ specifies how many entries are present in the tag. Each
-entry represents one half-frame of audio data, and there are 75 frames
-per second, so for each second of track audio there are 150 waveform
-detail entries. The purpose of the header bytes~{\tt 14-17} is
-unknown. The waveform color preview data begins at byte~{\tt 18} and
-is 1,200 (decimal) bytes long.
+$len\_entries$ specifies how many entries are present in the tag. The
+purpose of the header bytes~{\tt 14-17} is unknown. The waveform color
+preview data begins at byte~{\tt 18} and is 7,200 (decimal) bytes
+long, representing 1,200 columns of waveform preview information.
 
 The color waveform preview entries are the most complex of any of the
-waveform tags. See the discussion at
-\url{https://github.com/Deep-Symmetry/dysentery/issues/9} for an
-analysis of them until that can be polished up for inclusion here.
+waveform tags. See the discussion on
+Github\footnote{\url{https://github.com/Deep-Symmetry/dysentery/issues/9}}
+for how the analysis was performed. {\tt @jan2000} created an audio
+file containing a 10 second sine wave sweep from 20 Hz to 20 kHz, and
+analyzed that in rekordbox. The results are represented in
+Figure~\ref{fig:sineSweepAnalysis}.
+
+As a summary, the top six stripes plot the values of each six channels
+of waveform preview information. The first byte of data is the first
+column of the top stripe, the next byte is the first column of the
+second stripe, and so on, until we reach the seventh byte, which is
+the second column of the first stripe.
+
+We are not sure what the top two stripes represent, but they do seem
+to have an effect on the blue version of the waveform preview, so they
+somehow encode ``whiteness''. The next stripe, corresponding to
+byte~{\tt 2} of each column, indicates how much sound energy is
+present in the bottom half of the frequency range (it drops around 10
+KHz). The stripe corresponding to byte~{\tt 3} reflects how much sound
+energy is present in the bottom third of the frequency range,
+byte~{\tt 4} reflects how much sound energy is in the middle of the
+frequency range, and byte~{\tt 5} tracks the sound energy in the top of
+the frequency range.
+
+The stripe labeled ``color'' reflect's {\tt @jan2000}'s algorithm for
+combining bytes~3, 4, and 5 into a color preview, and the bottom
+stripe is his approach for deriving the blue preview from that and the
+other two stripes.
+
+The calculations used by Beat Link to build its own color previews can
+be found in the {\tt segmentColor} and {\tt segmentHeight} methods of
+the {\tt WaveformPreview}
+class\footnote{\url{https://deepsymmetry.org/beatlink/apidocs/org/deepsymmetry/beatlink/data/WaveformPreview.html}},
+and the way they are used to draw the actual graphical representation
+can be found in the {\tt updateWaveform} method of the {\tt
+  WaveformPreviewComponent}
+class\footnote{\url{https://deepsymmetry.org/beatlink/apidocs/org/deepsymmetry/beatlink/data/WaveformPreviewComponent.html}}.
+These produce attractive results, but it is certainly possible that
+refinements can be found in the future.
+
+\begin{figure}
+  \vspace{5mm}
+  \centering
+  \includegraphics[width=10cm]{assets/sine-sweep-preview}
+  \caption{Sine sweep analysis}
+  \label{fig:sineSweepAnalysis}
+\end{figure}
+
 
 \subsubsection{Waveform Color Detail Tag}
 
@@ -1641,7 +1684,33 @@ Considering each entry as a two-byte big-endian integer, the red
 component is the three high-order bits. The next three bits are the
 green component, followed by the three bits of blue intensity, and
 finally five bits of height. The two low-order bits do not seem to be
-used.
+used. This is shown in Figure~\ref{fig:colorDetailSegment}.
+
+\begin{figure}
+  \begin{bytefield}[bitwidth=1.9em, leftcurly=., leftcurlyspace=0pt, boxformatting={\baselinealign}]{16}
+    \bitbox[]{1}{\tiny\bfseries f}
+    \bitbox[]{1}{\tiny\bfseries e}
+    \bitbox[]{1}{\tiny\bfseries d}
+    \bitbox[]{1}{\tiny\bfseries c}
+    \bitbox[]{1}{\tiny\bfseries b}
+    \bitbox[]{1}{\tiny\bfseries a}
+    \bitbox[]{1}{\tiny\bfseries 9}
+    \bitbox[]{1}{\tiny\bfseries 8}
+    \bitbox[]{1}{\tiny\bfseries 7}
+    \bitbox[]{1}{\tiny\bfseries 6}
+    \bitbox[]{1}{\tiny\bfseries 5}
+    \bitbox[]{1}{\tiny\bfseries 4}
+    \bitbox[]{1}{\tiny\bfseries 3}
+    \bitbox[]{1}{\tiny\bfseries 2}
+    \bitbox[]{1}{\tiny\bfseries 1}
+    \bitbox[]{1}{\tiny\bfseries 0} \\
+
+    \bitbox{3}{$red$} & \bitbox{3}{$green$}& \bitbox{3}{$blue$}& \bitbox{5}{$height$} &
+    \bitbox{1}{\tt 0} & \bitbox{1}{\tt 0}
+  \end{bytefield}
+  \caption{Waveform color detail segment bits}
+  \label{fig:colorDetailSegment}
+\end{figure}
 
 \subsubsection{Song Structure Tag}
 
