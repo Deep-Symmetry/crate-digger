@@ -6,7 +6,13 @@ This change log follows the conventions of
 
 ## [Unreleased][unreleased]
 
-Nothing so far.
+### Fixed
+
+- Now builds properly under current JDKs, including Amazon Corretto 11
+  (which is a long-term support release). The minimum JDK for building
+  is now Java 9, but the resulting build is still compatible back to
+  Java 1.6. Building under Java 11 results in much nicer JavaDoc, with
+  search support.
 
 
 ## [0.1.1] - 2019-08-25
