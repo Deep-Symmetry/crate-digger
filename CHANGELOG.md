@@ -8,6 +8,10 @@ This change log follows the conventions of
 
 ### Fixed
 
+- Some extended cue entries found in the field were missing the color
+  bytes which are expected to follow the comment text, and this was
+  causing the parsing of `EXT` files to fail. These values are now
+  treated as optional.
 - Now builds properly under current JDKs, including Amazon Corretto 11
   (which is a long-term support release). The minimum JDK for building
   is now Java 9, but the resulting build is still compatible back to
