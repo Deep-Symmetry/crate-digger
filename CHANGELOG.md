@@ -6,6 +6,10 @@ This change log follows the conventions of
 
 ## [Unreleased][unreleased]
 
+Nothing so far.
+
+## [0.1.2] - 2019-10-25
+
 ### Fixed
 
 - Some extended cue entries found in the field were missing the color
@@ -42,5 +46,6 @@ This change log follows the conventions of
 - Initial release.
 
 
-[unreleased]: https://github.com/Deep-Symmetry/crate-digger/compare/v0.1.1...HEAD
+[unreleased]: https://github.com/Deep-Symmetry/crate-digger/compare/v0.1.2...HEAD
+[0.1.2]: https://github.com/Deep-Symmetry/crate-digger/compare/v0.1.1...v0.1.2
 [0.1.1]: https://github.com/Deep-Symmetry/crate-digger/compare/v0.1.0...v0.1.1
