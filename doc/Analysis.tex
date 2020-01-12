@@ -1181,7 +1181,8 @@ Section~\ref{sec:extCueTag} for details.
       \colorbitbox{yellow}{4}{$len\_tag$} & \colorbitbox{yellow}{4}{$type$}
     \end{leftwordgroup} \\
     \begin{leftwordgroup}{\tiny\bfseries 10}
-      \colorbitbox{yellow}{4}{$len\_cues$} & \colorbitbox{yellow}{4}{$memory\_count$} & \bitbox[lrt]{8}{Cue Entries}
+      \colorbitbox{yellow}{2}{$unk$} & \colorbitbox{yellow}{2}{$len_{cues}$} &
+      \colorbitbox{yellow}{4}{$memory\_count$} & \bitbox[lrt]{8}{Cue Entries}
     \end{leftwordgroup} \\
     \begin{leftwordgroup}{}
       \skippedwords \\
@@ -1195,10 +1196,11 @@ Section~\ref{sec:extCueTag} for details.
 The $type$ value at bytes~{\tt 0c-0f} determines whether this section
 holds memory points (if $type$ is {\tt 0}) or hot cues (if $type$ is
 {\tt 1}). The number of cue entries present in the section is reported
-in $len\_cues$ at bytes~{\tt 10-13}, and we don't yet know the meaning
-of $memory\_count$ at bytes~{\tt 14-17}. The remainder of the section,
-from byte~{\tt 18} through $len\_tag$ holds the cue entries
-themselves, with the structure shown in Figure~\ref{fig:cueEntry}.
+in $len_{cues}$ at bytes~{\tt 12-13}, and we don't yet know the
+meaning of $unk$ at bytes~{\tt 10-11} or $memory\_count$ at bytes~{\tt
+  14-17}. The remainder of the section, from byte~{\tt 18} through
+$len\_tag$ holds the cue entries themselves, with the structure shown
+in Figure~\ref{fig:cueEntry}.
 
 \begin{figure}
   \begin{bytefield}[bitwidth=1.9em, leftcurly=., leftcurlyspace=0pt, boxformatting={\baselinealign}]{16}

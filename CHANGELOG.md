@@ -6,7 +6,17 @@ This change log follows the conventions of
 
 ## [Unreleased][unreleased]
 
-Nothing so far.
+### Fixed
+
+- The parsing of `DAT` files would crash on some cue lists because we
+  originally assumed the cue count was a four byte value, but it
+  appears to actually only be two bytes (which is more than enough)
+  and sometimes non-zero values would appear in the high bytes,
+  causing us to try to read vastly more cues than actually existed.
+  Thanks to [@drummerclint](https://github.com/drummerclint) for
+  reporting this and sharing the problem file that enabled me to
+  figure it out.
+
 
 ## [0.1.2] - 2019-10-25
 

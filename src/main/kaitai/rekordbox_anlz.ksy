@@ -131,8 +131,9 @@ types:
         enum: cue_list_type
         doc: |
           Identifies whether this tag stores ordinary or hot cues.
+      - size: 2
       - id: len_cues
-        type: u4
+        type: u2
         doc: |
           The length of the cue list.
       - id: memory_count
