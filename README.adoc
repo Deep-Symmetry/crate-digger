@@ -15,7 +15,10 @@ ifdef::env-github[]
 :warning-caption: :warning:
 endif::env-github[]
 
-image:doc/assets/crate-padded-left.png[role="right"]
++++
+<img align="right" width="275" height="250" alt="Record crate"
+src="doc/assets/crate-padded-left.png">
++++
 
 A Java library for fetching and parsing rekordbox media exports and
 track analysis files.
