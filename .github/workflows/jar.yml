@@ -67,7 +67,7 @@ jobs:
           release_name: ${{ env.release_name }}
           isPrerelease: true
           replace_assets: ${{ env.release_snapshot }}
-          assets: ${{ env.jar_name }}
+          assets: ${{ env.artifact_name }}
           github_token: ${{ github.token }}
           initial_mrkdwn: ${{ env.initial_description }}
 
