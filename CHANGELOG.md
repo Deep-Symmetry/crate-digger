@@ -6,6 +6,11 @@ This change log follows the conventions of
 
 ## [Unreleased][unreleased]
 
+Nothing so far.
+
+
+## [0.1.3] - 2020-02-09
+
 ### Fixed
 
 - The parsing of `DAT` files would crash on some cue lists because we
@@ -56,6 +61,7 @@ This change log follows the conventions of
 - Initial release.
 
 
-[unreleased]: https://github.com/Deep-Symmetry/crate-digger/compare/v0.1.2...HEAD
+[unreleased]: https://github.com/Deep-Symmetry/crate-digger/compare/v0.1.3...HEAD
+[0.1.3]: https://github.com/Deep-Symmetry/crate-digger/compare/v0.1.2...v0.1.3
 [0.1.2]: https://github.com/Deep-Symmetry/crate-digger/compare/v0.1.1...v0.1.2
 [0.1.1]: https://github.com/Deep-Symmetry/crate-digger/compare/v0.1.0...v0.1.1
