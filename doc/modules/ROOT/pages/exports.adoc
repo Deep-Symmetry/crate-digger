@@ -147,7 +147,7 @@ this is speculation on my part.
 |03 |albums |<<album-rows,Albums>>, for reference by tracks and searching.
 |04 |labels |Music labels, for reference by tracks and searching, TODO: 1.3.7
 |05 |keys |Musical keys, for reference by tracks, searching, and key matching, TODO: 1.3.6
-|06 |colors |Color labels, for reference by tracks and searching, TODO: 1.3.4
+|06 |colors |<<color-rows,Color labels>>, for reference by tracks and searching.
 |07 |playlist_tree |Describes the hierarchical tree structure of available playlists and folders grouping them, TODO: 1.3.8
 |08 |playlist_entries |Links tracks to playlists, in the right order, TODO: 1.3.9
 |0d |artwork |File paths of <<artwork-rows,album artwork>> images.
@@ -436,7 +436,28 @@ string itself is still as described in <<devicesql-strings>>.
 (draw-bottom)
 ----
 
+[[color-rows]]
+=== Color Rows
 
+Color rows hold a numeric color _id_ (which controls the actual color
+displayed on the player interface) at bytes{nbsp}``05``-`06` and a
+text label or __name__ starting at byte `08` which is a
+<<devicesql-strings,DeviceSQL string>> shown in the information panel
+for tracks that are assigned the color. The rows have the structure
+shown below. There are several bytes in the row that are not yet known
+to have any meaning.
+
+.Color row.
+[bytefield]
+----
+(draw-column-headers)
+(draw-box (text "unknown" :math [:sub 1]) {:span 4})
+(draw-box (text "u" :math [:sub 2]))
+(draw-box (text "id" :math) {:span 2})
+(draw-box (text "u" :math [:sub 3]))
+(draw-gap (text "name" :math))
+(draw-bottom)
+----
 
 [[devicesql-strings]]
 == DeviceSQL Strings
