@@ -355,7 +355,7 @@ final byte in the row, __ofs_name__ is a pointer to the track name
 (labeled _o~n~_ in the byte field diagram). To find the location of
 the name, add __ofs_name__ bytes to the address of the start of the
 track row itself. The name itself is encoded in a surprisingly baroque
-way, explained in TODO: Section 1.4
+way, explained in <<devicesql-strings>>.
 
 [[artist-rows]]
 === Artist Rows
@@ -415,7 +415,7 @@ Whichever name offset is used, it is a pointer to the artist name. To
 find the location of the name, add the value of the offset to the
 address of the start of the artist row itself. This gives the address
 of a DeviceSQL string holding the name, with the structure explained
-in TODO: Section 1.4
+in <<devicesql-strings>>.
 
 [[artwork-rows]]
 === Artwork Rows
@@ -425,7 +425,7 @@ which the corresponding album art image file can be found, with the
 structure shown below. Note that in this case, the DeviceSQL string
 _path_ is embedded directly into the row itself, rather than being
 located elsewhere in the heap through an offset. The structure of the
-string itself is still as described in TODO: Section 1.4.
+string itself is still as described in <<devicesql-strings>>.
 
 .Artwork row.
 [bytefield]
@@ -436,6 +436,71 @@ string itself is still as described in TODO: Section 1.4.
 (draw-bottom)
 ----
 
+
+
+[[devicesql-strings]]
+== DeviceSQL Strings
+
+Many row types store string values, sometimes by directly embedding
+them, but more often by storing an offset to a location elsewhere in
+the heap. In either case the string itself uses the strange structure
+described in this section. Strings can be stored in a variety of
+formats. The first byte of the structure, labeled __length_and_kind__
+in the parsed Kaitai Struct, identifies the encoding type and, when
+the value is odd, also the length (for short ASCII strings), as
+detailed in <<short-ascii>>.
+
+[[long-ascii]]
+=== Long ASCII Strings
+
+If __length_and_kind__ has the value `40`, it is followed by a
+two-byte _length_ field, and then followed by that many bytes of
+ASCII-encoded string data, as shown below:
+
+.Long ASCII DeviceSQL string.
+[bytefield]
+----
+(draw-column-headers)
+(draw-box 0x40)
+(draw-box (text "length" :math) {:span 2})
+(draw-gap "ASCII data")
+(draw-bottom)
+----
+
+[[long-utf16be]]
+=== Long UTF-16 Big-Endian Strings
+
+If __length_and_kind__ has the value `90`, it is followed by a
+two-byte _length_ field, and then followed by that many bytes of
+UTF-16 big-endian encoded string data, as shown below:
+
+.Long UTF-16-BE DeviceSQL string.
+[bytefield]
+----
+(draw-column-headers)
+(draw-box 0x90)
+(draw-box (text "length" :math) {:span 2})
+(draw-gap "UTF-16 Big-Endian data")
+(draw-bottom)
+----
+
+[[short-ascii]]
+=== Short ASCII Strings
+
+If __length_and_kind__ has an odd value it is a __mangled_length__,
+labeled _m~l~_ below. This means we are dealing with a short ASCII
+DeviceSQL string. To find the length of the string data (which
+immediately follows this byte), subtract 1 from __mangled_length__,
+divide it by 2, and subtract 1 again.
+
+.Short ASCII DeviceSQL string.
+[bytefield]
+----
+(draw-column-headers)
+(draw-box (text "m" :math [:sub "l"]))
+(draw-gap "ASCII data")
+(draw-bottom)
+----
 
 
 include::partial$Footer.adoc[]
