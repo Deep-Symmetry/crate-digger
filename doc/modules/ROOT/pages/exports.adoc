@@ -142,7 +142,7 @@ this is speculation on my part.
 |Type |Name |Meaning
 
 |00 |tracks |Track metadata: title, artist, genre, artwork ID, playing time, etc., TODO: 1.3.10
-|01 |genres |Musical genres, for reference by tracks and searching, TODO: 1.3.5.
+|01 |genres |<<genre-rows,Musical genres>>, for reference by tracks and searching.
 |02 |artists |<<artist-rows,Artists>>, for reference by tracks and searching.
 |03 |albums |<<album-rows,Albums>>, for reference by tracks and searching.
 |04 |labels |Music labels, for reference by tracks and searching, TODO: 1.3.7
@@ -441,7 +441,7 @@ string itself is still as described in <<devicesql-strings>>.
 
 Color rows hold a numeric color _id_ (which controls the actual color
 displayed on the player interface) at bytes{nbsp}``05``-`06` and a
-text label or __name__ starting at byte `08` which is a
+text label or __name__ starting at byte{nbsp}``08`` which is a
 <<devicesql-strings,DeviceSQL string>> shown in the information panel
 for tracks that are assigned the color. The rows have the structure
 shown below. There are several bytes in the row that are not yet known
@@ -455,6 +455,24 @@ to have any meaning.
 (draw-box (text "u" :math [:sub 2]))
 (draw-box (text "id" :math) {:span 2})
 (draw-box (text "u" :math [:sub 3]))
+(draw-gap (text "name" :math))
+(draw-bottom)
+----
+
+[[genre-rows]]
+=== Genre Rows
+
+Genre rows hold a numeric genre _id_ (which tracks can be assigned) at
+bytes{nbsp}``00``-`03` and a text _name_ starting at byte{nbsp}``04``
+which is a <<devicesql-strings,DeviceSQL string>>. The rows
+have the structure shown below:
+
+[[genre-label-row]]
+.Genre or Label row.
+[bytefield]
+----
+(draw-column-headers)
+(draw-box (text "id" :math) {:span 4})
 (draw-gap (text "name" :math))
 (draw-bottom)
 ----
