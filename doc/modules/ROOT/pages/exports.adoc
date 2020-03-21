@@ -148,8 +148,8 @@ this is speculation on my part.
 |04 |labels |<<label-rows,Music labels>>, for reference by tracks and searching.
 |05 |keys |<<key-rows,Musical keys>>, for reference by tracks, searching, and key matching.
 |06 |colors |<<color-rows,Color labels>>, for reference by tracks and searching.
-|07 |playlist_tree |Describes the hierarchical <<playlist-tree-rows,tree structure>> of available playlists and folders grouping them.
-|08 |playlist_entries |Links tracks to playlists, in the right order, TODO: 1.3.9
+|07 |playlist_tree |Describes the hierarchical <<playlist-tree-rows,tree structure>> of playlists and folders grouping them.
+|08 |playlist_entries |Links tracks to <<playlist-entry-rows,playlists>>, in the right order.
 |0d |artwork |File paths of <<artwork-rows,album artwork>> images.
 |10 |columns |Details not yet confirmed.
 |13 |history |Records the tracks played during performances.
@@ -543,6 +543,7 @@ which is a boolean.
 
 The rows have the following structure:
 
+.Playlist Tree row.
 [bytefield]
 ----
 (draw-column-headers)
@@ -555,6 +556,31 @@ The rows have the following structure:
 (draw-bottom)
 ----
 
+[[playlist-entry-rows]]
+== Playlist Entry Rows
+
+Playlist entry rows list the tracks that belong to a particular
+playlist, and also establish the order in which they should be played.
+They have a very simple structure, shown below, containing only three
+values. The __entry_index__ at bytes{nbsp}``00``-`03` specifies the
+position within the playlist at which this entry belongs. The
+__track_id__ at bytes{nbsp}``04``-`07` identifies the track to be
+played at this position in the playlist, by corresponding to the _id_
+of a row in the <<track-rows,Track table>>, and the __playlist_id__ at
+bytes{nbsp}``08``-`0b` identifies the playlist to which it belongs, by
+corresponding to the __id__ of a row in the
+<<playlist-tree-rows,Playlist Tree>>.
+
+.Playlist Entry row.
+[bytefield]
+----
+(def boxes-per-row 0x0c)
+(def left-margin 1)
+(draw-column-headers)
+(draw-box (text "entry_index" :math) {:span 4})
+(draw-box (text "track_id" :math) {:span 4})
+(draw-box (text "playlist_id" :math) {:span 4})
+----
 [[devicesql-strings]]
 == DeviceSQL Strings
 
