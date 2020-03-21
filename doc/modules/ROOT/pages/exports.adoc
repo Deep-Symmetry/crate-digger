@@ -120,6 +120,7 @@ the following structure:
 .Table pointer.
 [bytefield]
 ----
+(def left-margin 1)
 (draw-column-headers)
 (draw-box (text "type" :math) {:span 4})
 (draw-box (text "empty" :math [:sub "c"]) {:span 4})
@@ -142,7 +143,7 @@ this is speculation on my part.
 
 |00 |tracks |Track metadata: title, artist, genre, artwork ID, playing time, etc., TODO: 1.3.10
 |01 |genres |Musical genres, for reference by tracks and searching, TODO: 1.3.5.
-|02 |artists |Artists, for reference by tracks and searching, TODO: 1.3.2.
+|02 |artists |<<artist-rows,Artists>>, for reference by tracks and searching.
 |03 |albums |<<album-rows,Albums>>, for reference by tracks and searching.
 |04 |labels |Music labels, for reference by tracks and searching, TODO: 1.3.7
 |05 |keys |Musical keys, for reference by tracks, searching, and key matching, TODO: 1.3.6
@@ -355,6 +356,67 @@ final byte in the row, __ofs_name__ is a pointer to the track name
 the name, add __ofs_name__ bytes to the address of the start of the
 track row itself. The name itself is encoded in a surprisingly baroque
 way, explained in TODO: Section 1.4
+
+[[artist-rows]]
+=== Artist Rows
+
+Artist rows hold an Artist name and ID, with the structure shown in
+<<artist-row-near,Artist row with nearby name>> or
+<<artist-row-far,Artist row with far name>>. The _subtype_ value at
+bytes{nbsp}``00``-`01` determines which variant is used. If the artist
+name was allocated close enough to the row to be reached by a single
+byte offset, offset, _subtype_ has the value `0060`, and the row has
+the structure in <<artist-row-near,Artist row with nearby name>>. If
+the name is too far away for that, _subtype_ has the value `0064` and
+the row has the structure in <<artist-row-far,Artist row with far
+name>>.
+
+[[artist-row-near]]
+.Artist row with nearby name.
+[bytefield]
+----
+(def boxes-per-row 0x0a)
+(def left-margin 1)
+(draw-column-headers)
+(draw-box 0x60 {:span 2})
+(draw-box (text "i" :math [:sub "shift"]) {:span 2})
+(draw-box (text "id" :math) {:span 4})
+(draw-box (text "u" :math [:sub 1]))
+(draw-box (text "o" :math [:sub "n"]))
+----
+
+[[artist-row-far]]
+.Artist row with far name.
+[bytefield]
+----
+(def boxes-per-row 0x0c)
+(def left-margin 1)
+(draw-column-headers)
+(draw-box 0x64 {:span 2})
+(draw-box (text "i" :math [:sub "shift"]) {:span 2})
+(draw-box (text "id" :math) {:span 4})
+(draw-box (text "u" :math [:sub 1]))
+(draw-box (text "o" :math [:sub "n"]))
+(draw-box (text "o" :math [:sub "far"]) {:span 2})
+----
+
+In either case, _subtype_ is followed by the unexplained two-byte
+value found in many row types that Mr. Flesniak called
+__index_shift__, and then by _id_, the ID of this artist row itself,
+at bytes{nbsp}``04``-`07`, an unknown value at byte{nbsp}``08``, and
+__ofs_name_near__ at byte{nbsp}``09`` (labeled _o~n~_), the one-byte
+name offset used only in the first variant.
+
+If _subtype_ is `0064`, the value of __ofs_name_near__ is ignored, and
+instead the two-byte value __ofs_name_far__ (labeled _o~far~_) is
+used.
+
+Whichever name offset is used, it is a pointer to the artist name. To
+find the location of the name, add the value of the offset to the
+address of the start of the artist row itself. This gives the address
+of a DeviceSQL string holding the name, with the structure explained
+in TODO: Section 1.4
+
 
 
 include::partial$Footer.adoc[]
