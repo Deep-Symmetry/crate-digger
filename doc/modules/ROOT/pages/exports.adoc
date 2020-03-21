@@ -1,0 +1,32 @@
+= Database Exports
+James Elliott <james@deepsymmetry.org>
+:icons: font
+:experimental:
+
+.Background
+****
+The files written to external media by rekordbox for use in player
+hardware contain a wealth of information that can be used in place of
+queries to the `remotedb` server on the players, which is important
+because they can be obtained from the players’ NFS servers, even if
+there are four players in use sharing the same media. Under those
+circumstances, `remotedb` queries are impossible. This document shares
+what has been learned so far about the files, and how to interpret
+them.
+****
+
+== Database Exports
+
+The starting point for finding track metadata from a player is the
+database export file, which can be found within rekordbox media at the
+following path:
+
+----
+/PIONEER/rekordbox/export.pdb
+----
+
+(If you are using the
+https://deepsymmetry.org/cratedigger/apidocs/org/deepsymmetry/cratedigger/FileFetcher.html#fetch(java.net.InetAddress,java.lang.String,java.lang.String,java.io.File)[Crate
+Digger `FileFetcher`] to request this file, use that path as the
+`filePath` argument, and use a `mountPath` value of `/B/` if you want
+to read it from the SD slot, or `/C/` to obtain it from the USB slot).

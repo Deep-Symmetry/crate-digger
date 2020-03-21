@@ -1,0 +1,7 @@
+name: rekordbox-export-analysis
+title: Rekordbox Export Structure Analysis
+version: 'master'
+prerelease: true
+start_page: ROOT:exports.adoc
+nav:
+- modules/ROOT/nav.adoc
