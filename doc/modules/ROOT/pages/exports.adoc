@@ -3,8 +3,8 @@ James Elliott <james@deepsymmetry.org>
 :icons: font
 :experimental:
 
-.Background
-****
+== Background
+
 The files written to external media by rekordbox for use in player
 hardware contain a wealth of information that can be used in place of
 queries to the `remotedb` server on the players, which is important
@@ -13,7 +13,6 @@ there are four players in use sharing the same media. Under those
 circumstances, `remotedb` queries are impossible. This document shares
 what has been learned so far about the files, and how to interpret
 them.
-****
 
 == Database Exports
 
@@ -30,3 +29,292 @@ https://deepsymmetry.org/cratedigger/apidocs/org/deepsymmetry/cratedigger/FileFe
 Digger `FileFetcher`] to request this file, use that path as the
 `filePath` argument, and use a `mountPath` value of `/B/` if you want
 to read it from the SD slot, or `/C/` to obtain it from the USB slot).
+
+The file is a relational database format designed to be efficiently
+used by very low power devices (there were deployments on 16 bit
+devices with 32K of RAM). Today you are most likely to encounter it
+within the Pioneer Professional DJ ecosystem, because it is the format
+that their rekordbox software uses to write USB and SD media which can
+be mounted in DJ controllers and used to play and mix music.
+
+The file consists of a series of fixed size pages. The first page
+contains a file header which defines the page size and the locations
+of database tables of different types, by the index of their first
+page. The rest of the pages consist of the data pages for all of the
+tables identified in the header.
+
+Each table is made up of a series of rows which may be spread across
+any number of pages. The pages start with a header describing the page
+and linking to the next page. The rest of the page is used as a heap:
+rows are scattered around it, and located using an index structure
+that builds backwards from the end of the page. Each row of a given
+type has a fixed size structure which links to any variable-sized
+strings by their offsets within the page.
+
+As changes are made to the table, some records may become unused, and
+there may be gaps within the heap that are too small to be used by
+other data. There is a bit map in the row index that identifies which
+rows are actually present. Rows that are not present must be ignored:
+they do not contain valid (or even necessarily well-formed) data.
+
+The majority of the work in reverse-engineering this format was
+performed by https://github.com/henrybetts/Rekordbox-Decoding[Henry
+Betts] and https://github.com/flesniak/python-prodj-link[Fabian
+Lesniak], to whom I am hugely grateful.
+
+[[file-header]]
+=== File Header
+
+Unless otherwise stated, all multi-byte numbers in the file are stored
+in little-endian byte order. Field names used in the byte field
+diagrams match the IDs assigned to them in the
+https://github.com/Deep-Symmetry/crate-digger/blob/master/src/main/kaitai/rekordbox_pdb.ksy[Kaitai
+Struct specification], unless that is too long to fit, in which case a
+subscripted abbreviation is used, and the text will mention the actual
+struct field name.
+
+.Numbers in this document
+****
+Values within packets, packet lengths, and byte offsets are all shown
+in hexadecimal in `code` font. Other numbers are in normal body text
+font and are decimal.
+****
+
+The first page begins with the file header, shown below. The header
+starts with four zero bytes, followed by a four-byte integer,
+__len_page__ at byte `04`, that establishes the size of each page
+(including this first one), in bytes. This is followed by another
+four-byte integer, __num_tables__ at byte `08`, which reports the
+number of different tables that are present in the file. Each table
+will have a table pointer entry in the “Table pointers” section of the
+file header, described below, that identifies and locates the table.
+
+.File header.
+[bytefield]
+----
+(draw-column-headers)
+(draw-related-boxes (repeat 4 0))
+(draw-box (text "len_page" :math) {:span 4})
+(draw-box (text "num_tables" :math) {:span 4})
+(draw-box (text "next" :math [:sub "u"]) {:span 4})
+(draw-box (text "unknown" :math) {:span 4})
+(draw-box (text "sequence" :math) {:span 4})
+(draw-related-boxes (repeat 4 0))
+(draw-gap "Table Pointers")
+(draw-bottom)
+----
+
+The four-byte integer _next~u~_ at byte `0c` has an unknown purpose,
+but Mr. Lesniak named it `next_unused_page` and said “Not used as any
+`empty_candidate`, points past the end of the file.” The four-byte
+integer _sequence_, at byte `14`, was described “Always incremented by
+at least one, sometimes by two or three.” and I assume this means it
+reflects a version number that rekordbox updates when synchronizing
+to the exported media.
+
+Finally, there is another series of four zero bytes, and then the
+header ends with the list of table pointers which begins at byte `1c`.
+There are as many of these as specified by __num_tables__, and each has
+the following structure:
+
+.Table pointer.
+[bytefield]
+----
+(draw-column-headers)
+(draw-box (text "type" :math) {:span 4})
+(draw-box (text "empty" :math [:sub "c"]) {:span 4})
+(draw-box (text "first_page" :math) {:span 4})
+(draw-box (text "last_page" :math) {:span 4})
+----
+
+Each Table Pointer is a series of four four-byte integers. The first,
+_type_, identifies the type of table being defined. The known table
+types are shown in below. The second value, at byte `04` of the table
+pointer, was called __empty_candidate__ by Mr. Lesniak. It may link to
+a chain of empty pages if the database is ever garbage collected, but
+this is speculation on my part.
+
+[[table-types]]
+.Table types.
+[cols=">1m,<2,<8"]
+|===
+|Type |Name |Meaning
+
+|00 |tracks |Track metadata: title, artist, genre, artwork ID, playing time, etc., TODO: 1.3.10
+|01 |genres |Musical genres, for reference by tracks and searching, TODO: 1.3.5.
+|02 |artists |Artists, for reference by tracks and searching, TODO: 1.3.2.
+|03 |albums |Albums, for reference by tracks and searching, TODO: 1.3.1.
+|04 |labels |Music labels, for reference by tracks and searching, TODO: 1.3.7
+|05 |keys |Musical keys, for reference by tracks, searching, and key matching, TODO: 1.3.6
+|06 |colors |Color labels, for reference by tracks and searching, TODO: 1.3.4
+|07 |playlist_tree |Describes the hierarchical tree structure of available playlists and folders grouping them, TODO: 1.3.8
+|08 |playlist_entries |Links tracks to playlists, in the right order, TODO: 1.3.9
+|0d |artwork |File paths of album artwork images, TODO: 1.3.3
+|10 |columns |Details not yet confirmed.
+|13 |history |Records the tracks played during performances.
+|===
+
+Other than the type, the two important values are __first_page__ at
+byte `08` and __last_page__ at byte `0c`. These tell us how to find
+the table. They are page indices, where the page containing the file
+header has index 0, the page with index 1 begins at byte __len_page__,
+and so on. In other words, the first page of the table identified by
+the current table pointer can be found within the file starting at the
+byte __len_page__ × __first_page__.
+
+The table is a linked list of pages: each page contains the index of
+the next page after it. However, you need to keep track of the
+__last_page__ value for the table, because it tells you not to try to
+follow the next page link once you reach the page with that index. (If
+you do keep going, you will start reading pages of some different
+table.) The structure of the table pages themselves are described in
+the next section.
+
+As far as we know, the remainder of the first page after the table
+pointers is unused.
+
+=== Table Pages
+
+The table header is followed by the table pages themselves. These each
+have the size specified by __len_page__ in the above diagram, and the
+following structure:
+
+.Table page.
+[bytefield]
+----
+(draw-column-headers)
+(draw-related-boxes (repeat 4 0))
+(draw-box (text "page_index" :math) {:span 4})
+(draw-box (text "type" :math) {:span 4})
+(draw-box (text "next_page" :math) {:span 4})
+(draw-box (text "unknown" :math [:sub "1"]) {:span 4})
+(draw-box (text "unknown" :math [:sub "2"]) {:span 4})
+(draw-box (text "n" :math [:sub "rs"]))
+(draw-box (text "u" :math [:sub "3"]))
+(draw-box (text "u" :math [:sub "4"]))
+(draw-box (text "p" :math [:sub "f"]))
+(draw-box (text "free" :math [:sub "s"]) {:span 2})
+(draw-box (text "used" :math [:sub "s"]) {:span 2})
+
+(draw-box (text "u" :math [:sub "5"]) {:span 2})
+(draw-box (text "num" :math [:sub "rl"]) {:span 2})
+(draw-box (text "u" :math [:sub "6"]) {:span 2})
+(draw-box (text "u" :math [:sub "7"]) {:span 2})
+(draw-gap "heap")
+
+(draw-box "row groups" {:span 16 :borders #{:left :right}})
+(draw-box "…" [:box-below {:span 2}])
+
+(defn draw-ofs [ns]
+  (doseq [n ns]
+    (draw-box (text "ofs" :math [:sub n]) {:span 2})))
+
+(draw-ofs (take 5 (reverse (range 21))))
+(draw-box (text "row_pf" :math [:sub 1]) {:span 2})
+(draw-ofs (reverse (range 16)))
+(draw-box (text "row_pf" :math [:sub 0]) {:span 2})
+----
+
+Data pages all seem to have the header structure described here, but
+not all of them actually store data. Some of them are “strange” and we
+have not yet figured out why. The discussion below describes how to
+recognize a strange page, and avoid trying to read it as a data page.
+
+The first four bytes of a table page always seem to be zero. This is
+followed by a four-byte value _page_index_ which identifies the index of
+this page within the list of table pages (the header has index 0, the
+first actual data page the index 1, and so on). This value seems to be
+redundant, because it can be calculated by dividing the offset of the
+start of the page by _len_page_, but perhaps it serves as a sanity
+check.
+
+This is followed by another four-byte value, _type_, which identifies
+the type of the page, using the values shown in the
+<<table-types,preceding table>>. This again seems redundant because
+the table header which was followed to reach this page also identified
+the table type, but perhaps it is another sanity check, or an
+alternate way to tell, when following page links, that you have
+reached the end of the table you are interested in. Speaking of which,
+the next four-byte value, __next_page__, is that link: it identifies
+the index at which the next page of this table can be found, as long
+as we have not already reached the final page of the table, as
+described in <<file-header>>.
+
+The exact meaning of _unknown~1~_ is unclear. Mr. Flesinak said
+“sequence number (0→1: 8→13, 1→2: 22, 2→3: 27)” but I don’t know how
+to interpret that. Even less is known about _unknown~2~_ . But
+__num_rows_small__ at byte `18` within the page (abbrviated _n~rs~_ in
+the byte field diagram above) holds the number of rows that are
+present in the page, unless __num_rows_large__ (below) holds a value
+that is larger than it (but not equal to `1fff`). This seems like a
+strange mechanism for dealing with the fact that some tables (like
+playlist entries) have a lot of very small rows, too many to count
+with a single byte. But then why not just always use
+__num_rows_large__?
+
+The purpose of the next two bytes are is also unclear. Of _u~3~_ Mr.
+Flesniak said “a bitmask (first track: 32)”, and he described _u~4~_
+as “often 0, sometimes larger, especially for pages with a high number
+of rows (e.g. 12 for 101 rows)”.
+
+Byte{nbsp}``1b`` is called __page_flags__ (abbrviated _p~f~_ in the
+diagram). According to Mr. Flesniak, “strange” (non-data) pages will
+have the value `44` or `64`, and other pages have had the values `24`
+or `34`. Crate Digger considers a page to be a data page if
+__page_flags__&``40``{nbsp}={nbsp}`0`.
+
+Bytes{nbsp}``1c``-`1d` are called __free_size__ (abbreviated _free~s~_
+in the diagram), and store the amount of unused space in the page heap
+(excluding the row index which is built backwards from the end of the
+page); __used_size__ at bytes{nbsp}``1c``-`1d` (abbreviated _used~s~_)
+stores the number of bytes that are in use in the page heap.
+
+Bytes{nbsp}``20``-`21`, _u~5~_ , are of unclear purpose. Mr. Flesniak
+labeled them “(0→1: 2).”
+
+Bytes{nbsp}``22``-`23`, __num_rows_large__ (abbrviated _num~rl~_ in
+the diagram) hold the number of entries in the row index at the end of
+the page when that value is too large to fit into __num_rows_small__
+(as mentioned above), and that situation seems to be indicated when
+this value is larger than __num_rows_small__, but not equal to `1fff`.
+
+_u~6~_ at bytes{nbsp}``24``-`25` seems to have the value `1004` for
+strange pages, and `0000` for data pages. And Mr. Flesniak describes
+_u~7~_ at bytes{nbsp}``26``-`27` as “always 0 except 1 for history
+pages, num entries for strange pages?”
+
+After these header fields comes the page heap. Rows are allocated
+within this heap starting at byte `28`. Since rows can be different
+sizes, there needs to be a way to locate them. This takes the form of
+a row index, which is built from the end of the page backwards, in
+groups of up to sixteen row pointers along with a bitmask saying which
+of those rows are still part of the table (they might have been
+deleted). The number of row index entries is determined, as described
+above, by the value of either __num_rows_small__ or
+__num_rows_large__.
+
+The bit mask for the first group of up to sixteen rows, labeled
+_row~pf0~_ in the diagram (meaning “row presence flags group 0”), is
+found in the last two bytes of the page. The low order bit of this
+value will be set if row 0 is really present, the next bit if row 1 is
+really present, and so on. The two bytes before these flags, labeled
+_ofs~0~_, store the offset of the first row in the page. This offset
+is the number of bytes past the end of the page header at which the
+row itself can be found. So if row 0 begins at the very beginning of
+the heap, at byte `28` in the page, _ofs~0~_ would have the value
+`0000`.
+
+As more rows are added to the page, space is allocated for them in the
+heap, and additional index entries are added at the end of the heap,
+growing backwards. Once there have been sixteen rows added, all of the
+bits in _row~pf0~_ are accounted for, and when another row is added,
+before its offset entry _ofs~16~_ can be added, another row bit-mask
+entry _row~pf1~_ needs to be allocated. And so the row index grows
+backwards towards the rows that are being added forwards, and once
+they are too close for a new row to fit, the page is full, and another
+page gets allocated to the table.
+
+
+
+
+include::partial$Footer.adoc[]
