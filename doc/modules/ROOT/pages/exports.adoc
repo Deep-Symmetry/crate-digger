@@ -143,7 +143,7 @@ this is speculation on my part.
 |00 |tracks |Track metadata: title, artist, genre, artwork ID, playing time, etc., TODO: 1.3.10
 |01 |genres |Musical genres, for reference by tracks and searching, TODO: 1.3.5.
 |02 |artists |Artists, for reference by tracks and searching, TODO: 1.3.2.
-|03 |albums |Albums, for reference by tracks and searching, TODO: 1.3.1.
+|03 |albums |<<album-rows,Albums>>, for reference by tracks and searching.
 |04 |labels |Music labels, for reference by tracks and searching, TODO: 1.3.7
 |05 |keys |Musical keys, for reference by tracks, searching, and key matching, TODO: 1.3.6
 |06 |colors |Color labels, for reference by tracks and searching, TODO: 1.3.4
@@ -314,7 +314,47 @@ backwards towards the rows that are being added forwards, and once
 they are too close for a new row to fit, the page is full, and another
 page gets allocated to the table.
 
+== Table Rows
 
+The structure of the rows themselves is determined by the _type_ of
+the table, using the values shown in <<table-types,Table types>>.
+
+[[album-rows]]
+=== Album Rows
+
+Album rows hold an album name and ID along with an artist association,
+with the structure shown below. The unknown value at
+bytes{nbsp}``00``-`01` seems to usually have the values `80 00`. It is
+followed by a two-byte value Mr. Flesniak called __index_shift__,
+although I don’t know what that means, and another four bytes of
+unknown purpose. But at bytes{nbsp}``08``-`0b` we finally find a value
+we have a use for: __artist_id__ holds the ID of an artist row
+associated with this track row. This is followed by __id__, the ID of
+this track row itself, at bytes{nbsp}``0c``-`0f`. We assume that there
+are index tables somewhere that would let us locate the page and row
+index of a record given its table type and ID, but we have not yet
+found and figured them out.
+
+.Album row.
+[bytefield]
+----
+(draw-column-headers)
+(draw-box (text "u" :math [:sub 1]) {:span 2})
+(draw-box (text "i" :math [:sub "shift"]) {:span 2})
+(draw-box (text "unknown" :math [:sub 2]) {:span 4})
+(draw-box (text "artist_id" :math) {:span 4})
+(draw-box (text "id" :math) {:span 4})
+(draw-box (text "unknown" :math [:sub 3]) {:span 4})
+(draw-box (text "u" :math [:sub 4]))
+(draw-box (text "o" :math [:sub "n"]))
+----
+
+This is followed by five more bytes with unknown meaning, and the
+final byte in the row, __ofs_name__ is a pointer to the track name
+(labeled _o~n~_ in the byte field diagram). To find the location of
+the name, add __ofs_name__ bytes to the address of the start of the
+track row itself. The name itself is encoded in a surprisingly baroque
+way, explained in TODO: Section 1.4
 
 
 include::partial$Footer.adoc[]
