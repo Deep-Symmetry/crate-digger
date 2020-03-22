@@ -1,0 +1,11 @@
+;; Background color, used to distinguish header sections.
+(defattrs :bg-yellow {:fill "#ffffa0"})
+
+(defn draw-tag-header
+  "Draws the fields common to all tagged sections in an analysis file,
+  with the specified `kind` identifier."
+  [kind]
+  (draw-column-headers)
+  (draw-box (text kind :hex) [:bg-yellow {:span 4}])
+  (draw-box (text "len_header" :math) [:bg-yellow {:span 4}])
+  (draw-box (text "len_tag" :math) [:bg-yellow {:span 4}]))

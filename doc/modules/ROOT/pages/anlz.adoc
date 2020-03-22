@@ -1,0 +1,159 @@
+[[analysis-files]]
+= Analysis Files
+James Elliott <james@deepsymmetry.org>
+:icons: font
+:experimental:
+
+When rekordbox analyzes tracks there is some data that is too big to
+fit in the database itself. We have already seen some of that (the
+album art images, and of course the track audio is left in the
+filesystem as well). The other analysis data is organized into “anlz”
+files, whose path can be found in the DeviceSQL string pointed to by
+index 14 in the string offsets found at the end of the corresponding
+<<exports#track-rows,track row>>. These files have names like `ANLZ0001.DAT`
+and their structure is described in this section.
+
+The files are “tagged type” files, where there is an overall file
+header section, and then each entry in the file has its own header
+which identifies the type and length of that section.
+
+Later player hardware added support for things like colored and
+more-detailed waveforms. Apparently these were deemed too large to fit
+in the `.DAT` files (probably due to memory limitations of the older
+players downloading those files), so another file was introduced,
+which shares the same base filename as the `.DAT` file, but uses an
+extension of `.EXT` instead. Both kinds of file share the same
+structure, but different sets of tags can be found in each.
+
+== Analysis File Header
+
+For some reason the analysis files store their numbers in big-endian
+byte order, the opposite of the `export.pdb` database file. Field
+names used in the byte field diagrams match the IDs assigned to them
+in the
+https://github.com/Deep-Symmetry/crate-digger/blob/master/src/main/kaitai/rekordbox_anlz.ksy[Kaitai
+Struct specification], unless that is too long to fit, in which case a
+subscripted abbreviation is used, and the text will mention the actual
+struct field name.
+
+The file itself starts with the four-character code `PMAI` that
+identifies its format. This file format identifier is followed a
+four-byte value, __len_header__ (at bytes{nbsp}``04``-`07`) that
+specifies the length of the file header in bytes. This is followed by
+another four-byte value, __len_file__, at bytes{nbsp}``08``-`0b` that
+specifies the length of the whole file in bytes:
+
+.Analysis file structure.
+[bytefield]
+----
+(draw-column-headers)
+(draw-box (text "PMAI" :hex) {:span 4})
+(draw-box (text "len_header" :math) {:span 4})
+(draw-box (text "len_file" :math) {:span 4})
+(draw-related-boxes (repeat 16 nil))
+(draw-gap "Tagged sections")
+(draw-bottom)
+----
+
+The header seems to usually be `1c` bytes long, though we do not yet
+know the purpose of any of the header values that come after
+__len_file__. After the header, the file consists of a series of
+tagged sections, each with their own four-character code identifying
+the section type, followed by a header and the section content. This
+overall structure is illustrated in the above diagram, and the
+structure of the known tag types is described next.
+
+== Analysis File Sections
+
+The structure of each tagged section has an “envelope” that can be
+understood even if the internal structure of the section is unknown,
+making it easy to navigate through the file looking for the section
+you need. This structure is very similar to the file itself, and is
+illustrated below.
+
+.Tagged section structure.
+[bytefield]
+----
+(draw-column-headers)
+(draw-box (text "fourcc" :math) {:span 4})
+(draw-box (text "len_header" :math) {:span 4})
+(draw-box (text "len_tag" :math) {:span 4})
+(draw-gap "Tag-specific content")
+(draw-bottom)
+----
+
+Every section begins with a four-character code, _fourcc_, identifying
+its specific structure and content, as described in the sections
+below. This is followed by a four-byte value, __len_header__, which
+specifies how many bytes there are in the section header, and another
+four-byte value, __len_tag__, which specifies the length of the entire
+tagged section (including the header), in bytes. This value can be
+added to the address of the start of the tag to find the start of the
+next tag.
+
+There is not much value to __len_header__. If you study the structure
+of each type of tagged section, you can see some sense of where the
+“header-like stuff ” ends, and “content-like stuff” begins, and this
+seems to line up with the value of __len_header__. But because there
+are important values in each tag’s header, and those always start
+immediately after __len_tag__, it is simply easier to ignore the value
+of __len_header__, and model the tag body as beginning at byte `0c` of
+the tag. To show where the boundary occurs, in the diagrams that
+follow, values that fall inside the byte range of the header are
+colored yellow.
+
+=== Beat Grid Tag
+
+This kind of section holds a list of all beats found within the track,
+recording their bar position, the time at which they occur, and the
+tempo at that point. It is identified by the four-character code
+`PQTZ`, which may stand for “Pioneer Quantization”. It has the
+structure shown below. __len_header__ is 18. The tag-specific
+content starts with two unknown values, although Mr. Flesniak says
+that _unknown~2~_ seems to always have the value `00800000`.
+
+.Beat Grid tag.
+[bytefield]
+----
+include::example$tag_shared.edn[]
+(draw-tag-header "PQTZ")
+(draw-box (text "unknown" :math [:sub 1]) [:bg-yellow {:span 4}])
+(draw-box (text "unknown" :math [:sub 2]) [:bg-yellow {:span 4}])
+(draw-box (text "len_beats" :math) [:bg-yellow {:span 4}])
+(draw-gap "Beat entries")
+(draw-bottom)
+----
+
+__len_beats__ at bytes{nbsp}``14``-`17` specifies the number of beats
+were found in the track, and thus the number of beat entries that will
+be present in this section. The beat entries come next, and each has
+the following structure:
+
+.Beat Grid beat.
+[bytefield]
+----
+(def boxes-per-row 8)
+(def left-margin 1)
+(draw-column-headers)
+(draw-box (text "b" :math [:sub "num"]) {:span 2})
+(draw-box (text "tempo" :math) {:span 2})
+(draw-box (text "time" :math) {:span 4})
+----
+
+Each beat entry is eight bytes long. It starts with _beat_number_, a
+two-byte number (abbreviated _b~num~_ in the byte field diagram above)
+which specifies where the beat falls within its measure. So the value
+is always 1, 2, 3, or 4. This is followed by a two-byte _tempo_ value,
+which records the track tempo at the point where this beat occurs, in
+beats per minute multiplied by 100 (to allow a precision of
+stem:[\frac{1}{100}] BPM). Finally, there is a four-byte _time_ value,
+which specifies the time at which this beat would occur, in
+milliseconds, when playing the track at its normal speed.
+
+As noted above, there will be as many beat entries as __len_beats__
+specifies. They continue to the end of the tag.
+
+
+
+
+include::partial$Footer.adoc[]
