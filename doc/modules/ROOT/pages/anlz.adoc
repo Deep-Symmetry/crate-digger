@@ -153,7 +153,96 @@ milliseconds, when playing the track at its normal speed.
 As noted above, there will be as many beat entries as __len_beats__
 specifies. They continue to the end of the tag.
 
+[[cue-list]]
+=== Cue List Tag
 
+This kind of section holds either a list of ordinary memory points and
+loops, or a list of hot cues and hot loops. It is identified by the
+four-character code `PCOB`, and has the structure shown below.
+__len_header__ is `18`.
+
+NOTE: Since the release of the Nexus 2 series of players, there is a
+newer tag available that contains more information and supports more
+hot cues, so you should check for that before loading this tag. See
+<<extended-cue-list>> for details.
+
+.Cue List tag.
+[bytefield]
+----
+include::example$tag_shared.edn[]
+(draw-tag-header "PCOB")
+(draw-box (text "type" :math) [:bg-yellow {:span 4}])
+(draw-box (text "unk" :math) [:bg-yellow {:span 2}])
+(draw-box (text "len" :math [:sub "cues"]) [:bg-yellow {:span 2}])
+(draw-box (text "memory_count" :math) [:bg-yellow {:span 4}])
+(draw-gap "Cue entries")
+(draw-bottom)
+----
+
+The _type_ value at bytes{nbsp}``0c``-`0f` determines whether this
+section holds memory points (if _type_ is 0) or hot cues (if _type_ is
+1). The number of cue entries present in the section is reported in
+_len~cues~_ at bytes{nbsp}``12``-`13`, and we don’t yet know the
+meaning of _unk_ at bytes{nbsp}``10``-`11` or __memory_count__ at
+bytes{nbsp}``14``-`17`. The remainder of the section, from
+byte{nbsp}``18`` through __len_tag__ holds the cue entries themselves,
+with the following structure:
+
+.Cue List entry.
+[bytefield]
+----
+include::example$tag_shared.edn[]
+(draw-tag-header "PCPT" "len_entry")
+(draw-box (text "hot_cue" :math) [:bg-yellow {:span 4}])
+(draw-box (text "status" :math) [:bg-yellow {:span 4}])
+(draw-box (text "unknown" :math [:sub 1]) [:bg-yellow {:span 4}])
+(draw-box (text "o" :math [:sub "first"]) [:bg-yellow {:span 2}])
+(draw-box (text "o" :math [:sub "last"]) [:bg-yellow {:span 2}])
+(draw-box (text "t" :math))
+(draw-box (text "unknown" :math [:sub 2]) {:span 3})
+(draw-box (text "time" :math) {:span 4})
+(draw-box (text "loop_time" :math) {:span 4})
+(draw-related-boxes (repeat 16 nil))
+----
+
+Each cue entry is `38` bytes long. It is structured as its own
+miniature tag for unknown reasons, starting with the four-character
+code `PCPT` (Pioneer Cue Point?), and its own internal four-byte
+__len_header__ and __len_entry__ values (`1c` and `38` respectively).
+
+If the cue is an ordinary memory point, __hot_cue__ at
+bytes{nbsp}``0c``-`0f` will be zero, otherwise it identifies the
+number of the hot cue that this entry represents (Hot Cue A is number
+1, B is 2, and so on). The __status__ value at bytes{nbsp}``10``-`13`
+seems to be a deletion indicator; if it is zero, the entry is ignored.
+Cues which the players pay attention to have the value 1 here.
+
+The next four bytes have an unknown purpose, but seem to always have
+the value `00100000`. They are followed by two two-byte values, which
+seem to be for sorting the cues in the proper order in some strange
+way. __order_first__ at bytes{nbsp}``1a``-`1b` (labeled _o~first~_ in
+the diagram) has the value `ffff` for the first cue, `0000` for the
+second, then 2, 3 and on. __order_last__ at bytes{nbsp}``1a``-`1b`
+(labeled _o~last~_) has the value 1 for the first cue, 2 for the
+second, and so on, but `ffff` for the last. It would seem that the
+cues could be perfectly well sorted by just one of these fields, or
+indeed, by their _time_ values.
+
+The first “non-header” field is _type_ at byte{nbsp}``1c`` (labeled
+_t_ in the diagram), and it specifies whether the entry records a
+simple position (if it has the value 1) or a loop (if it has the value
+2). The next three bytes have an unknown purpose, but seem to always
+have the value `0003e8`, or decimal 1000.
+
+The value _time_ at bytes{nbsp}``20``-`23` records the position of the
+cue within the track, as a number of milliseconds (representing when
+the cue would occur if the track is being played at normal speed). If
+_type_ is 2, meaning that this cue stores a loop, then __loop_time__
+at bytes{nbsp}``24``-`27` stores the track time in milliseconds at
+which the player should loop back to _time_.
+
+We do not know what, if anything, is stored in the remaining bytes of
+the cue entry.
 
 
 include::partial$Footer.adoc[]

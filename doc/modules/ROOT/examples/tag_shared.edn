@@ -3,9 +3,13 @@
 
 (defn draw-tag-header
   "Draws the fields common to all tagged sections in an analysis file,
-  with the specified `kind` identifier."
-  [kind]
-  (draw-column-headers)
-  (draw-box (text kind :hex) [:bg-yellow {:span 4}])
-  (draw-box (text "len_header" :math) [:bg-yellow {:span 4}])
-  (draw-box (text "len_tag" :math) [:bg-yellow {:span 4}]))
+  with the specified `kind` identifier. If `length-name` is not
+  supplied it defaults to `len-tag`, and is used as the content of the
+  third header field."
+  ([kind]
+   (draw-tag-header kind "len_tag"))
+  ([kind length-name]
+   (draw-column-headers)
+   (draw-box (text kind :hex) [:bg-yellow {:span 4}])
+   (draw-box (text "len_header" :math) [:bg-yellow {:span 4}])
+   (draw-box (text length-name :math) [:bg-yellow {:span 4}])))
