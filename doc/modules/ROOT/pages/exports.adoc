@@ -69,9 +69,9 @@ Unless otherwise stated, all multi-byte numbers in the file are stored
 in little-endian byte order. Field names used in the byte field
 diagrams match the IDs assigned to them in the
 https://github.com/Deep-Symmetry/crate-digger/blob/master/src/main/kaitai/rekordbox_pdb.ksy[Kaitai
-Struct specification], unless that is too long to fit, in which case a
-subscripted abbreviation is used, and the text will mention the actual
-struct field name.
+Struct specification],footnote:[http://kaitai.io] unless that is too
+long to fit, in which case a subscripted abbreviation is used, and the
+text will mention the actual struct field name.
 
 .Numbers in this document
 ****
@@ -141,7 +141,7 @@ this is speculation on my part.
 |===
 |Type |Name |Meaning
 
-|00 |tracks |Track metadata: title, artist, genre, artwork ID, playing time, etc., TODO: 1.3.10
+|00 |tracks |<<track-rows,Track metadata>>: title, artist, genre, artwork ID, playing time, etc.
 |01 |genres |<<genre-rows,Musical genres>>, for reference by tracks and searching.
 |02 |artists |<<artist-rows,Artists>>, for reference by tracks and searching.
 |03 |albums |<<album-rows,Albums>>, for reference by tracks and searching.
@@ -581,6 +581,129 @@ corresponding to the __id__ of a row in the
 (draw-box (text "track_id" :math) {:span 4})
 (draw-box (text "playlist_id" :math) {:span 4})
 ----
+
+[[track-rows]]
+== Track Rows
+
+Track rows describe audio tracks that can be played from the media
+export, and provide many details about the music including links to
+other tables like artists, albums, keys, and others. They have the
+structure shown below:
+
+.Track row.
+[bytefield]
+----
+include::example$track_row.edn[]
+----
+
+The first two bytes, labeled _u~1~_, have an unknown purpose; they
+usually are `24` followed by `00`. They are followed by the
+unexplained two-byte value found in many row types that Mr. Flesniak
+called __index_shift__, and a four-byte value he called _bitmask_,
+although we do not know what the bits mean. The value at
+bytes{nbsp}``08``-`0b`, __sample_rate__, is the first one we have a
+solid understanding of: it holds the playback sample rate of the audio
+file, in samples per second (this will be 0 if it is unknown or
+variable).
+
+Bytes{nbsp}``0c``-`0f` hold the value __composer_id__ which identifies
+the composer of the track, if known, as a non-zero _id_ value of an
+<<artist-rows,Artist row>>. The size of the audio file, in bytes, is
+found in __file_size__ at bytes{nbsp}``10``-`13`. This is followed by
+an unknown four-byte value, _u~2~_, which may be another ID, and two
+unknown two-byte values, _u~3~_ (about which Mr. Flesniak says “always
+19048?”) and _u~4~_ (“always 30967?”).
+
+If there is cover art for the track, there will be a non-zero value in
+__artwork_id__ (bytes{nbsp}``1c``-`1f`), identifying the _id_ of an
+<<artwork-rows,Artwork row>>.
+
+If a dominant musical key was identified for the track there will be a
+non-zero value in __key_id__ (bytes{nbsp}``20``-`23`), which
+represents the _id_ of a <<key-rows,Key row>>. If the track is known
+to be a remake, the non-zero <<artist-rows,Artist row>> _id_ of the
+original performer will be found at bytes{nbsp}``24``-`27` in
+__original_artist_id__. If there is a known record label for the
+track, the non-zero value in __label_id__ (bytes{nbsp}``28``-`2b`)
+will link to the __id__ of a <<label-rows,Label row>> _id_. Similarly,
+if there is a known remixer, there will be a non-zero value in
+__remixer_id__ (bytes{nbsp}``2c``-`2f`) linking to the _id_ of an
+<<artist-rows,Artist row>>.
+
+The field _bitrate_ at bytes{nbsp}``30``-`33` stores the playback bit
+rate of the track, and __track_number__ at bytes{nbsp}``34``-`37`
+holds the position of the track within its album. __tempo__ at
+bytes{nbsp}``38``-`3b` holds the playback tempo of the start of the
+track in beats per minute, multiplied by 100 (in order to support a
+precision of stem:[\frac{1}{100}] BPM). If there is a known genre for
+the track, there will be a non-zero value in __genre_id__ at
+bytes{nbsp}``3c``-`3f`, representing the _id_ of a <<genre-rows,Genre
+row>>.
+
+If the track is part of an album, there will be a non-zero value in
+__album_id__ at bytes{nbsp}``40``-`43`, and this will be the _id_ of
+an <<album-rows,Album row>>. The <<artist-rows,Artist row>> _id_ of
+the primary performer associated with the track is found in
+__artist_id__ at bytes{nbsp}``44``-`47`. And the _id_ of the track
+itself is found in _id_ at bytes{nbsp}``48``-`4b`. If the album is
+known to consist of multiple discs, the disc number on which this
+track is found will be in __disc_number__ at bytes{nbsp}``4c``-`4d`.
+And the number of times the track has been played is found in
+__play_count__ (bytes{nbsp}``4e``-`4f`).
+
+The year in which the track was recorded, if known, is in _year_ at
+bytes{nbsp}``50``-`51`. The sample depth of the track audio file (bits
+per sample) is in __sample_depth__ at bytes{nbsp}``52``-`53`. The
+playback time of the track (in seconds, at normal speed) is in
+_duration_ at bytes{nbsp}``54``-`55`. The purpose of the next two
+bytes, labeled _u~5~_, is unknown; they seem to always hold the value
+`29`.
+
+Byte{nbsp}``58``, __color_id__ (labeled _c~id~_ in the diagram), holds
+the color assigned to the track in rekordbox, as the __id__ of a
+<<color-rows,Color row>>, or zero if no color has been assigned.
+Byte{nbsp}``59``, _rating_ (labeled _r_ in the diagram) holds the
+rating (0 to 5 stars) assigned the track. The next two bytes, labeled
+_u~6~_, have an unknown purpose, and seem to always have the value 1.
+The two bytes after them, labeled _u~7~_, are also unknown; Mr.
+Flesniak said “alternating 2 and 3”.
+
+The rest of the track row is an array of 21 two-byte offsets that
+point to <<devicesql-strings,DeviceSQL strings>>. To find the start of
+the string, add the address of the start of the track row to the
+offset. The purpose of each string is described in the following
+table. For convenience, the strings can be accessed as Kaitai Struct
+instance values with the names shown in the table:
+
+.Track offset strings.
+[cols=">1,<3,<8"]
+|===
+|Index |Name |Content
+
+|0 |__unknown_string_1__|Unknown, so far always empty.
+|1 |_texter_| Unknown, named by https://github.com/flesniak/python-prodj-link[@flesniak].
+|2 |__unknown_string_2__|Unknown, “thought track number, wrong”.
+|3 |__unknown_string_3__|Unknown,  “strange things”.footnote:[Often zero length, sometimes low binary values, ASCII `01` or `02` as content.]
+|4 |__unknown_string_4__|Unknown, “strange things” (as above).
+|5 |_message_| Unknown, named by https://github.com/flesniak/python-prodj-link[@flesniak].
+|6 |__kuvo_public__|Empty or `"ON"`.footnote:[Apparently used rather than a simple bit flag to control whether the track information is visible on Kuvo.]
+|7 |__autoload_hotcues__|Empty or `"ON"`.footnote:[Apparently used rather than a simple bit flag to control whether hot cues are automatically loaded for
+the track.]
+|8 |__unknown_string_5__|Unknown.
+|9 |__unknown_string_6__|Unknown, usually empty.
+|10|__date_added__|When the track was added to the rekordbox collection.
+|11|__release_date__|When the track was released.
+|12|__mix_name__|Name of the track remix, if any.
+|13|__unknown_string_7__|Unknown, usually empty.
+|14|__analyze_path__|File path of the track analysis, see TODO: Section 2.
+|15|__analyze_date__|When track analysis was performed.
+|16|_comment_|Track comment assigned by the DJ.
+|17|_title_|Track title.
+|18|__unknown_string_8__|Unknown, usually empty.
+|19|_filename_|Name of track audio file.
+|20|__file_path__|File path of track audio.
+|===
+
 [[devicesql-strings]]
 == DeviceSQL Strings
 
