@@ -404,6 +404,7 @@ include::example$tag_shared.edn[]
 (draw-bottom)
 ----
 
+[[waveform-preview-tag]]
 === Waveform Preview Tag
 
 This kind of section holds a fixed-width monochrome preview of the
@@ -448,5 +449,43 @@ shown <<waveform-preview-diagram,above>>. __len_header__ is still
 of the waveform preview. The height of the column is represented by
 the four low-order bits of the byte (so it can only range from 0 to 15
 pixels high), and no other bits are used.
+
+=== Waveform Detail Tag
+
+This kind of section holds a variable-width and much larger monochrome
+preview of the track waveform, which scrolls along while the track
+plays, giving a detailed glimpse of the neighborhood of the current
+playback position. Since this is potentially much larger than other
+analysis elements, and is not supported by older players, it is stored
+in the extended analyis file (with extension `.EXT`). It is identified
+by the four-character code `PWV3` and has the structure shown below.
+__len_header__ is `18`.
+
+.Waveform Detail tag.
+[bytefield]
+----
+include::example$tag_shared.edn[]
+(draw-tag-header "PWV3")
+(draw-box (text "len_entry_bytes" :math) [:bg-yellow {:span 4}])
+(draw-box (text "len_entries" :math) [:bg-yellow {:span 4}])
+(draw-box (text "unknown" :math) [:bg-yellow {:span 4}])
+(draw-gap (text "entries" :math))
+(draw-bottom)
+----
+
+__len_entry_bytes__ identifies how many bytes each waveform detail
+entry takes up; for this kind of tag it always has the value 1.
+__len_entries__ specifies how many entries are present in the tag.
+Each entry represents one
+<<djl-analysis:ROOT:track_metadata#frames,half-frame>> of audio data,
+and there are 75 frames per second, so for each second of track audio
+there are 150 waveform detail entries. The purpose of the header
+bytes{nbsp}``14``-`17` is unknown; they always seem to have the value
+`00960000`. The waveform detail entries begin at byte{nbsp}``18``. The
+interpretation of each byte is the same as for the
+<<waveform-preview-tag,Waveform Preview data>>.
+
+
+
 
 include::partial$Footer.adoc[]
