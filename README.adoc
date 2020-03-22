@@ -57,10 +57,11 @@ Purkhiser] posted on
 https://reverseengineering.stackexchange.com/questions/4311/help-reversing-a-edb-database-file-for-pioneers-rekordbox-software[Stack
 Exchange].
 
-There is a http://deepsymmetry.org/cratedigger/Analysis.pdf[Structure
-Analysis] article describing the details of what we have learned about
-these file formats. Reading that will help make sense of the
-exploration tools and the objects returned by this library.
+There is an
+https://djl-analysis.deepsymmetry.org/rekordbox-export-analysis/exports.html[Export
+Structure Analysis] site describing the details of what we have
+learned about these file formats. Reading that will help make sense of
+the exploration tools and the objects returned by this library.
 
 === Exploring the Analysis
 
@@ -187,8 +188,8 @@ provided to convert them into ordinary Java strings.
 
 See the http://deepsymmetry.org/cratedigger/apidocs/[API
 documentation] for more details about these classes, and the
-http://deepsymmetry.org/cratedigger/Analysis.pdf[Structure Analysis]
-for more details about the file formats.
+https://djl-analysis.deepsymmetry.org/rekordbox-export-analysis/exports.html[Export
+Structure Analysis] for more details about the file formats.
 
 == Logging
 
@@ -228,21 +229,31 @@ tools yourself.
 
 == Building the Structure Analysis
 
-The source is found in `doc/Analysis.tex`. I started out using
+The source used to be in [doc/Analysis.tex]. I started out using
 pdfLaTeX to write and format the document, but then, at the
 recommendation of one of the Kaitai Struct developers, switched to
-XeLaTeX in order to take advantage of newer fonts, Unicode, and
-ligatures. I tried setting up the document preamble so that both
-processors will still work, although the line breaks have now been
-optimized for XeLaTex, and if you want to use that you will either
-need to have the Garamond Premier Pro and Andale Mono font packages
-available on your system, or choose different font families that you
-actually do own in the `\ifxetex` section at the top.
+XeLaTeX in order to take advantage of newer features. But over time
+some of the packages I was using, especially for tables, went out of
+support and started having issues. So this and the dysentery analysis
+documents have been ported to more modern Asciidoc source in the form
+of https://antora.org[Antora] sites.
 
-The easiest way to get all the TeX and LaTeX pieces you need is
-probably via https://www.tug.org/texlive/[TeX Live], which is how I
-obtained it when I started working on the protocol analysis document
-for dysentery.
+To re-create (and even improve on) the byte field diagrams I was able
+to achieve in LaTeX, I ended up writing my own diagram generator,
+https://github.com/Deep-Symmetry/bytefield-svg[bytefied-svg], which
+runs as an Antora plugin with the help of David Jencks'
+https://gitlab.com/djencks/asciidoctor-generic-svg-extension.js[generic-svg-extension].
+
+Unfortunately, plugin support for Antora is not yet a released
+feature, so I need to run on one of David's forks for now. Once those
+features are released, it will be much easier to build this, and I
+will write simple instructions here. Until then, if you really need
+to, you can look at the
+https://github.com/Deep-Symmetry/dysentery/blob/master/doc/build.sh[build
+script] and
+https://github.com/Deep-Symmetry/dysentery/blob/master/doc/netlify.yml[antora
+playbook] in the dysentery project which build this documentation
+alongside the dysentery protocol analysis on Netlify.
 
 == Contributing
 
