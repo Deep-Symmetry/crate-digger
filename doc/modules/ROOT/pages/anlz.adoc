@@ -361,4 +361,27 @@ associated with the cue, all four of these bytes have the value `00`.
 We do not know what, if anything, is stored in the remaining bytes of
 the tag.
 
+=== Path Tag
+
+This kind of section holds the file path of the audio file for which
+the track analysis was performed. It is identified by the
+four-character code `PPTH` and has the structure shown below.
+__len_header__ is `10`.
+
+.Path tag.
+[bytefield]
+----
+include::example$tag_shared.edn[]
+(draw-tag-header "PPTH")
+(draw-box (text "len_path" :math) [:bg-yellow {:span 4}])
+(draw-gap (text "path" :math))
+(draw-bottom)
+----
+
+__len_path__ at bytes{nbsp}``0c``-`0f` holds the length of the file
+path value, which makes up the entire tag body. _path_, which starts
+at byte{nbsp}``10``, is a <<exports#devicesql-strings,DeviceSQL
+string>>.
+
+
 include::partial$Footer.adoc[]
