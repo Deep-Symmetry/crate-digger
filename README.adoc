@@ -229,14 +229,14 @@ tools yourself.
 
 == Building the Structure Analysis
 
-The source used to be in [doc/Analysis.tex](doc/Analysis.tex). I
-started out using pdfLaTeX to write and format the document, but then,
-at the recommendation of one of the Kaitai Struct developers, switched
-to XeLaTeX in order to take advantage of newer features. But over time
-some of the packages I was using, especially for tables, went out of
-support and started having issues. So this and the dysentery analysis
-documents have been ported to more modern Asciidoc source in the form
-of https://antora.org[Antora] sites.
+I started out using pdfLaTeX to write and format the document, but
+then, at the recommendation of one of the Kaitai Struct developers,
+switched to XeLaTeX in order to take advantage of newer features. But
+over time some of the packages I was using, especially for tables,
+became unsupported and started having issues. So this and the
+dysentery project's protocol analysis document have been ported to
+more modern Asciidoc source in the form of https://antora.org[Antora]
+sites.
 
 To re-create (and even improve on) the byte field diagrams I was able
 to achieve in LaTeX, I ended up writing my own diagram generator,
@@ -247,7 +247,7 @@ https://gitlab.com/djencks/asciidoctor-generic-svg-extension.js[generic-svg-exte
 Unfortunately, plugin support for Antora is not yet a released
 feature, so I need to run on one of David's forks for now. Once those
 features are released, it will be much easier to build this, and I
-will write simple instructions here. Until then, if you really need
+will write simpler instructions here. Until then, if you really need
 to, you can look at the
 https://github.com/Deep-Symmetry/dysentery/blob/master/doc/build.sh[build
 script] and
