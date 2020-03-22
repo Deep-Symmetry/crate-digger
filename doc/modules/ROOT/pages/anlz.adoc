@@ -383,5 +383,70 @@ path value, which makes up the entire tag body. _path_, which starts
 at byte{nbsp}``10``, is a <<exports#devicesql-strings,DeviceSQL
 string>>.
 
+=== VBR Tag
+
+This kind of section has not yet been explained, but it is believed to
+hold an index allowing rapid seeking to particular times within
+variable-bit-rate tracks. (Without such a structure, it would be
+necessary to scan the entire file from the beginning to find a frame
+starting at a particular time, which would be too slow for jumping to
+memory points or hot cues deep within the track.) What is known of the
+structure is shown below. The four-character code that identifies this
+type of section is `PVBR` and __len_header__ is `10`.
+
+.VBR tag.
+[bytefield]
+----
+include::example$tag_shared.edn[]
+(draw-tag-header "PVBR")
+(draw-box (text "unknown" :math [:sub 1]) [:bg-yellow {:span 4}])
+(draw-gap (text "unknown" :math [:sub 2]))
+(draw-bottom)
+----
+
+=== Waveform Preview Tag
+
+This kind of section holds a fixed-width monochrome preview of the
+track waveform, displayed above the touch strip on original nexus
+players, providing a birds-eye view of the current playback position,
+and supporting direct needle jump to specific track sections. It is
+identified by the four-character code `PWAV` and has the structure
+shown below. __len_header__ is `14`.
+
+[[waveform-preview-diagram]]
+.Waveform Preview tag.
+[bytefield]
+----
+include::example$tag_shared.edn[]
+(draw-tag-header "PWAV")
+(draw-box (text "len_preview" :math) [:bg-yellow {:span 4}])
+(draw-box (text "unknown" :math) [:bg-yellow {:span 4}])
+(draw-gap (text "data" :math))
+(draw-bottom)
+----
+
+The purpose of the header bytes{nbsp}``10``-`13` is unknown; they
+always seem to have the value `00100000`. The waveform preview data
+begins at byte{nbsp}``14`` and is 400 (decimal) bytes long. Each byte
+encodes one vertical pixel-wide column of the waveform preview. The
+height of the column is represented by the five low-order bits of the
+byte (so it can range from 0 to 31 pixels high), and the whiteness of
+the segment is represented by the three high-order bits. Segments with
+higher values in these three bits are drawn in a less saturated
+(whiter) shade of blue.
+
+=== Tiny Waveform Preview Tag
+
+This kind of section holds an even smaller fixed-width monochrome
+preview of the track waveform, which seems to be displayed on the
+CDJ-900. It is identified by the four-character code `PWV2` but
+otherwise has the same structure as the larger waveform preview tags
+shown <<waveform-preview-diagram,above>>. __len_header__ is still
+`14`, and header bytes{nbsp}``10``-`13` also seem to have the value
+`00100000`. The waveform preview data begins at byte `14` and is 100
+(decimal) bytes long. Each byte encodes one vertical pixel-wide column
+of the waveform preview. The height of the column is represented by
+the four low-order bits of the byte (so it can only range from 0 to 15
+pixels high), and no other bits are used.
 
 include::partial$Footer.adoc[]
