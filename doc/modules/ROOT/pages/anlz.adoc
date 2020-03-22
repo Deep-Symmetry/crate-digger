@@ -574,7 +574,133 @@ used. This is shown below:
 (draw-related-boxes [0 0])
 ----
 
+=== Song Structure Tag
 
+This kind of section is used only in rekordbox Performance Mode, and
+so does not get exported to external media. If you want to work with
+song structure data, you will need to find the extended analysis file
+on the computer hosting rekordbox. Within that file, the section is
+identified by the four-character code `PSSI` and has the structure
+shown below. __len_header__ is `20`. Many thanks to
+https://github.com/mganss[Michael Ganss] for contributing this
+analysis.
+
+.Song Structure tag.
+[bytefield]
+----
+include::example$tag_shared.edn[]
+(draw-tag-header "PSSI")
+(draw-box (text "len_entry_bytes" :math) [:bg-yellow {:span 4}])
+(draw-box (text "len" :math [:sub "e"]) [:bg-yellow {:span 2}])
+(draw-box (text "style" :math) [:bg-yellow {:span 2}])
+(draw-box (text "unknown" :math) [:bg-yellow {:span 6}])
+(draw-box (text "end" :math) [:bg-yellow {:span 2}])
+(draw-box (text "unknown" :math [:sub "2"]) [:bg-yellow {:span 4}])
+(draw-gap (text "entries" :math))
+(draw-bottom)
+----
+
+__len_entry_bytes__ identifies how many bytes each phrase entry takes
+up; so far it always has the value `18`, so each entry takes twenty
+four bytes. __len_entries__ at bytes{nbsp}``10``-`11` (labeled
+_len~e~_ in the diagram) specifies how many entries are present in the
+tag. Each entry represents one recognized phrase. __phrase_style__ at
+bytes{nbsp}``12``-`13` (labeled _phrase_) specifies the overall type
+of phrase structure that rekordbox chose to represent the song. The
+value 1 is an “up-down” style where the main phrases consist of “UP”,
+“DOWN”, and “CHORUS”, and is represented in rekordbox by white label
+text. The value 2 is a “bridge-verse” style where the main phrases are
+labeled “VERSE”, “CHORUS”, and “BRIDGE”, and the label text in
+rekordbox is black. Style 3 is mostly identical to bridge-verse,
+except verses 1–3 are labeled “VERSE1” and verses 4–6 are labeled
+“VERSE2” in rekordbox.
+
+The purpose of the header bytes{nbsp}``14``-`19` is unknown.
+__end_beat__ at bytes{nbsp}``1a``-`1b` (labeled _end_ in the diagram)
+holds the beat number at which the last recognized phrase ends. The
+track may continue beyond this, but will mostly be silence from then
+on.
+
+The final four bytes of the header, `1c`-`1f`, also have an unknown
+purpose.
+
+The phrase entries begin at byte{nbsp}``20``, and each has the
+structure shown below:
+
+.Song Structure entry.
+[bytefield]
+----
+(draw-column-headers)
+(draw-box (text "phr" :math [:sub "num"]) {:span 2})
+(draw-box (text "beat" :math) {:span 2})
+(draw-box (text "phr" :math [:sub "id"]) {:span 2})
+(draw-related-boxes (repeat 15 nil))
+(draw-box (text "f" :math))
+(draw-box (text "f" :math [:sub "b"]) {:span 2})
+----
+
+The first two bytes of each song structure entry hold
+__phrase_number__ (labeled _phr~num~_ in the diagram) which numbers
+each phrase, starting at one and incrementing with each entry. That is
+followed by __beat_number__ (labeled _beat_), a two-byte value that
+specifies the beat at which this phrase begins in the track. It
+continues until either the beat number of the next phrase, or the beat
+identified by _end_ in the tag header if this is the last entry.
+
+__phrase_id__ at bytes{nbsp}``04``-`05` (labeled _phr~id~_ in the
+diagram) specifies what kind of phrase rekordbox has identified here.
+The interpretation depends on the value of __phrase_style__ in the tag
+header, as is detailed the table below.
+
+The purpose of the entry bytes{nbsp}``06``-`14` is unknown.
+__fill_in__ at byte{nbsp}``15`` (labeled _f_ in the diagram) is a flag
+that indicates whether there are fill (non-phrase) beats at the end of
+the phrase. If it is non-zero, then __fill_in_beat_number__ at
+bytes{nbsp}``16``-`17` (labeled _f~b~_) holds the beat number at which
+the fill begins. When fill-in is present, it is indicated in rekordbox
+by little dots on the full waveform. The manual says:
+
+> [Fill in] is a section that provides improvisational changes at the
+> end of phrase. [Fill in] is detected at the end of Intro, Up, and
+> Chorus (up to 4 beats).
+
+.Phrase labels.
+[%autowidth,cols=">1,>1,<1"]
+|===
+|Phrase Style |Phrase ID |Label
+
+|1 |1 |INTRO
+|1 |2 |UP
+|1 |3 |DOWN
+|1 |5 |CHORUS
+|1 |6 |OUTRO
+| | |
+|2 |1 |INTRO
+|2 |2 |VERSE1
+|2 |3 |VERSE2
+|2 |4 |VERSE3
+|2 |5 |VERSE4
+|2 |6 |VERSE5
+|2 |7 |VERSE6
+|2 |8 |BRIDGE
+|2 |9 |CHORUS
+|2 |10|OUTRO
+| | |
+|3 |1 |INTRO
+|3 |2 |VERSE1
+|3 |3 |VERSE2
+|3 |4 |VERSE3
+|3 |5 |VERSE4
+|3 |6 |VERSE5
+|3 |7 |VERSE6
+|3 |8 |BRIDGE
+|3 |9 |CHORUS
+|3 |10|OUTRO
+|===
+
+Note that because Kaitai Struct does not allow multiple enum values to
+share the same label, style 3 is modeled in Crate Digger as identical
+to style 2.
 
 
 include::partial$Footer.adoc[]
