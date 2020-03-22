@@ -453,7 +453,7 @@ pixels high), and no other bits are used.
 === Waveform Detail Tag
 
 This kind of section holds a variable-width and much larger monochrome
-preview of the track waveform, which scrolls along while the track
+rendition of the track waveform, which scrolls along while the track
 plays, giving a detailed glimpse of the neighborhood of the current
 playback position. Since this is potentially much larger than other
 analysis elements, and is not supported by older players, it is stored
@@ -519,6 +519,60 @@ The color waveform preview entries are the most complex of any of the
 waveform tags. See the
 <<djl-analysis:ROOT:track_metadata#color-preview-analysis,protocol
 analysis document>> for the details.
+
+=== Waveform Color Detail Tag
+
+This kind of section holds a variable-width and much larger color
+rendition of the track waveform, introduced with the nexus 2 line (and
+also used in rekordbox), which scrolls along while the track plays,
+giving a detailed glimpse of the neighborhood of the current playback
+position. This is stored in the extended analyis file (with extension
+`.EXT`). It is identified by the four-character code `PWV5` and has
+the structure shown below. __len_header__ is `18`.
+
+.Waveform Color Detail tag.
+[bytefield]
+----
+include::example$tag_shared.edn[]
+(draw-tag-header "PWV5")
+(draw-box (text "len_entry_bytes" :math) [:bg-yellow {:span 4}])
+(draw-box (text "len_entries" :math) [:bg-yellow {:span 4}])
+(draw-box (text "unknown" :math) [:bg-yellow {:span 4}])
+(draw-gap (text "entries" :math))
+(draw-bottom)
+----
+
+__len_entry_bytes__ identifies how many bytes each waveform detail
+entry takes up; for this kind of tag it always has the value 2.
+__len_entries__ specifies how many entries are present in the tag.
+Each entry represents one
+<<djl-analysis:ROOT:track_metadata#frames,half-frame>> of audio data,
+and there are 75 frames per second, so for each second of track audio
+there are 150 waveform detail entries. The purpose of the header
+bytes{nbsp}``14``-`17` is unknown; they may always have the value
+`00960305`. The color waveform detail entries begin at
+byte{nbsp}``18``.
+
+Color detail entries are much simpler than color preview entries. They
+consist of three-bit red, green, and blue components and a five-bit
+height component packed into the sixteen bits of the two entry bytes.
+Considering each entry as a two-byte big-endian integer, the red
+component is the three high-order bits. The next three bits are the
+green component, followed by the three bits of blue intensity, and
+finally five bits of height. The two low-order bits do not seem to be
+used. This is shown below:
+
+.Waveform Color Detail segment bits.
+[bytefield]
+----
+(def left-margin 1)
+(draw-column-headers {:labels (str/split "f,e,d,c,b,a,9,8,7,6,5,4,3,2,1,0" #",")})
+(draw-box (text "red" :math) {:span 3})
+(draw-box (text "green" :math) {:span 3})
+(draw-box (text "blue" :math) {:span 3})
+(draw-box (text "height" :math) {:span 5})
+(draw-related-boxes [0 0])
+----
 
 
 
