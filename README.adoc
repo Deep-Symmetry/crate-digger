@@ -244,16 +244,10 @@ https://github.com/Deep-Symmetry/bytefield-svg[bytefied-svg], which
 runs as an Antora plugin with the help of David Jencks'
 https://gitlab.com/djencks/asciidoctor-generic-svg-extension.js[generic-svg-extension].
 
-Unfortunately, plugin support for Antora is not yet a released
-feature, so I need to run on one of David's forks for now. Once those
-features are released, it will be much easier to build this, and I
-will write simpler instructions here. Until then, if you really need
-to, you can look at the
-https://github.com/Deep-Symmetry/dysentery/blob/master/doc/build.sh[build
-script] and
-https://github.com/Deep-Symmetry/dysentery/blob/master/doc/netlify.yml[antora
-playbook] in the dysentery project which build this documentation
-alongside the dysentery protocol analysis on Netlify.
+This documentation site can be built alongside the dysentery project's
+protocol analysis, by following the directions in
+https://github.com/Deep-Symmetry/dysentery/blob/master/doc/#readme[that
+project].
 
 == Contributing
 
