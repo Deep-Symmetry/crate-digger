@@ -376,7 +376,7 @@ types:
 
   song_structure_tag:
     doc: |
-      Stores the song structure, also known as phrases (intro, verse, 
+      Stores the song structure, also known as phrases (intro, verse,
       bridge, chorus, up, down, outro).
     seq:
       - id: len_entry_bytes
@@ -481,11 +481,12 @@ enums:
   cue_entry_status:
     0: disabled
     1: enabled
-    
+
   phrase_style:
     1: up_down
     2: verse_bridge
-    
+    3: verse_bridge_2
+
   phrase_verse_bridge_id:
     1: intro
     2: verse1
@@ -497,7 +498,7 @@ enums:
     8: bridge
     9: chorus
     10: outro
-    
+
   phrase_up_down_id:
     1: intro
     2: up
