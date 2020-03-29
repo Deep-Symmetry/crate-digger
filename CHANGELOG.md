@@ -6,7 +6,15 @@ This change log follows the conventions of
 
 ## [Unreleased][unreleased]
 
-Nothing so far.
+### Fixed
+
+- Apparently some `DAT` files can be created by mixers somehow? And
+  apparently these have incorrectly-formatted vestigial `PWAV` and
+  `PWV2` tags that claim to have the normal number of preview bytes,
+  but whose tag size is equal to their header size, so they have no
+  actual data at all. This was causing the Kaitai Struct parser to
+  crash. This change allows the parse to succeed, and instead these
+  tags will return `nil` when you ask for their `data()`.
 
 
 ## [0.1.3] - 2020-02-09
