@@ -316,6 +316,7 @@ types:
         size: len_preview
         doc: |
           The actual bytes of the waveform preview.
+        if: _parent.len_tag > _parent.len_header
 
   wave_scroll_tag:
     doc: |
