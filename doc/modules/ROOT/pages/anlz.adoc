@@ -2,7 +2,6 @@
 = Analysis Files
 James Elliott <james@deepsymmetry.org>
 :icons: font
-:toc: preamble
 :experimental:
 
 When rekordbox analyzes tracks there is some data that is too big to
