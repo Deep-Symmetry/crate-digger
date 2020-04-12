@@ -108,7 +108,7 @@ This kind of section holds a list of all beats found within the track,
 recording their bar position, the time at which they occur, and the
 tempo at that point. It is identified by the four-character code
 `PQTZ`, which may stand for “Pioneer Quantization”. It has the
-structure shown below. __len_header__ is 18. The tag-specific
+structure shown below. __len_header__ is `18`. The tag-specific
 content starts with two unknown values, although Mr. Flesniak says
 that _unknown~2~_ seems to always have the value `00800000`.
 
