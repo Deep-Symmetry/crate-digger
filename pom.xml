@@ -191,7 +191,7 @@
             <plugin>
                 <groupId>name.valery1707.kaitai</groupId>
                 <artifactId>kaitai-maven-plugin</artifactId>
-                <version>0.1.1</version>
+                <version>0.1.6</version>
                 <configuration>
                     <sourceDirectory>src/main/kaitai</sourceDirectory>
                     <packageName>org.deepsymmetry.cratedigger.pdb</packageName>
@@ -251,7 +251,7 @@
             <plugin>
                 <groupId>org.codehaus.mojo</groupId>
                 <artifactId>build-helper-maven-plugin</artifactId>
-                <version>3.0.0</version>
+                <version>3.1.0</version>
                 <executions>
                     <execution>
                         <phase>generate-sources</phase>
@@ -279,7 +279,7 @@
                         <configuration>
                             <rules>
                                 <requireMavenVersion>
-                                    <version>3.0.5</version>
+                                    <version>3.2.2</version>
                                 </requireMavenVersion>
                                 <requireJavaVersion>
                                     <version>9</version>
