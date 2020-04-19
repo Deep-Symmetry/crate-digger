@@ -247,12 +247,14 @@ types:
       - size: 12  # Loops seem to have some non-zero values in the last four bytes of this.
       - id: len_comment
         type: u4
+        if: len_entry > 43
       - id: comment
         type: str
         size: len_comment
         encoding: utf-16be
         doc: |
           The comment assigned to this cue by the DJ, if any, with a trailing NUL.
+        if: len_entry > 43
       - id: color_code
         type: u1
         doc: |

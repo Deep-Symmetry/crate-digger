@@ -342,6 +342,12 @@ the comment, encoded as a UTF-16 Big Endian string with a trailing
 non-zero) always at least 4 (a one character comment followed by the
 trailing `NUL`).
 
+WARNING: Some extended cue entries are incomplete, and their
+__len_entry__ indicates they end before the comment, or include the
+comment but end before the color information. Code that processes them
+needs to be prepared to handle this, and treat such partial cues as
+having no comment and/or color.
+
 Immediately after _comment_ (in other words, starting __len_comment__
 + `1c` past the start of the entry) there are four one-byte values
 containing color information. __color_code__ (labeled _c_ in the
