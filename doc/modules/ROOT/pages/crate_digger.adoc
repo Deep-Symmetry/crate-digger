@@ -1,7 +1,5 @@
 = Crate Digger
 James Elliott <james@deepsymmetry.org>
-:icons: font
-:experimental:
 
 You can find a Java library that can parse the structures described in
 this research, and that can retrieve them from players’ NFS servers,
@@ -16,5 +14,3 @@ There are also ONC RPC specification files which were similarly used
 to generate Java classes to communicate with the NFSv2 servers in the
 players, and which can likely be used to generate structures for other
 languages as well.
-
-include::partial$Footer.adoc[]

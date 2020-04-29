@@ -16,7 +16,7 @@ ifdef::env-github[]
 endif::env-github[]
 
 +++
-<img align="right" width="275" height="250" alt="Record crate"
+<img style="float:right" width="275" height="250" alt="Record crate"
 src="doc/assets/crate-padded-left.png">
 +++
 
@@ -258,7 +258,7 @@ link:CONTRIBUTING.md[guidelines] and get in touch!
 == Licenses
 
 +++<a href="http://deepsymmetry.org"><img src="doc/assets/DS-logo-bw-200-padded-left.png"
-      align="right" alt="Deep Symmetry logo" width="216" height="123"></a>+++
+      style="float:right" alt="Deep Symmetry logo" width="216" height="123"></a>+++
 Copyright © 2018–2020 http://deepsymmetry.org[Deep Symmetry, LLC]
 
 Distributed under the

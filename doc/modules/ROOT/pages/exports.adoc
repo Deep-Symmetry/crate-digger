@@ -1,7 +1,5 @@
 = Database Exports
 James Elliott <james@deepsymmetry.org>
-:icons: font
-:experimental:
 
 == Background
 
@@ -767,5 +765,3 @@ divide it by 2, and subtract 1 again.
 (draw-gap "ASCII data")
 (draw-bottom)
 ----
-
-include::partial$Footer.adoc[]

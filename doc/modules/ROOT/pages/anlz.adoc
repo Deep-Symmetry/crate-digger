@@ -1,8 +1,6 @@
 [[analysis-files]]
 = Analysis Files
 James Elliott <james@deepsymmetry.org>
-:icons: font
-:experimental:
 
 When rekordbox analyzes tracks there is some data that is too big to
 fit in the database itself. We have already seen some of that (the
@@ -707,6 +705,3 @@ by little dots on the full waveform. The manual says:
 Note that because Kaitai Struct does not allow multiple enum values to
 share the same label, style 3 is modeled in Crate Digger as identical
 to style 2.
-
-
-include::partial$Footer.adoc[]
