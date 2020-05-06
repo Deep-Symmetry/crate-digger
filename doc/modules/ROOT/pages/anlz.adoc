@@ -8,8 +8,8 @@ album art images, and of course the track audio is left in the
 filesystem as well). The other analysis data is organized into “anlz”
 files, whose path can be found in the DeviceSQL string pointed to by
 index 14 in the string offsets found at the end of the corresponding
-<<exports#track-rows,track row>>. These files have names like `ANLZ0001.DAT`
-and their structure is described in this section.
+<<exports.adoc#track-rows,track row>>. These files have names like
+`ANLZ0001.DAT` and their structure is described in this section.
 
 The files are “tagged type” files, where there is an overall file
 header section, and then each entry in the file has its own header
@@ -384,7 +384,7 @@ include::example$tag_shared.edn[]
 
 __len_path__ at bytes{nbsp}``0c``-`0f` holds the length of the file
 path value, which makes up the entire tag body. _path_, which starts
-at byte{nbsp}``10``, is a <<exports#devicesql-strings,DeviceSQL
+at byte{nbsp}``10``, is a <<exports.adoc#devicesql-strings,DeviceSQL
 string>>.
 
 === VBR Tag
@@ -481,9 +481,9 @@ __len_entry_bytes__ identifies how many bytes each waveform detail
 entry takes up; for this kind of tag it always has the value 1.
 __len_entries__ specifies how many entries are present in the tag.
 Each entry represents one
-<<djl-analysis:ROOT:track_metadata#frames,half-frame>> of audio data,
-and there are 75 frames per second, so for each second of track audio
-there are 150 waveform detail entries. The purpose of the header
+<<djl-analysis:ROOT:track_metadata.adoc#frames,half-frame>> of audio
+data, and there are 75 frames per second, so for each second of track
+audio there are 150 waveform detail entries. The purpose of the header
 bytes{nbsp}``14``-`17` is unknown; they always seem to have the value
 `00960000`. The waveform detail entries begin at byte{nbsp}``18``. The
 interpretation of each byte is the same as for the
@@ -521,7 +521,7 @@ information.
 
 The color waveform preview entries are the most complex of any of the
 waveform tags. See the
-<<djl-analysis:ROOT:track_metadata#color-preview-analysis,protocol
+<<djl-analysis:ROOT:track_metadata.adoc#color-preview-analysis,protocol
 analysis document>> for the details.
 
 === Waveform Color Detail Tag
@@ -550,7 +550,7 @@ __len_entry_bytes__ identifies how many bytes each waveform detail
 entry takes up; for this kind of tag it always has the value 2.
 __len_entries__ specifies how many entries are present in the tag.
 Each entry represents one
-<<djl-analysis:ROOT:track_metadata#frames,half-frame>> of audio data,
+<<djl-analysis:ROOT:track_metadata.adoc#frames,half-frame>> of audio data,
 and there are 75 frames per second, so for each second of track audio
 there are 150 waveform detail entries. The purpose of the header
 bytes{nbsp}``14``-`17` is unknown; they may always have the value

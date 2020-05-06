@@ -531,7 +531,7 @@ byte{nbsp}``14`` which is a <<devicesql-strings,DeviceSQL string>>
 displayed when navigating the hierarchy, a __sort_order__ indicator at
 bytes{nbsp}``08``-`0b` (this may be the same value used to select sort
 orders when requesting menus using the dbserver protocol, shown in the
-<<djl-analysis:ROOT:track_metadata#alternate-track-sort-orders,packet
+<<djl-analysis:ROOT:track_metadata.adoc#alternate-track-sort-orders,packet
 analysis>>, but this has not yet been confirmed), and a value that
 specifies whether the row defines a folder or a playlist. In the
 Kaitai Struct, this value is called __raw_is_folder__, is found at
@@ -693,7 +693,7 @@ the track.]
 |11|__release_date__|When the track was released.
 |12|__mix_name__|Name of the track remix, if any.
 |13|__unknown_string_7__|Unknown, usually empty.
-|14|__analyze_path__|File path of the <<anlz#analysis-files,track analysis>>.
+|14|__analyze_path__|File path of the <<anlz.adoc#,track analysis>>.
 |15|__analyze_date__|When track analysis was performed.
 |16|_comment_|Track comment assigned by the DJ.
 |17|_title_|Track title.
