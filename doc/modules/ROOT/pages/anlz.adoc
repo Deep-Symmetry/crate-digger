@@ -291,7 +291,8 @@ include::example$tag_shared.edn[]
 (draw-box (text "unknown" :math [:sub 1]) {:span 3})
 (draw-box (text "time" :math) {:span 4})
 (draw-box (text "loop_time" :math) {:span 4})
-(draw-related-boxes (repeat 12 nil))
+(draw-box (text "c" :math [:sub "id"]))
+(draw-related-boxes (repeat 11 nil))
 
 (draw-box (text "len_comment" :math) {:span 4})
 (draw-gap "comment" {:min-label-columns 4})
@@ -330,9 +331,16 @@ _type_ is 2, meaning that this cue stores a loop, then __loop_time__
 at bytes{nbsp}``18``-`1b` stores the track time in milliseconds at
 which the player should loop back to _time_.
 
-The next twelve bytes have an unknown purpose, but seem to have the
-value `00`, except for the second byte which seems to have the value
-`10`. They are followed by __len_comment__, which contains the length,
+Immediately after the loop time, at byte{nbsp}``1c`` is the single
+byte value __color_id__ (labeled _c~id~_). This holds the color,
+if any, assigned to memory points and loops. If it is not zero,
+it is the ID of a row in the <<exports.adoc#color-rows,color table>>.
+Hot cues do not use this value, and have their own color information
+later in the entry.
+
+The next eleven bytes have an unknown purpose, but seem to have the
+value `00`, except for the first byte which seems to have the value
+`01`. They are followed by __len_comment__, which contains the length,
 in bytes, of the _comment_ field which immediately follows it. If
 __len_comment__ has a non-zero value, _comment_ will hold the text of
 the comment, encoded as a UTF-16 Big Endian string with a trailing
@@ -342,17 +350,17 @@ trailing `NUL`).
 
 WARNING: Some extended cue entries are incomplete, and their
 __len_entry__ indicates they end before the comment, or include the
-comment but end before the color information. Code that processes them
-needs to be prepared to handle this, and treat such partial cues as
-having no comment and/or color.
+comment but end before the hot cue color information.
+Code that processes them needs to be prepared to handle this,
+and treat such partial cues as having no comment and/or hot cue color.
 
 Immediately after _comment_ (in other words, starting __len_comment__
 + `1c` past the start of the entry) there are four one-byte values
-containing color information. __color_code__ (labeled _c_ in the
-diagram) appears to be a code identifying the color with which
-rekordbox displays the cue, by looking it up in a table. There have
-been sixteen codes identified, and their corresponding RGB colors can
-be found by looking at the
+containing hot cue color information. __color_code__
+(labeled _c_ in the diagram) appears to be a code identifying the color
+in which rekordbox displays the cue, by looking it up in a table.
+There have been sixteen codes identified, and their corresponding RGB
+colors can be found by looking at the
 https://github.com/Deep-Symmetry/beat-link/blob/v0.6.1/src/main/java/org/deepsymmetry/beatlink/data/CueList.java#L457-L509[`findRecordboxColor`
 static method] in the Beat Link library’s `CueList` class. The next
 three bytes, __color_red__ (labeled _r_), __color_green__ (labeled
@@ -360,7 +368,7 @@ _g_), and __color_blue__ (labeled _b_), make up an RGB color
 specification which is similar, but not identical, to the color that
 rekordbox displays. We believe these are the values used to illuminate
 the RGB LEDs in a player that has loaded the cue. When no color is
-associated with the cue, all four of these bytes have the value `00`.
+associated with the hot cue, all four of these bytes have the value `00`.
 
 We do not know what, if anything, is stored in the remaining bytes of
 the tag.

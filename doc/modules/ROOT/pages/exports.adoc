@@ -457,6 +457,26 @@ to have any meaning.
 (draw-bottom)
 ----
 
+Regardless of the names assigned to the colors by the user, the
+row _id_ values map to the following colors in the user interface
+of rekordbox and on CDJs:
+
+.Colors displayed.
+[cols=">1m,<8"]
+|===
+|ID |Meaning
+
+|0 |No color
+|1 |Pink
+|2 |Red
+|3 |Orange
+|4 |Yellow
+|5 |Green
+|6 |Aqua
+|7 |Blue
+|8 |Purple
+|===
+
 [[genre-rows]]
 === Genre Rows
 
