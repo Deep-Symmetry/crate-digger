@@ -52,7 +52,7 @@ types:
     seq:
       - id: fourcc
         type: s4
-        # enum: section_tags  Can't use this until enums support default/unmatched value
+        # enum: section_tags  # Can't use this line until KSC supports switching on possibly-null enums in Java.
         doc: |
           A tag value indicating what kind of section this is.
       - id: len_header
@@ -391,7 +391,7 @@ types:
           The number of phrases.
       - id: style
         type: u2
-        enum: phrase_style
+        # enum: phrase_style   Can't use this line until KSC supports switching on possibly-null enums in Java.
         doc: |
           The phrase style. 1 is the up-down style
           (white label text in rekordbox) where the main phrases consist
@@ -429,8 +429,8 @@ types:
         type:
           switch-on: _parent.style
           cases:
-            'phrase_style::up_down': phrase_up_down
-            'phrase_style::verse_bridge': phrase_verse_bridge
+            1: phrase_up_down       # 'phrase_style::up_down'
+            2: phrase_verse_bridge  # 'phrase_style::verse_bridge'
             _: phrase_verse_bridge
         doc: |
           Identifier of the phrase label.
