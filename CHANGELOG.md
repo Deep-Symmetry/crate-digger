@@ -15,6 +15,10 @@ This change log follows the conventions of
   actual data at all. This was causing the Kaitai Struct parser to
   crash. This change allows the parse to succeed, and instead these
   tags will return `nil` when you ask for their `data()`.
+- Rekordbox 6 seems to have at least one new phrase style in it, and
+  this was also crashing the parser. For now, until KSC can handle
+  switching on possibly-null enum values in Java, give up on using an
+  enum for this.
 
 
 ## [0.1.3] - 2020-02-09
