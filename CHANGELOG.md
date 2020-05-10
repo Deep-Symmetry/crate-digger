@@ -6,8 +6,16 @@ This change log follows the conventions of
 
 ## [Unreleased][unreleased]
 
+Nothing so far.
+
+
+## [0.1.4] - 2020-05-10
+
 ### Fixed
 
+- The colors assigned to ordinary memory points and loops use
+  a [completely separate mechanism](https://github.com/Deep-Symmetry/crate-digger/pull/13),
+  which was discovered by [@ehendrikd](https://github.com/ehendrikd).
 - Apparently some `DAT` files can be created by mixers somehow? And
   apparently these have incorrectly-formatted vestigial `PWAV` and
   `PWV2` tags that claim to have the normal number of preview bytes,
@@ -73,7 +81,8 @@ This change log follows the conventions of
 - Initial release.
 
 
-[unreleased]: https://github.com/Deep-Symmetry/crate-digger/compare/v0.1.3...HEAD
+[unreleased]: https://github.com/Deep-Symmetry/crate-digger/compare/v0.1.4...HEAD
+[0.1.4]: https://github.com/Deep-Symmetry/crate-digger/compare/v0.1.3...v0.1.4
 [0.1.3]: https://github.com/Deep-Symmetry/crate-digger/compare/v0.1.2...v0.1.3
 [0.1.2]: https://github.com/Deep-Symmetry/crate-digger/compare/v0.1.1...v0.1.2
 [0.1.1]: https://github.com/Deep-Symmetry/crate-digger/compare/v0.1.0...v0.1.1
