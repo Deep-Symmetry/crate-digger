@@ -10,6 +10,9 @@ This change log follows the conventions of
 
 - DeviceSQL Strings with kind `90` are actually stored as UTF-16LE with
   an unknown `00` byte between the length and text.
+- The structure analysis documentation and diagram for database table
+  pages neglected a pair of unknown bytes at the end, so the locations
+  of the row presence flags and row offsets were shown incorrectly.
 
 ## [0.1.4] - 2020-05-10
 

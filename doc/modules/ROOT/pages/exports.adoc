@@ -701,7 +701,7 @@ instance values with the names shown in the table:
 |===
 |Index |Name |Content
 
-|0 |__unknown_string_1__|Unknown, so far always empty.
+|0 |__isrc__|International Standard Recording Code, if known, in <<isrc-strings,mangled format>>.
 |1 |_texter_| Unknown, named by https://github.com/flesniak/python-prodj-link[@flesniak].
 |2 |__unknown_string_2__|Unknown, “thought track number, wrong”.
 |3 |__unknown_string_3__|Unknown,  “strange things”.footnote:[Often zero length, sometimes low binary values, ASCII `01` or `02` as content.]
@@ -772,6 +772,15 @@ below:
 (draw-gap "UTF-16 Little-Endian data")
 (draw-bottom)
 ----
+
+[[isrc-strings]]
+.ISRC Strings
+NOTE: When an International Standard Recording Code is present as the
+first string pointer in a track row, it is marked with kind `90` but
+does not actually hold a UTF-16-LE string. Instead, the first byte
+after the `00` value following the length is the value `03`, and then
+there are _length_ bytes of ordinary ASCII holding the ISRC. Crate
+Digger does not yet attempt to cope with this.
 
 [[short-ascii]]
 === Short ASCII Strings

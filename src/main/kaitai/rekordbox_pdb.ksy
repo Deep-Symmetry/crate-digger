@@ -687,12 +687,12 @@ types:
           The location, relative to the start of this row, of a
           variety of variable-length strings.
     instances:
-      unknown_string_1:
+      isrc:
         type: device_sql_string
         pos: _parent.row_base + ofs_strings[0]
         doc: |
-          A string of unknown purpose, which has so far only been
-          empty.
+          International Standard Recording Code of track
+          when known (in mangled format).
         -webide-parse-mode: eager
       texter:
         type: device_sql_string
