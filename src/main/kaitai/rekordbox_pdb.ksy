@@ -843,7 +843,7 @@ types:
           switch-on: length_and_kind
           cases:
             0x40: device_sql_long_ascii
-            0x90: device_sql_long_utf16be
+            0x90: device_sql_long_utf16le
             _: device_sql_short_ascii(length_and_kind)
         -webide-parse-mode: eager
     -webide-representation: '{body.text}'
@@ -887,18 +887,19 @@ types:
         doc: |
           The content of the string.
 
-  device_sql_long_utf16be:
+  device_sql_long_utf16le:
     doc: |
-      A UTF-16BE-encoded string preceded by a two-byte length field.
+      A UTF-16LE-encoded string preceded by a two-byte length field.
     seq:
       - id: length
         type: u2
         doc: |
           Contains the length of the string in bytes, including two trailing nulls.
+      - type: u1
       - id: text
         type: str
         size: length - 4
-        encoding: utf-16be
+        encoding: utf-16le
         doc: |
           The content of the string.
 

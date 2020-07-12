@@ -696,8 +696,8 @@ public class Database implements Closeable {
             text = ((RekordboxPdb.DeviceSqlShortAscii) string.body()).text();
         } else if (string.body() instanceof  RekordboxPdb.DeviceSqlLongAscii) {
             text = ((RekordboxPdb.DeviceSqlLongAscii) string.body()).text();
-        } else if (string.body() instanceof RekordboxPdb.DeviceSqlLongUtf16be) {
-            text = ((RekordboxPdb.DeviceSqlLongUtf16be) string.body()).text();
+        } else if (string.body() instanceof RekordboxPdb.DeviceSqlLongUtf16le) {
+            text = ((RekordboxPdb.DeviceSqlLongUtf16le) string.body()).text();
         }
         if (text != null) {
             return text;

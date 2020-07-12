@@ -754,20 +754,22 @@ ASCII-encoded string data, as shown below:
 (draw-bottom)
 ----
 
-[[long-utf16be]]
-=== Long UTF-16 Big-Endian Strings
+[[long-utf16le]]
+=== Long UTF-16 Little-Endian Strings
 
 If __length_and_kind__ has the value `90`, it is followed by a
-two-byte _length_ field, and then followed by that many bytes of
-UTF-16 big-endian encoded string data, as shown below:
+two-byte _length_ field, an unknown byte (always `00`?) and then by
+that many bytes of UTF-16 little-endian encoded string data, as shown
+below:
 
-.Long UTF-16-BE DeviceSQL string.
+.Long UTF-16-LE DeviceSQL string.
 [bytefield]
 ----
 (draw-column-headers)
 (draw-box 0x90)
 (draw-box (text "length" :math) {:span 2})
-(draw-gap "UTF-16 Big-Endian data")
+(draw-box 0)
+(draw-gap "UTF-16 Little-Endian data")
 (draw-bottom)
 ----
 

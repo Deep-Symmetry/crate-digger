@@ -6,8 +6,10 @@ This change log follows the conventions of
 
 ## [Unreleased][unreleased]
 
-Nothing so far.
+### Fixed
 
+- DeviceSQL Strings with kind `90` are actually stored as UTF-16LE with
+  an unknown `00` byte between the length and text.
 
 ## [0.1.4] - 2020-05-10
 
