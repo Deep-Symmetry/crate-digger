@@ -701,7 +701,7 @@ instance values with the names shown in the table:
 |===
 |Index |Name |Content
 
-|0 |__isrc__|International Standard Recording Code, if known, in <<isrc-strings,mangled format>>.
+|0 |__isrc__|International Standard Recording Code, if known, in <<isrc-strings,mangled format>>.footnote:evilfred[Thanks to https://github.com/evilfred[@evilfred] for discovering the ISRC strings and leading `00` byte in DeviceSQL UTF strings; we previously believed they were big-endian.]
 |1 |_texter_| Unknown, named by https://github.com/flesniak/python-prodj-link[@flesniak].
 |2 |__unknown_string_2__|Unknown, “thought track number, wrong”.
 |3 |__unknown_string_3__|Unknown,  “strange things”.footnote:[Often zero length, sometimes low binary values, ASCII `01` or `02` as content.]
@@ -759,8 +759,8 @@ ASCII-encoded string data, as shown below:
 
 If __length_and_kind__ has the value `90`, it is followed by a
 two-byte _length_ field, an unknown byte (always `00`?) and then by
-that many bytes of UTF-16 little-endian encoded string data, as shown
-below:
+that many bytes of UTF-16 little-endian{blank}footnote:evilfred[]
+encoded string data, as shown below:
 
 .Long UTF-16-LE DeviceSQL string.
 [bytefield]
