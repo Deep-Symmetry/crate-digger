@@ -63,6 +63,7 @@ Structure Analysis] site describing the details of what we have
 learned about these file formats. Reading that will help make sense of
 the exploration tools and the objects returned by this library.
 
+[[exploring-analysis]]
 === Exploring the Analysis
 
 One of the amazingly cool things about Kaitai Struct is that you can
@@ -100,7 +101,7 @@ files are found inside the corresponding track record.
 The structure definitions for these files are in
 link:src/main/kaitai/rekordbox_anlz.ksy[`rekordbox_anlz.ksy`]. You can
 use it with the Kaitai Struct Web IDE as described
-<<exploring-the-analysis,above>> to explore analysis files found in
+<<exploring-analysis,above>> to explore analysis files found in
 your own exported media.
 
 == Using the Library
@@ -126,7 +127,7 @@ need these files to provide smooth integrations with the music being
 performed). The second half is the ability to parse the contents of
 those files, as described above.
 
-=== Retreiving Files
+=== Retrieving Files
 
 The class `org.deepsymmetry.cratedigger.FileFetcher` is a singleton,
 so to work with it you will start by calling `getInstance()`, as is

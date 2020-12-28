@@ -6,6 +6,10 @@ This change log follows the conventions of
 
 ## [Unreleased][unreleased]
 
+Nothing so far.
+
+## [0.1.5] - 2020-12-28
+
 ### Fixed
 
 - DeviceSQL Strings with kind `90` are actually stored as UTF-16LE with
@@ -86,7 +90,8 @@ This change log follows the conventions of
 - Initial release.
 
 
-[unreleased]: https://github.com/Deep-Symmetry/crate-digger/compare/v0.1.4...HEAD
+[unreleased]: https://github.com/Deep-Symmetry/crate-digger/compare/v0.1.5...HEAD
+[0.1.5]: https://github.com/Deep-Symmetry/crate-digger/compare/v0.1.4...v0.1.5
 [0.1.4]: https://github.com/Deep-Symmetry/crate-digger/compare/v0.1.3...v0.1.4
 [0.1.3]: https://github.com/Deep-Symmetry/crate-digger/compare/v0.1.2...v0.1.3
 [0.1.2]: https://github.com/Deep-Symmetry/crate-digger/compare/v0.1.1...v0.1.2
