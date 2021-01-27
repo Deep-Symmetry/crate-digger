@@ -593,9 +593,10 @@ This kind of section was originally used only in rekordbox Performance
 Mode, but starting with rekordbox version 6 it also gets exported to
 external media so CDJ-3000 players can use it to control lighting
 looks. The section is identified by the four-character code `PSSI` and
-has the structure shown below. __len_header__ is `20`. Many thanks to
-https://github.com/mganss[Michael Ganss] for contributing this
-analysis.
+has the structure shown below. __len_header__ is `20`, and as always
+__len_tag__ is the length of the entire tag including the header. Many
+thanks to https://github.com/mganss[Michael Ganss] for contributing
+this analysis.
 
 .Song Structure tag.
 [bytefield]
@@ -617,7 +618,7 @@ up; so far it always has the value `18`, so each entry takes twenty
 four bytes. __len_entries__ at bytes{nbsp}``10``-`11` (labeled
 _len~e~_ in the diagram) specifies how many entries are present in the
 tag. Each entry represents one recognized phrase. __phrase_style__ at
-bytes{nbsp}``12``-`13` (labeled _phrase_) specifies the overall type
+bytes{nbsp}``12``-`13` (labeled _style_) specifies the overall type
 of phrase structure that rekordbox chose to represent the song. The
 value 1 is an “up-down” style where the main phrases consist of “UP”,
 “DOWN”, and “CHORUS”, and is represented in rekordbox by white label
