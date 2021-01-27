@@ -586,14 +586,14 @@ used. This is shown below:
 (draw-related-boxes [0 0])
 ----
 
+[[song-structure-tag]]
 === Song Structure Tag
 
-This kind of section is used only in rekordbox Performance Mode, and
-so does not get exported to external media. If you want to work with
-song structure data, you will need to find the extended analysis file
-on the computer hosting rekordbox. Within that file, the section is
-identified by the four-character code `PSSI` and has the structure
-shown below. __len_header__ is `20`. Many thanks to
+This kind of section was originally used only in rekordbox Performance
+Mode, but starting with rekordbox version 6 it also gets exported to
+external media so CDJ-3000 players can use it to control lighting
+looks. The section is identified by the four-character code `PSSI` and
+has the structure shown below. __len_header__ is `20`. Many thanks to
 https://github.com/mganss[Michael Ganss] for contributing this
 analysis.
 
