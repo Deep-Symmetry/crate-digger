@@ -6,7 +6,10 @@ This change log follows the conventions of
 
 ## [Unreleased][unreleased]
 
-Nothing so far.
+### Added
+
+- Ability to parse `PSSI` (song structure/phrase analysis) tags now
+  exported by rekordbox 6.
 
 ## [0.1.5] - 2020-12-28
 
