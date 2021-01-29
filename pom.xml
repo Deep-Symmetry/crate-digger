@@ -6,7 +6,7 @@
 
     <groupId>org.deepsymmetry</groupId>
     <artifactId>crate-digger</artifactId>
-    <version>0.1.5</version>
+    <version>0.1.6-SNAPSHOT</version>
     <packaging>jar</packaging>
 
     <name>Crate Digger</name>

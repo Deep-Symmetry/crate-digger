@@ -394,6 +394,19 @@ types:
         type: u2
         doc: |
           The number of phrases.
+      - id: body
+        type: song_structure_body
+        doc: |
+          The rest of the tag, which needs to be unmasked before it
+          can be parsed.
+        size-eos: true
+        process: unmask_song_structure_tag(len_entries)
+
+  song_structure_body:
+    doc: |
+      Stores the rest of the song structure tag, which can only be
+      parsed after unmasking.
+    seq:
       - id: style
         type: u2
         # enum: phrase_style   Can't use this line until KSC supports switching on possibly-null enums in Java.
@@ -416,7 +429,7 @@ types:
       - id: entries
         type: song_structure_entry
         repeat: expr
-        repeat-expr: len_entries
+        repeat-expr: _parent.len_entries
 
   song_structure_entry:
     doc: |
@@ -439,7 +452,7 @@ types:
             _: phrase_verse_bridge
         doc: |
           Identifier of the phrase label.
-      - size: _parent.len_entry_bytes - 9
+      - size: _parent._parent.len_entry_bytes - 9
       - id: fill_in
         type: u1
         doc: |
