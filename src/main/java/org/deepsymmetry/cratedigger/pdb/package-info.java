@@ -12,6 +12,11 @@
  * <p>The generated classes are used by {@link org.deepsymmetry.cratedigger.Database}, which provides the API for
  * taking advantage of them.</p>
  *
+ * <p>The song structure tag, {@link org.deepsymmetry.cratedigger.pdb.RekordboxAnlz.SongStructureTag}, is also now
+ * exposed as the official API for working with phrase analysis information. Going forward, new tag types are likely
+ * to be modeled in this way, because they are accessible through the general tag query via dbserver queries as well
+ * as by parsing the downloaded analysis files themselves.</p>
+ *
  * <p>The Kaitai Struct source code for these classes, which is much more readable than the classes themselves,
  * can be found <a href="https://github.com/Deep-Symmetry/crate-digger/tree/master/src/main/kaitai"
  *   target="_blank">here</a>.</p>
