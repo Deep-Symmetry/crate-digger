@@ -78,7 +78,12 @@ seq:
     doc: |
       @flesniak said: "Always incremented by at least one,
       sometimes by two or three."
-  - contents: [0, 0, 0, 0]
+  - id: gap
+    contents: [0, 0, 0, 0]
+    doc: |
+      Only exposed until
+      https://github.com/kaitai-io/kaitai_struct/issues/825 can be
+      fixed.
   - id: tables
     type: table
     repeat: expr
@@ -145,7 +150,12 @@ types:
       an index which locates all rows present in the heap via their
       offsets past the end of the page header.
     seq:
-      - contents: [0, 0, 0, 0]
+      - id: gap
+        contents: [0, 0, 0, 0]
+        doc: |
+          Only exposed until
+          https://github.com/kaitai-io/kaitai_struct/issues/825 can be
+          fixed.
       - id: page_index
         doc: Matches the index we used to look up the page, sanity check?
         type: u4

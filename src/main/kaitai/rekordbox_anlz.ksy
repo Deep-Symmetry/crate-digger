@@ -26,7 +26,9 @@ doc: |
 doc-ref: https://reverseengineering.stackexchange.com/questions/4311/help-reversing-a-edb-database-file-for-pioneers-rekordbox-software
 
 seq:
-  - contents: "PMAI"
+  - id: magic
+    contents: "PMAI"
+    doc: Identifies this as an analysis file.
   - id: len_header
     type: u4
     doc: |
@@ -149,7 +151,9 @@ types:
     doc: |
       A cue list entry. Can either represent a memory cue or a loop.
     seq:
-      - contents: "PCPT"
+      - id: magic
+        contents: "PCPT"
+        doc: Identifies this as a cue list entry (cue point).
       - id: len_header
         type: u4
       - id: len_entry
@@ -218,7 +222,9 @@ types:
       A cue extended list entry. Can either describe a memory cue or a
       loop.
     seq:
-      - contents: "PCP2"
+      - id: magic
+        contents: "PCP2"
+        doc: Identifies this as an extended cue list entry (cue point).
       - id: len_header
         type: u4
       - id: len_entry

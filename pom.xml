@@ -55,7 +55,7 @@
         <dependency>
             <groupId>io.kaitai</groupId>
             <artifactId>kaitai-struct-runtime</artifactId>
-            <version>0.8</version>
+            <version>0.9</version>
         </dependency>
 
         <!-- Remote Tea -->
@@ -193,6 +193,7 @@
                 <artifactId>kaitai-maven-plugin</artifactId>
                 <version>0.1.6</version>
                 <configuration>
+                    <version>0.9</version>
                     <sourceDirectory>src/main/kaitai</sourceDirectory>
                     <packageName>org.deepsymmetry.cratedigger.pdb</packageName>
                     <overwrite>true</overwrite>
@@ -247,7 +248,10 @@
                 </executions>
             </plugin>
 
-            <!-- The remote tea plugin does not automatically add its own generated sources to the source scope. -->
+            <!--
+               The remote tea plugin does not automatically add its own generated sources to the source scope.
+               It also seems that when compiling with ksc version 0.9, neither does the Kaitai Struct plugin.
+             -->
             <plugin>
                 <groupId>org.codehaus.mojo</groupId>
                 <artifactId>build-helper-maven-plugin</artifactId>
@@ -261,6 +265,7 @@
                         <configuration>
                             <sources>
                                 <source>${project.build.directory}/generated-sources/remotetea</source>
+                                <source>${project.build.directory}/generated-sources/kaitai</source>
                             </sources>
                         </configuration>
                     </execution>
