@@ -407,23 +407,18 @@ types:
           can be parsed.
         size-eos: true
         process: unmask_song_structure_tag(len_entries)
+    -webide-representation: '{mood}'
 
   song_structure_body:
     doc: |
       Stores the rest of the song structure tag, which can only be
       parsed after unmasking.
     seq:
-      - id: style
+      - id: mood
         type: u2
-        # enum: phrase_style   Can't use this line until KSC supports switching on possibly-null enums in Java.
+        enum: track_mood
         doc: |
-          The phrase style. 1 is the up-down style
-          (white label text in rekordbox) where the main phrases consist
-          of up, down, and chorus. 2 is the bridge-verse style
-          (black label text in rekordbox) where the main phrases consist
-          of verse, chorus, and bridge. Style 3 is mostly identical to
-          bridge-verse style except verses 1-3 are labeled VERSE1 and verses
-          4-6 are labeled VERSE2 in rekordbox.
+          The mood which can be assigned to the track in rekordbox Lighting mode.
       - size: 6
       - id: end_beat
         type: u2
@@ -449,15 +444,16 @@ types:
         type: u2
         doc: |
           The beat number at which the phrase starts.
-      - id: phrase_id
+      - id: kind
         type:
-          switch-on: _parent.style
+          switch-on: _parent.mood
           cases:
-            1: phrase_up_down       # 'phrase_style::up_down'
-            2: phrase_verse_bridge  # 'phrase_style::verse_bridge'
-            _: phrase_verse_bridge
+            'track_mood::high': phrase_high
+            'track_mood::mid': phrase_mid
+            'track_mood::low': phrase_low
+            _: unknown_tag
         doc: |
-          Identifier of the phrase label.
+          The kind of phrase as displayed in rekordbox.
       - size: _parent._parent.len_entry_bytes - 9
       - id: fill_in
         type: u1
@@ -467,18 +463,25 @@ types:
         type: u2
         doc: |
           The beat number at which fill-in starts.
+    -webide-representation: '{kind.id}'
 
-  phrase_up_down:
+  phrase_high:
     seq:
       - id: id
         type: u2
-        enum: phrase_up_down_id
+        enum: mood_high_phrase
 
-  phrase_verse_bridge:
+  phrase_mid:
     seq:
       - id: id
         type: u2
-        enum: phrase_verse_bridge_id
+        enum: mood_mid_phrase
+
+  phrase_low:
+    seq:
+      - id: id
+        type: u2
+        enum: mood_low_phrase
 
   unknown_tag: {}
 
@@ -508,24 +511,32 @@ enums:
     0: disabled
     1: enabled
 
-  phrase_style:
-    1: up_down
-    2: verse_bridge
-    3: verse_bridge_2
+  track_mood:
+    1: high
+    2: mid
+    3: low
 
-  phrase_verse_bridge_id:
+  mood_low_phrase:
     1: intro
-    2: verse1
-    3: verse2
-    4: verse3
-    5: verse4
-    6: verse5
-    7: verse6
+    2: verse_1
+    5: verse_2
     8: bridge
     9: chorus
     10: outro
 
-  phrase_up_down_id:
+  mood_mid_phrase:
+    1: intro
+    2: verse_1
+    3: verse_2
+    4: verse_3
+    5: verse_4
+    6: verse_5
+    7: verse_6
+    8: bridge
+    9: chorus
+    10: outro
+
+  mood_high_phrase:
     1: intro
     2: up
     3: down
