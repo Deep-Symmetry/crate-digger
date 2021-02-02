@@ -406,8 +406,20 @@ types:
           The rest of the tag, which needs to be unmasked before it
           can be parsed.
         size-eos: true
-        process: unmask_song_structure_tag(len_entries)
+        process: 'xor(mask)'
+#        process: 'xor(is_unmask_disabled ? [0] : mask)'
+    instances:
+      c:
+        value: len_entries
+      mask:
+        value: |
+          [
+            (0xCB+c).as<s1>, (0xE1+c).as<s1>, (0xEE+c).as<s1>, (0xFA+c).as<s1>, (0xE5+c).as<s1>, (0xEE+c).as<s1>, (0xAD+c).as<s1>, (0xEE+c).as<s1>,
+            (0xE9+c).as<s1>, (0xD2+c).as<s1>, (0xE9+c).as<s1>, (0xEB+c).as<s1>, (0xE1+c).as<s1>, (0xE9+c).as<s1>, (0xF3+c).as<s1>, (0xE8+c).as<s1>,
+            (0xE9+c).as<s1>, (0xF4+c).as<s1>, (0xE1+c).as<s1>
+          ].as<bytes>
     -webide-representation: '{mood}'
+
 
   song_structure_body:
     doc: |
