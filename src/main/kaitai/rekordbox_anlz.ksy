@@ -470,7 +470,7 @@ types:
             'track_mood::high': phrase_high
             'track_mood::mid': phrase_mid
             'track_mood::low': phrase_low
-            _: unknown_tag
+            _: phrase_mid  # We don't recognize this mood, so pick a generic interpretation.
         doc: |
           The kind of phrase as displayed in rekordbox.
       - size: _parent._parent.len_entry_bytes - 9
