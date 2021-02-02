@@ -616,10 +616,12 @@ include::example$tag_shared.edn[]
 (draw-tag-header "PSSI")
 (draw-box (text "len_entry_bytes" :math) [:bg-yellow {:span 4}])
 (draw-box (text "len" :math [:sub "e"]) [:bg-yellow {:span 2}])
-(draw-box (text "style" :math) [:bg-yellow {:span 2}])
+(draw-box (text "mood" :math) [:bg-yellow {:span 2}])
 (draw-box (text "unknown" :math) [:bg-yellow {:span 6}])
 (draw-box (text "end" :math) [:bg-yellow {:span 2}])
-(draw-box (text "unknown" :math [:sub "2"]) [:bg-yellow {:span 4}])
+(draw-box (text "unk" :math [:sub "2"]) [:bg-yellow {:span 2}])
+(draw-box (text "bank" :math) [:bg-yellow ])
+(draw-box (text "u" :math [:sub "3"]) [:bg-yellow])
 (draw-gap (text "entries" :math))
 (draw-bottom)
 ----
@@ -628,16 +630,27 @@ __len_entry_bytes__ identifies how many bytes each phrase entry takes
 up; so far it always has the value `18`, so each entry takes twenty
 four bytes. __len_entries__ at bytes{nbsp}``10``-`11` (labeled
 _len~e~_ in the diagram) specifies how many entries are present in the
-tag. Each entry represents one recognized phrase. __phrase_style__ at
-bytes{nbsp}``12``-`13` (labeled _style_) specifies the overall type
-of phrase structure that rekordbox chose to represent the song. The
-value 1 is an “up-down” style where the main phrases consist of “UP”,
-“DOWN”, and “CHORUS”, and is represented in rekordbox by white label
-text. The value 2 is a “bridge-verse” style where the main phrases are
-labeled “VERSE”, “CHORUS”, and “BRIDGE”, and the label text in
-rekordbox is black. Style 3 is mostly identical to bridge-verse,
-except verses 1–3 are labeled “VERSE1” and verses 4–6 are labeled
-“VERSE2” in rekordbox.
+tag. Each entry represents one recognized phrase.
+
+The value _mood_ at bytes{nbsp}``12``-`13` specifies the overall type
+of phrase structure that rekordbox chose to represent the song, based
+on its analysis of the audio.
+
+The value 1 is a “high” mood where the phrase types consist of
+“Intro”, “Up”, “Down”, “Chorus”, and “Outro”. Other values in each
+phrase entry cause the intro, chorus, and outro phrases to have their
+labels subdivided into styes “1” or “2” (for example, “Intro 1”), and
+“up” is subdivided into style “Up 1”, “Up 2”, or “Up 3”. See the
+<<phrase-labels,table below>> for an expanded version of this
+description.
+
+The value 2 is a “mid” mood where the phrase types are labeled
+“Intro”, “Verse 1” through “Verse 6”, “Chorus”, “Bridge”, and “Outro”.
+
+And value 3 is a “low” mood where the phrase types are labeled
+“Intro”, “Verse 1”, “Verse 2”, “Chorus”, “Bridge”, and “Outro”. There
+are three different phrase type values for each of “Verse 1” and
+“Verse 2”, but rekordbox makes no distinction between them.
 
 The purpose of the header bytes{nbsp}``14``-`19` is unknown.
 __end_beat__ at bytes{nbsp}``1a``-`1b` (labeled _end_ in the diagram)
@@ -645,8 +658,15 @@ holds the beat number at which the last recognized phrase ends. The
 track may continue beyond this, but will mostly be silence from then
 on.
 
-The final four bytes of the header, `1c`-`1f`, also have an unknown
-purpose.
+The purpose of the header bytes{nbsp}``1c``-`1d` is also unknown.
+
+_bank_ at byte{nbsp}``1e`` identifies the stylistic bank which has
+been assigned to the track by the user in Lighting mode. The value
+zero means the user has made no assignment, and this is treated the
+same as if “Cool” has been chosen. The values and their meanings are
+listed in the <<track-banks,table below>>.
+
+The final byte of the header also has an unknown purpose.
 
 The phrase entries begin at byte{nbsp}``20``, and each has the
 structure shown below:
@@ -688,40 +708,37 @@ by little dots on the full waveform. The manual says:
 > end of phrase. [Fill in] is detected at the end of Intro, Up, and
 > Chorus (up to 4 beats).
 
-.Phrase labels.
-[%autowidth,cols=">1,>1,<1"]
+[[phrase-labels]]
+.Phrase labels in each mood.
+[%autowidth,cols=">1,<2,<2,<2"]
 |===
-|Phrase Style |Phrase ID |Label
+|Phrase ID |Low Label |Mid Label |High Label
 
-|1 |1 |INTRO
-|1 |2 |UP
-|1 |3 |DOWN
-|1 |5 |CHORUS
-|1 |6 |OUTRO
-| | |
-|2 |1 |INTRO
-|2 |2 |VERSE1
-|2 |3 |VERSE2
-|2 |4 |VERSE3
-|2 |5 |VERSE4
-|2 |6 |VERSE5
-|2 |7 |VERSE6
-|2 |8 |BRIDGE
-|2 |9 |CHORUS
-|2 |10|OUTRO
-| | |
-|3 |1 |INTRO
-|3 |2 |VERSE1
-|3 |3 |VERSE2
-|3 |4 |VERSE3
-|3 |5 |VERSE4
-|3 |6 |VERSE5
-|3 |7 |VERSE6
-|3 |8 |BRIDGE
-|3 |9 |CHORUS
-|3 |10|OUTRO
+|1 |Intro |Intro | Intro _n_
+|2 |Verse 1 |Verse 1 |Up _n_
+|3 |Verse 1 |Verse 2 |Down
+|4 |Verse 1 |Verse 3 |
+|5 |Verse 2 |Verse 4 |Chorus _n_
+|6 |Verse 2 |Verse 5 |Outro _n_
+|7 |Verse 2 |Verse 6 |
+|8 |Bridge |Bridge |
+|9 |Chorus |Chorus |
+|10 |Outro |Outro |
 |===
 
-Note that because Kaitai Struct does not allow multiple enum values to
-share the same label, style 3 is modeled in Crate Digger as identical
-to style 2.
+[[track-banks]]
+.Track banks.
+[%autowidth,cols=">1,<4"]
+|===
+|Mood ID |Label
+
+|0 |Default (treated as Cool)
+|1 |Cool
+|2 |Natural
+|3 |Hot
+|4 |Subtle
+|5 |Warm
+|6 |Vivid
+|7 |Club 1
+|8 |Club 2
+|===

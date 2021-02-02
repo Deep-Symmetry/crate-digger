@@ -418,7 +418,7 @@ types:
             (0xE9+c).as<s1>, (0xD2+c).as<s1>, (0xE9+c).as<s1>, (0xEB+c).as<s1>, (0xE1+c).as<s1>, (0xE9+c).as<s1>, (0xF3+c).as<s1>, (0xE8+c).as<s1>,
             (0xE9+c).as<s1>, (0xF4+c).as<s1>, (0xE1+c).as<s1>
           ].as<bytes>
-    -webide-representation: '{mood}'
+    -webide-representation: '{body.mood}'
 
 
   song_structure_body:
@@ -430,7 +430,7 @@ types:
         type: u2
         enum: track_mood
         doc: |
-          The mood which can be assigned to the track in rekordbox Lighting mode.
+          The mood which rekordbox assigns the track as a whole during phrase analysis.
       - size: 6
       - id: end_beat
         type: u2
@@ -438,7 +438,13 @@ types:
           The beat number at which the last phrase ends. The track may
           continue after the last phrase ends. If this is the case, it will
           mostly be silence.
-      - size: 4
+      - size: 2
+      - id: bank
+        type: u1
+        enum: track_bank
+        doc: |
+          The stylistic bank which can be assigned to the track in rekordbox Lighting mode.
+      - size: 1
       - id: entries
         type: song_structure_entry
         repeat: expr
@@ -531,7 +537,11 @@ enums:
   mood_low_phrase:
     1: intro
     2: verse_1
+    3: verse_1b  # Just displayed as "Verse 1" in rekordbox.
+    4: verse_1c  # Just displayed as "Verse 1" in rekordbox.
     5: verse_2
+    6: verse_2b  # Just displayed as "Verse 2" in rekordbox.
+    7: verse_2c  # Just displayed as "Verse 2" in rekordbox.
     8: bridge
     9: chorus
     10: outro
@@ -554,3 +564,14 @@ enums:
     3: down
     5: chorus
     6: outro
+
+  track_bank:
+    0: default
+    1: cool
+    2: natural
+    3: hot
+    4: subtle
+    5: warm
+    6: vivid
+    7: club_1
+    8: club_2
