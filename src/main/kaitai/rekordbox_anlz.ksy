@@ -301,6 +301,7 @@ types:
         size: len_path - 2
         encoding: utf-16be
         if: len_path > 1
+    -webide-representation: '{path}'
 
   vbr_tag:
     doc: |
