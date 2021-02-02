@@ -54,7 +54,7 @@ types:
     seq:
       - id: fourcc
         type: s4
-        # enum: section_tags  # Can't use this line until KSC supports switching on possibly-null enums in Java.
+        enum: section_tags
         doc: |
           A tag value indicating what kind of section this is.
       - id: len_header
@@ -70,17 +70,17 @@ types:
         type:
           switch-on: fourcc
           cases:
-            0x50434f32: cue_extended_tag        #'section_tags::cues_2' (PCO2)
-            0x50434f42: cue_tag                 #'section_tags::cues' (PCOB)
-            0x50505448: path_tag                #'section_tags::path' (PPTH)
-            0x5051545a: beat_grid_tag           #'section_tags::beat_grid' (PQTZ)
-            0x50564252: vbr_tag                 #'section_tags::vbr'       (PVBR)
-            0x50574156: wave_preview_tag        #'section_tags::wave_preview' (PWAV)
-            0x50575632: wave_preview_tag        #'section_tags::wave_tiny'    (PWV2)
-            0x50575633: wave_scroll_tag         #'section_tags::wave_scroll'  (PWV3, seen in .EXT)
-            0x50575634: wave_color_preview_tag  #'section_tags::wave_color_preview' (PWV4, in .EXT)
-            0x50575635: wave_color_scroll_tag   #'section_tags::wave_color_scroll'  (PWV5, in .EXT)
-            0x50535349: song_structure_tag      #'section_tags::song_structure'  (PSSI, in .EXT)
+            'section_tags::cues_2': cue_extended_tag                    # PCO2
+            'section_tags::cues': cue_tag                               # PCOB
+            'section_tags::path': path_tag                              # PPTH
+            'section_tags::beat_grid': beat_grid_tag                    # PQTZ
+            'section_tags::vbr': vbr_tag                                # PVBR
+            'section_tags::wave_preview': wave_preview_tag              # PWAV
+            'section_tags::wave_tiny': wave_preview_tag                 # PWV2
+            'section_tags::wave_scroll': wave_scroll_tag                # PWV3, seen in .EXT
+            'section_tags::wave_color_preview': wave_color_preview_tag  # PWV4, in .EXT
+            'section_tags::wave_color_scroll': wave_color_scroll_tag    # PWV5, in .EXT
+            'section_tags::song_structure': song_structure_tag          # PSSI, in .EXT
             _: unknown_tag
     -webide-representation: '{fourcc}'
 
@@ -483,7 +483,7 @@ types:
   unknown_tag: {}
 
 enums:
-  section_tags:  # We can't use this enum until KSC supports default/unmatched values
+  section_tags:
     0x50434f42: cues                # PCOB
     0x50434f32: cues_2              # PCO2 (seen in .EXT)
     0x50505448: path                # PPTH

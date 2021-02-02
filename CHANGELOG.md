@@ -11,6 +11,14 @@ This change log follows the conventions of
 - Ability to parse `PSSI` (song structure/phrase analysis) tags now
   exported by rekordbox 6.
 
+### Changed
+
+- Upgraded Kaitai Struct to version 0.9, which fixes a bug that
+  prevented us from using enums for the four-character-codes in
+  track analysis files. This makes the parsed values more readable
+  in the Web IDE, and in the generated classes as well.
+  > :wrench:  This is a backwards-incompatible change.
+
 ## [0.1.5] - 2020-12-28
 
 ### Fixed
