@@ -677,8 +677,14 @@ structure shown below:
 (draw-column-headers)
 (draw-box (text "phr" :math [:sub "num"]) {:span 2})
 (draw-box (text "beat" :math) {:span 2})
-(draw-box (text "phr" :math [:sub "id"]) {:span 2})
-(draw-related-boxes (repeat 15 nil))
+(draw-box (text "kind" :math) {:span 2})
+(draw-box "")
+(draw-box (text "k" :math [:sub 1]))
+(draw-box "")
+(draw-box (text "k" :math [:sub 2]))
+(draw-related-boxes (repeat 9 nil))
+(draw-box (text "k" :math [:sub 3]))
+(draw-box "")
 (draw-box (text "f" :math))
 (draw-box (text "f" :math [:sub "b"]) {:span 2})
 ----
@@ -691,10 +697,17 @@ specifies the beat at which this phrase begins in the track. It
 continues until either the beat number of the next phrase, or the beat
 identified by _end_ in the tag header if this is the last entry.
 
-__phrase_id__ at bytes{nbsp}``04``-`05` (labeled _phr~id~_ in the
-diagram) specifies what kind of phrase rekordbox has identified here.
-The interpretation depends on the value of __phrase_style__ in the tag
-header, as is detailed the table below.
+_kind_ at bytes{nbsp}``04``-`05` specifies what kind of phrase
+rekordbox has identified here. The interpretation depends on the value
+of _mood_ in the tag header, as is detailed the table below. In the
+case of the “high” mood, there are numbered variations for some of the
+phrases displayed in rekordbox that are not reflected in _kind_, but
+depend on the values of three flag bytes _k~1~_ through _k~3~_ at
+bytes{nbsp}``07``, `09`, and `13` in a complicated way shown in its
+<<high-phrase-variants,own table>>. Our best guess as to the reasons
+behind this is that the design of the lighting feature changed after
+the first release, and they struggled to maintain backwards
+compatibility.
 
 The purpose of the entry bytes{nbsp}``06``-`14` is unknown.
 __fill_in__ at byte{nbsp}``15`` (labeled _f_ in the diagram) is a flag
@@ -725,6 +738,25 @@ by little dots on the full waveform. The manual says:
 |9 |Chorus |Chorus |
 |10 |Outro |Outro |
 |===
+
+[[high-phrase-variants]]
+.High mood phrase variants.
+[%autowidth,cols=">1,>1,>1,>1,<2"]
+|===
+|Phrase ID |_k~1~_ |_k~2~_ |_k~3~_ |Expanded Label
+
+|1 |1 | | |Intro 1
+|1 |0 | | |Intro 2
+|2 | |0 |0 |Up 1
+|2 | |0 |1 |Up 2
+|2 | |1 |0 |Up 3
+|3 | | | |Down
+|5 |1 | | |Chorus 1
+|5 |0 | | |Chorus 2
+|6 |1 | | |Outro 1
+|6 |0 | | |Outro 2
+|===
+
 
 [[track-banks]]
 .Track banks.
