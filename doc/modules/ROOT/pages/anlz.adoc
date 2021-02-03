@@ -716,7 +716,7 @@ compatibility.
 We also noticed that when _mood_, _kind_ and the _k_ flags indicate a
 phrase of type “Up 3”, additional beat numbers (which all fall within
 the phrase) are present in the entry. These may indicate points within
-the phrase at which lighting changes would make sense; more
+the phrase at which lighting changes would look good; more
 investigation is required to make sense of them. The number of beats
 that will be listed seems to depend on the value of the flag _b_ at
 byte{nbsp}``0b``: if this has the value 0, there will be a single beat
