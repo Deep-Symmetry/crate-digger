@@ -455,11 +455,11 @@ types:
     doc: |
       A song structure entry, represents a single phrase.
     seq:
-      - id: phrase_number
+      - id: index
         type: u2
         doc: |
           The absolute number of the phrase, starting at one.
-      - id: beat_number
+      - id: beat
         type: u2
         doc: |
           The beat number at which the phrase starts.
@@ -473,12 +473,43 @@ types:
             _: phrase_mid  # We don't recognize this mood, so pick a generic interpretation.
         doc: |
           The kind of phrase as displayed in rekordbox.
-      - size: _parent._parent.len_entry_bytes - 9
-      - id: fill_in
+      - size: 1
+      - id: k1
+        type: u1
+        doc: One of three flags that identify phrase kind variants in high-mood tracks.
+      - size: 1
+      - id: k2
+        type: u1
+        doc: One of three flags that identify phrase kind variants in high-mood tracks.
+      - size: 1
+      - id: b
         type: u1
         doc: |
-          If nonzero, fill-in is present.
-      - id: fill_in_beat_number
+          Flags how many more beat numbers are in a high-mood "Up 3" phrase.
+      - id: beat2
+        type: u2
+        doc: |
+          Extra beat number (falling within phrase) always present in high-mood "Up 3" phrases.
+      - id: beat3
+        type: u2
+        doc: |
+          Extra beat number (falling within phrase, larger than beat2)
+          present in high-mood "Up 3" phrases when b has value 1.
+      - id: beat4
+        type: u2
+        doc: |
+          Extra beat number (falling within phrase, larger than beat3)
+          present in high-mood "Up 3" phrases when b has value 1.
+      - size: 1
+      - id: k3
+        type: u1
+        doc: One of three flags that identify phrase kind variants in high-mood tracks.
+      - size: 1
+      - id: fill
+        type: u1
+        doc: |
+          If nonzero, fill-in is present at end of phrase.
+      - id: beat_fill
         type: u2
         doc: |
           The beat number at which fill-in starts.

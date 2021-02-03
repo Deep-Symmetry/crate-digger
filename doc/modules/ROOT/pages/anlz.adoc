@@ -675,27 +675,31 @@ structure shown below:
 [bytefield]
 ----
 (draw-column-headers)
-(draw-box (text "phr" :math [:sub "num"]) {:span 2})
+(draw-box (text "index" :math) {:span 2})
 (draw-box (text "beat" :math) {:span 2})
 (draw-box (text "kind" :math) {:span 2})
 (draw-box "")
 (draw-box (text "k" :math [:sub 1]))
 (draw-box "")
 (draw-box (text "k" :math [:sub 2]))
-(draw-related-boxes (repeat 9 nil))
+(draw-box "")
+(draw-box (text "b" :math))
+(draw-box (text "beat" :math [:sub 2]) {:span 2})
+(draw-box (text "beat" :math [:sub 3]) {:span 2})
+(draw-box (text "beat" :math [:sub 4]) {:span 2})
+(draw-box "")
 (draw-box (text "k" :math [:sub 3]))
 (draw-box "")
-(draw-box (text "f" :math))
-(draw-box (text "f" :math [:sub "b"]) {:span 2})
+(draw-box (text "fill" :math))
+(draw-box (text "beat" :math [:sub "fill"]) {:span 2})
 ----
 
-The first two bytes of each song structure entry hold
-__phrase_number__ (labeled _phr~num~_ in the diagram) which numbers
-each phrase, starting at one and incrementing with each entry. That is
-followed by __beat_number__ (labeled _beat_), a two-byte value that
-specifies the beat at which this phrase begins in the track. It
-continues until either the beat number of the next phrase, or the beat
-identified by _end_ in the tag header if this is the last entry.
+The first two bytes of each song structure entry hold _index_, which
+numbers each phrase, starting at one and incrementing with each entry.
+That is followed by _beat_, a two-byte value that specifies the beat
+at which this phrase begins in the track. It continues until either
+the beat number of the next phrase, or the beat identified by _end_ in
+the tag header if this is the last entry.
 
 _kind_ at bytes{nbsp}``04``-`05` specifies what kind of phrase
 rekordbox has identified here. The interpretation depends on the value
@@ -709,13 +713,23 @@ behind this is that the design of the lighting feature changed after
 the first release, and they struggled to maintain backwards
 compatibility.
 
-The purpose of the entry bytes{nbsp}``06``-`14` is unknown.
-__fill_in__ at byte{nbsp}``15`` (labeled _f_ in the diagram) is a flag
-that indicates whether there are fill (non-phrase) beats at the end of
-the phrase. If it is non-zero, then __fill_in_beat_number__ at
-bytes{nbsp}``16``-`17` (labeled _f~b~_) holds the beat number at which
-the fill begins. When fill-in is present, it is indicated in rekordbox
-by little dots on the full waveform. The manual says:
+We also noticed that when _mood_, _kind_ and the _k_ flags indicate a
+phrase of type “Up 3”, additional beat numbers (which all fall within
+the phrase) are present in the entry. These may indicate points within
+the phrase at which lighting changes would make sense; more
+investigation is required to make sense of them. The number of beats
+that will be listed seems to depend on the value of the flag _b_ at
+byte{nbsp}``0b``: if this has the value 0, there will be a single beat
+found in _beat~2~_ at bytes{nbsp}``0c``-`0d`, and if _b_ has the value
+1 there will be three different beat numbers present, with increasing
+values, in _beat~2~_, _beat~3~_ at bytes{nbsp}``0e``-`0f`, and
+_beat~4~_ at bytes{nbsp}``10``-`11`.
+
+_fill_ at byte{nbsp}``15`` is a flag that indicates whether there are
+fill (non-phrase) beats at the end of the phrase. If it is non-zero,
+then _beat~fill~_ at bytes{nbsp}``16``-`17` holds the beat number at
+which the fill begins. When fill-in is present, it is indicated in
+rekordbox by little dots on the full waveform. The manual says:
 
 > [Fill in] is a section that provides improvisational changes at the
 > end of phrase. [Fill in] is detected at the end of Intro, Up, and
