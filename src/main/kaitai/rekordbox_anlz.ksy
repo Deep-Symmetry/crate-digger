@@ -407,8 +407,7 @@ types:
           The rest of the tag, which needs to be unmasked before it
           can be parsed.
         size-eos: true
-        process: 'xor(mask)'
-#        process: 'xor(is_unmask_disabled ? [0] : mask)'
+        process:  'xor(is_masked ? mask : [0])'
     instances:
       c:
         value: len_entries
@@ -419,6 +418,14 @@ types:
             (0xE9+c).as<s1>, (0xD2+c).as<s1>, (0xE9+c).as<s1>, (0xEB+c).as<s1>, (0xE1+c).as<s1>, (0xE9+c).as<s1>, (0xF3+c).as<s1>, (0xE8+c).as<s1>,
             (0xE9+c).as<s1>, (0xF4+c).as<s1>, (0xE1+c).as<s1>
           ].as<bytes>
+      raw_mood:
+        type: u2
+        pos: 6
+        doc: |
+          This is a way to tell whether the rest of the tag has been masked. The value is supposed
+          to range from 1 to 3, but in masked files it will be much larger.
+      is_masked:
+        value: 'raw_mood > 20'  # This is almost certainly not true for an unmasked file.
     -webide-representation: '{body.mood}'
 
 
