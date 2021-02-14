@@ -23,6 +23,7 @@ which shares the same base filename as the `.DAT` file, but uses an
 extension of `.EXT` instead. Both kinds of file share the same
 structure, but different sets of tags can be found in each.
 
+[[file-header]]
 == Analysis File Header
 
 For some reason the analysis files store their numbers in big-endian
@@ -61,6 +62,7 @@ the section type, followed by a header and the section content. This
 overall structure is illustrated in the above diagram, and the
 structure of the known tag types is described next.
 
+[[file-sections]]
 == Analysis File Sections
 
 The structure of each tagged section has an “envelope” that can be
@@ -100,6 +102,7 @@ the tag. To show where the boundary occurs, in the diagrams that
 follow, values that fall inside the byte range of the header are
 colored yellow.
 
+[[beat-grid]]
 === Beat Grid Tag
 
 This kind of section holds a list of all beats found within the track,
@@ -373,6 +376,7 @@ associated with the hot cue, all four of these bytes have the value `00`.
 We do not know what, if anything, is stored in the remaining bytes of
 the tag.
 
+[[path]]
 === Path Tag
 
 This kind of section holds the file path of the audio file for which
@@ -395,6 +399,7 @@ path value, which makes up the entire tag body. _path_, which starts
 at byte{nbsp}``10``, is a <<exports.adoc#devicesql-strings,DeviceSQL
 string>>.
 
+[[vbr]]
 === VBR Tag
 
 This kind of section has not yet been explained, but it is believed to
@@ -448,6 +453,7 @@ the segment is represented by the three high-order bits. Segments with
 higher values in these three bits are drawn in a less saturated
 (whiter) shade of blue.
 
+[[tiny-preview]]
 === Tiny Waveform Preview Tag
 
 This kind of section holds an even smaller fixed-width monochrome
@@ -462,6 +468,7 @@ of the waveform preview. The height of the column is represented by
 the four low-order bits of the byte (so it can only range from 0 to 15
 pixels high), and no other bits are used.
 
+[[waveform-detail]]
 === Waveform Detail Tag
 
 This kind of section holds a variable-width and much larger monochrome
@@ -497,6 +504,7 @@ bytes{nbsp}``14``-`17` is unknown; they always seem to have the value
 interpretation of each byte is the same as for the
 <<waveform-preview-tag,Waveform Preview data>>.
 
+[[color-preview]]
 === Waveform Color Preview Tag
 
 This kind of section holds a fixed-width color preview of the track
@@ -532,6 +540,7 @@ waveform tags. See the
 <<djl-analysis:ROOT:track_metadata.adoc#color-preview-analysis,protocol
 analysis document>> for the details.
 
+[[color-detail]]
 === Waveform Color Detail Tag
 
 This kind of section holds a variable-width and much larger color
