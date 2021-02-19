@@ -785,7 +785,7 @@ rekordbox by little dots on the full waveform. The manual says:
 .Track banks.
 [%autowidth,cols=">1,<4"]
 |===
-|Mood ID |Label
+|Bank ID |Label
 
 |0 |Default (treated as Cool)
 |1 |Cool
