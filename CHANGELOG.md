@@ -10,6 +10,8 @@ This change log follows the conventions of
 
 - Ability to parse `PSSI` (song structure/phrase analysis) tags now
   exported by rekordbox 6.
+- Ability to parse the history playlist names and entries found in
+  rekordbox database exports.
 
 ### Changed
 

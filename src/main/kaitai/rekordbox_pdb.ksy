@@ -338,6 +338,8 @@ types:
             'page_type::labels': label_row
             'page_type::playlist_tree': playlist_tree_row
             'page_type::playlist_entries': playlist_entry_row
+            'page_type::history_playlists': history_playlist_row
+            'page_type::history_entries': history_entry_row
             'page_type::tracks': track_row
         if: present
         doc: |
@@ -553,6 +555,38 @@ types:
         type: u4
         doc: |
           The playlist to which this entry belongs.
+
+  history_playlist_row:
+    doc: |
+      A row that holds a history playlist ID and name, linking to
+      the track IDs captured during a performance on the player.
+    seq:
+      - id: id
+        type: u4
+        doc: |
+          The unique identifier by which this history playlist can
+          be requested.
+      - id: name
+        type: device_sql_string
+        doc: |
+          The variable-length string naming the playlist.
+
+  history_entry_row:
+    doc: |
+      A row that associates a track with a position in a history playlist.
+    seq:
+      - id: track_id
+        type: u4
+        doc: |
+          The track found at this position in the playlist.
+      - id: playlist_id
+        type: u4
+        doc: |
+          The history playlist to which this entry belongs.
+      - id: entry_index
+        type: u4
+        doc: |
+          The position within the playlist represented by this entry.
 
   track_row:
     doc: |
@@ -959,11 +993,15 @@ enums:
     10:
       id: unknown_10
     11:
-      id: unknown_11
+      id: history_playlists
       doc: |
-        The rows all seem to have history file names in them, such as "HISTORY 001".
+        Holds rows that assign IDs and give names to the history playlists
+        that have been captured by the player, such as "HISTORY 001".
     12:
-      id: unknown_12
+      id: history_entries
+      doc: |
+        Holds rows that enumerate the tracks found in history playlists
+        and the playlists they belong to.
     13:
       id: artwork
       doc: |
@@ -983,4 +1021,4 @@ enums:
     19:
       id: history
       doc: |
-        Holds rows listing tracks played in performance sessions.
+        Holds information to help rekordbox sync history playlists.

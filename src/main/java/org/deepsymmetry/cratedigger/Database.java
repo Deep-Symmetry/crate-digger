@@ -87,6 +87,9 @@ public class Database implements Closeable {
 
         playlistIndex = indexPlaylists();
         playlistFolderIndex = indexPlaylistFolders();
+
+        historyPlaylistIndex = indexHistoryPlaylists();
+        historyPlaylistNameIndex = indexHistoryPlaylistNames();
     }
 
     /**
@@ -219,6 +222,16 @@ public class Database implements Closeable {
      */
     @SuppressWarnings("WeakerAccess")
     public final SortedMap<Long, SortedSet<Long>> trackGenreIndex;
+
+    /**
+     * A sorted map from history playlist name to the ID by which its entries can be found.
+     */
+    public final SortedMap<String, Long> historyPlaylistNameIndex;
+
+    /**
+     * A map from playlist ID to the list of tracks IDs making up a history playlist.
+     */
+    public final Map<Long, List<Long>> historyPlaylistIndex;
 
     /**
      * Parse and index all the tracks found in the database export.
@@ -666,6 +679,54 @@ public class Database implements Closeable {
             result.put(entry.getKey(), Collections.unmodifiableList(entry.getValue()));
         }
         logger.info("Indexed " + result.size() + " playlist folders.");
+        return Collections.unmodifiableMap(result);
+    }
+
+    /**
+     * Parse and index the names of all available history playlists.
+     *
+     * @return a map sorted by the history playlist names identifying the IDs by which their entries can be found.
+     */
+    private SortedMap<String, Long> indexHistoryPlaylistNames() {
+        final SortedMap<String, Long> result = new TreeMap<String, Long>();
+        indexRows(RekordboxPdb.PageType.HISTORY_PLAYLISTS, new RowHandler() {
+            @Override
+            public void rowFound(KaitaiStruct row) {
+                RekordboxPdb.HistoryPlaylistRow historyRow = (RekordboxPdb.HistoryPlaylistRow) row;
+                result.put(getText(historyRow.name()), historyRow.id());
+            }
+        });
+        logger.info("Indexed " + result.size() + " history playlists.");
+        return Collections.unmodifiableSortedMap(result);
+    }
+
+    /**
+     * Parse and index all the history playlists found in the database export.
+     *
+     * @return the populated and unmodifiable history playlist index.
+     */
+    private Map<Long, List<Long>> indexHistoryPlaylists() {
+        final Map<Long, List<Long>> result = new HashMap<Long, List<Long>>();
+        indexRows(RekordboxPdb.PageType.HISTORY_ENTRIES, new RowHandler() {
+            @Override
+            public void rowFound(KaitaiStruct row) {
+                RekordboxPdb.HistoryEntryRow entryRow = (RekordboxPdb.HistoryEntryRow) row;
+                ArrayList<Long> playList = (ArrayList<Long>) result.get(entryRow.playlistId());
+                if (playList == null) {
+                    playList = new ArrayList<Long>();
+                    result.put(entryRow.playlistId(), playList);
+                }
+                while (playList.size() <= entryRow.entryIndex()) {  // Grow to hold the new entry we are going to set.
+                    playList.add(0L);
+                }
+                playList.set((int) entryRow.entryIndex(), entryRow.trackId());
+            }
+        });
+        // Freeze the finished lists and overall map.
+        for (Map.Entry<Long, List<Long>> entry : result.entrySet()) {
+            result.put(entry.getKey(), Collections.unmodifiableList(entry.getValue()));
+        }
+        logger.info("Indexed " + result.size() + " history playlists.");
         return Collections.unmodifiableMap(result);
     }
 
