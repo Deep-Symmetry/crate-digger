@@ -146,11 +146,13 @@ this is speculation on my part.
 |04 |labels |<<label-rows,Music labels>>, for reference by tracks and searching.
 |05 |keys |<<key-rows,Musical keys>>, for reference by tracks, searching, and key matching.
 |06 |colors |<<color-rows,Color labels>>, for reference by tracks and searching.
-|07 |playlist_tree |Describes the hierarchical <<playlist-tree-rows,tree structure>> of playlists and folders grouping them.
+|07 |playlist_tree |Holds the hierarchical <<playlist-tree-rows,tree structure>> of playlists and folders grouping them.
 |08 |playlist_entries |Links tracks to <<playlist-entry-rows,playlists>>, in the right order.
 |0d |artwork |File paths of <<artwork-rows,album artwork>> images.
 |10 |columns |Details not yet confirmed.
-|13 |history |Records the tracks played during performances.
+|11 |history_playlists |Holds the list of <<history-playlist-rows,history playlists>> in the History menu.
+|12 |history_entries |Links tracks to <<history-entry-rows,history playlists entries>>, in the right order.
+|13 |history |Data used by rekordbox to synchronize history playlists (not yet studied).
 |===
 
 Other than the type, the two important values are __first_page__ at
@@ -498,6 +500,60 @@ have the structure shown below:
 (draw-bottom)
 ----
 
+
+[[history-playlist-rows]]
+=== History Playlist Rows
+
+The History menu automatically records playlists of the tracks
+performed off a particular USB or SD card in a new, numbered playlist
+each time the media is mounted in a player. These playlists have names
+like "HISTORY 001". This table lists all the history playlists which
+have been created for the current database, tying their name to an ID
+which is used to match the <<history-entry-rows>> that make up the
+playlist for the corresponding performance.
+
+The rows are much simpler than the general-purpose hierarchical
+playlists described <<playlist-tree-rows,below>>. They hold only a
+numeric _id_ at bytes{nbsp}``00``-`03` and a text _name_ starting at
+byte{nbsp}``04`` which is a <<devicesql-strings,DeviceSQL string>>.
+
+.History Playlist row.
+[bytefield]
+----
+(draw-column-headers)
+(draw-box (text "id" :math) {:span 4})
+(draw-gap (text "name" :math))
+(draw-bottom)
+----
+
+[[history-entry-rows]]
+=== History Entry Rows
+
+History entry rows list the tracks that belong to a particular history
+playlist, and also establish the order in which they were played. They
+have a very simple structure, shown below, containing only three
+values. The __track_id__ at bytes{nbsp}``00``-`03` identifies the
+track that was played at this position in the playlist, by
+corresponding to the _id_ of a row in the <<track-rows,Track table>>.
+The __playlist_id__ at bytes{nbsp}``04``-`07` identifies the history
+playlist to which it belongs, by corresponding to the __id__ of a row
+in the <<history-playlist-rows,History Playlist list>>. The
+__entry_index__ at bytes{nbsp}``08``-`0b` specifies the position
+within the playlist at which this entry belongs.
+
+
+.History Entry row.
+[bytefield]
+----
+(def boxes-per-row 0x0c)
+(def left-margin 1)
+(draw-column-headers)
+(draw-box (text "track_id" :math) {:span 4})
+(draw-box (text "playlist_id" :math) {:span 4})
+(draw-box (text "entry_index" :math) {:span 4})
+----
+
+
 [[key-rows]]
 === Key Rows
 
@@ -578,7 +634,7 @@ The rows have the following structure:
 ----
 
 [[playlist-entry-rows]]
-== Playlist Entry Rows
+=== Playlist Entry Rows
 
 Playlist entry rows list the tracks that belong to a particular
 playlist, and also establish the order in which they should be played.
@@ -604,7 +660,7 @@ corresponding to the __id__ of a row in the
 ----
 
 [[track-rows]]
-== Track Rows
+=== Track Rows
 
 Track rows describe audio tracks that can be played from the media
 export, and provide many details about the music including links to
