@@ -255,7 +255,17 @@ types:
         doc: |
           References a row in the colors table if this is a memory cue or loop
           and has been assigned a color.
-      - size: 11  # Loops seem to have some non-zero values in the last four bytes of this.
+      - size: 7
+      - id: loop_numerator
+        type: u2
+        doc: |
+          The numerator of the loop length in beats. 
+          Zero if the loop is not quantized.
+      - id: loop_denominator
+        type: u2
+        doc: |
+          The denominator of the loop length in beats. 
+          Zero if the loop is not quantized.
       - id: len_comment
         type: u4
         if: len_entry > 43
