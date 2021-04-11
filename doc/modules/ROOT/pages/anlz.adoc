@@ -295,7 +295,9 @@ include::example$tag_shared.edn[]
 (draw-box (text "time" :math) {:span 4})
 (draw-box (text "loop_time" :math) {:span 4})
 (draw-box (text "c" :math [:sub "id"]))
-(draw-related-boxes (repeat 11 nil))
+(draw-related-boxes (repeat 7 nil))
+(draw-box (text "l" :math [:sub "numerator"]) {:span 2})
+(draw-box (text "l" :math [:sub "denominator"]) {:span 2})
 
 (draw-box (text "len_comment" :math) {:span 4})
 (draw-gap "comment" {:min-label-columns 4})
@@ -341,15 +343,29 @@ it is the ID of a row in the <<exports.adoc#color-rows,color table>>.
 Hot cues do not use this value, and have their own color information
 later in the entry.
 
-The next eleven bytes have an unknown purpose, but seem to have the
+The next seven bytes have an unknown purpose, but seem to have the
 value `00`, except for the first byte which seems to have the value
-`01`. They are followed by __len_comment__, which contains the length,
-in bytes, of the _comment_ field which immediately follows it. If
-__len_comment__ has a non-zero value, _comment_ will hold the text of
-the comment, encoded as a UTF-16 Big Endian string with a trailing
-`NUL` (`0000`) character. So the length will always be even, and (when
-non-zero) always at least 4 (a one character comment followed by the
-trailing `NUL`).
+`01`.
+
+For entries that represent quantized automatic loops, information
+about the quantized loop size is found in the values
+__loop_numerator__ (labeled _l~numerator~_) at bytes{nbsp}``24``-`25`
+and __loop_denominator__ (labeled _l~denominator~_) at bytes
+{nbsp}``26``-`27`. The numerator and denominator represent the size of
+the loop as a fraction of beats. So a four-beat loop would have a
+numerator of 4 and a denominator of 1, while a half-beat loop would
+have a numerator of 1 and a denominator of 2. Entries that are not
+loops, or that are non-quantized, manually-positioned loops, will have
+zeroes here.
+
+The quantized loop information is followed by __len_comment__ at bytes
+{nbsp}``28``-`2b`, which contains the length, in bytes, of the
+_comment_ field which immediately follows it starting at
+byte{nbsp}``2c``. If __len_comment__ has a non-zero value, _comment_
+will hold the text of the comment, encoded as a UTF-16 Big Endian
+string with a trailing `NUL` (`0000`) character. So the length will
+always be even, and (when non-zero) always at least 4 (a one character
+comment followed by the trailing `NUL`).
 
 WARNING: Some extended cue entries are incomplete, and their
 __len_entry__ indicates they end before the comment, or include the
