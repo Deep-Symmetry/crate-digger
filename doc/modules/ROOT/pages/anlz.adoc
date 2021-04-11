@@ -356,7 +356,10 @@ the loop as a fraction of beats. So a four-beat loop would have a
 numerator of 4 and a denominator of 1, while a half-beat loop would
 have a numerator of 1 and a denominator of 2. Entries that are not
 loops, or that are non-quantized, manually-positioned loops, will have
-zeroes here.
+zeroes here. For cases where these are non-zero values, they are
+always positive and powers of two. If the numerator is greater than 1,
+the denominator will always be 1, and if the denominator is greater
+than 1 the numerator will always be 1.
 
 The quantized loop information is followed by __len_comment__ at bytes
 {nbsp}``28``-`2b`, which contains the length, in bytes, of the
