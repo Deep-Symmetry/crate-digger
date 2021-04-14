@@ -571,11 +571,12 @@ enums:
     1: hot_cues
 
   cue_entry_type:
-    1: cue
+    1: memory_cue
     2: loop
 
   cue_entry_status:
-    0: default
+    0: disabled
+    1: enabled
     4: active_loop
 
   track_mood:
