@@ -167,7 +167,7 @@ types:
         type: u4
         enum: cue_entry_status
         doc: |
-          If zero, this entry should be ignored.
+          Indicates if this is an active loop.
       - type: u4  # Seems to always be 0x10000
       - id: order_first
         type: u2
@@ -238,7 +238,7 @@ types:
         type: u1
         enum: cue_entry_type
         doc: |
-          Indicates whether this is a memory cue or a loop.
+          Indicates whether this is a regular cue point or a loop.
       - size: 3  # seems to always be 1000
       - id: time
         type: u4
@@ -577,6 +577,7 @@ enums:
   cue_entry_status:
     0: disabled
     1: enabled
+    4: active_loop
 
   track_mood:
     1: high

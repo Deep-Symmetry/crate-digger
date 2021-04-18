@@ -215,8 +215,8 @@ If the cue is an ordinary memory point, __hot_cue__ at
 bytes{nbsp}``0c``-`0f` will be zero, otherwise it identifies the
 number of the hot cue that this entry represents (Hot Cue A is number
 1, B is 2, and so on). The __status__ value at bytes{nbsp}``10``-`13`
-seems to be a deletion indicator; if it is zero, the entry is ignored.
-Cues which the players pay attention to have the value 1 here.
+is an indicator of active loops; if it is zero, the entry is a regular
+cue point or loop. Active loops have the value 4 here.
 
 The next four bytes have an unknown purpose, but seem to always have
 the value `00100000`. They are followed by two two-byte values, which
