@@ -23,7 +23,7 @@ src="doc/assets/crate-padded-left.png">
 A Java library for fetching and parsing rekordbox media exports and
 track analysis files.
 
-image:https://img.shields.io/badge/License-Eclipse%20Public%20License%201.0-blue.svg[link="#license"]
+image:https://img.shields.io/badge/License-Eclipse%20Public%20License%201.0-blue.svg[link="#licenses"]
 
 This project uses the http://kaitai.io[Kaitai Struct] compiler with
 the help of a https://github.com/valery1707/kaitai-maven-plugin[Maven
