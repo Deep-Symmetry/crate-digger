@@ -419,8 +419,8 @@ include::example$tag_shared.edn[]
 
 __len_path__ at bytes{nbsp}``0c``-`0f` holds the length of the file
 path value, which makes up the entire tag body. _path_, which starts
-at byte{nbsp}``10``, is a <<exports.adoc#devicesql-strings,DeviceSQL
-string>>.
+at byte{nbsp}``10``, is a UTF-16 Big Endian string with a trailing `NUL`
+(`0000`) character.
 
 [[vbr]]
 === VBR Tag
