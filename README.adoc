@@ -274,7 +274,7 @@ license can be found in link:LICENSE[LICENSE] within this project.
 Secondary License: This Source Code may also be made available under
 the following Secondary License when the conditions for such
 availability set forth in the Eclipse Public License, v. 2.0 are
-satisfied: GPLv3, https://www.gnu.org/licenses/gpl-3.0.html
+satisfied: https://www.gnu.org/licenses/gpl-3.0.html[GPLv3]
 
 
 === Library and Build Tool Licenses
