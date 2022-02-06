@@ -23,7 +23,9 @@ src="doc/assets/crate-padded-left.png">
 A Java library for fetching and parsing rekordbox media exports and
 track analysis files.
 
-image:https://img.shields.io/badge/License-Eclipse%20Public%20License%201.0-blue.svg[link="#licenses"]
+image:https://img.shields.io/badge/License-Eclipse%20Public%20License%202.0-blue.svg[link="#licenses"]
+or
+image:https://img.shields.io/badge/License-GPLv3-blue.svg[link="#licenses"]
 
 This project uses the http://kaitai.io[Kaitai Struct] compiler with
 the help of a https://github.com/valery1707/kaitai-maven-plugin[Maven
@@ -263,11 +265,17 @@ link:CONTRIBUTING.md[guidelines] and get in touch!
 Copyright © 2018–2021 http://deepsymmetry.org[Deep Symmetry, LLC]
 
 Distributed under the
-http://opensource.org/licenses/eclipse-1.0.php[Eclipse Public License
-1.0]. By using this software in any fashion, you
+https://opensource.org/licenses/EPL-2.0[Eclipse Public License
+2.0]. By using this software in any fashion, you
 are agreeing to be bound by the terms of this license. You must not
 remove this notice, or any other, from this software. A copy of the
 license can be found in link:LICENSE[LICENSE] within this project.
+
+Secondary License: This Source Code may also be made available under
+the following Secondary License when the conditions for such
+availability set forth in the Eclipse Public License, v. 2.0 are
+satisfied: GPLv3, https://www.gnu.org/licenses/gpl-3.0.html
+
 
 === Library and Build Tool Licenses
 
