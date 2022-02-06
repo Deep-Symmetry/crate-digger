@@ -24,7 +24,8 @@ A Java library for fetching and parsing rekordbox media exports and
 track analysis files.
 
 image:https://img.shields.io/badge/License-Eclipse%20Public%20License%202.0-blue.svg[link="#licenses"]
-or
+or secondary options
+image:https://img.shields.io/badge/License-Mozilla%20Public%20License%202.0-blue.svg[link="#licenses"]
 image:https://img.shields.io/badge/License-GPLv3-blue.svg[link="#licenses"]
 
 This project uses the http://kaitai.io[Kaitai Struct] compiler with
@@ -271,10 +272,11 @@ are agreeing to be bound by the terms of this license. You must not
 remove this notice, or any other, from this software. A copy of the
 license can be found in link:LICENSE[LICENSE] within this project.
 
-Secondary License: This Source Code may also be made available under
+Secondary Licenses: This Source Code may also be made available under
 the following Secondary License when the conditions for such
 availability set forth in the Eclipse Public License, v. 2.0 are
-satisfied: https://www.gnu.org/licenses/gpl-3.0.html[GPLv3]
+satisfied: https://www.mozilla.org/en-US/MPL/2.0/[Mozilla Public
+License 2.0], https://www.gnu.org/licenses/gpl-3.0.html[GPLv3].
 
 
 === Library and Build Tool Licenses
