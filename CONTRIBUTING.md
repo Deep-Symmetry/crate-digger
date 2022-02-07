@@ -45,22 +45,22 @@ Crate Digger is primarily maintained by [@brunchboy][brunchboy].
 
 ## Licenses
 
-+++<a href="http://deepsymmetry.org"><img src="doc/assets/DS-logo-github.png"
-      style="float:right" alt="Deep Symmetry logo" width="250" height="150"></a>+++
-Copyright © 2018–2022 http://deepsymmetry.org[Deep Symmetry, LLC]
+<a href="http://deepsymmetry.org"><img src="doc/assets/DS-logo-github.png"
+      style="float:right" alt="Deep Symmetry logo" width="250" height="150"></a>
+Copyright © 2018–2022 [Deep Symmetry, LLC](http://deepsymmetry.org)
 
-Distributed under the
-https://opensource.org/licenses/EPL-2.0[Eclipse Public License
-2.0]. By using this software in any fashion, you
-are agreeing to be bound by the terms of this license. You must not
-remove this notice, or any other, from this software.
+Distributed under the [Eclipse Public License
+2.0](https://opensource.org/licenses/EPL-2.0). By using this software
+in any fashion, you are agreeing to be bound by the terms of this
+license. You must not remove this notice, or any other, from this
+software.
 
 Secondary Licenses: This Source Code may also be made available under
 the following Secondary Licenses when the conditions for such
 availability set forth in the Eclipse Public License, v. 2.0 are
-satisfied: https://www.mozilla.org/en-US/MPL/2.0/[Mozilla Public
-License 2.0], or https://opensource.org/licenses/LGPL-3.0[GNU Lesser
-General Public License v. 3].
+satisfied: [Mozilla Public License
+2.0](https://www.mozilla.org/en-US/MPL/2.0/), or [GNU Lesser General
+Public License v. 3](https://opensource.org/licenses/LGPL-3.0).
 
 [contributions-released]: https://help.github.com/articles/github-terms-of-service/#6-contributions-under-repository-license
 [covenant]: http://contributor-covenant.org/
