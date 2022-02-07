@@ -6,7 +6,7 @@ that has made it possible so far, and your help is key to keeping it
 great.
 
 Contributions to this project are [released][contributions-released]
-to the public under the [project's open source license](LICENSE).
+to the public under the [project's open source license](#licenses).
 
 This project adheres to the
 [Contributor Covenant Code of Conduct][covenant].
@@ -43,18 +43,24 @@ nobody already has.
 
 Crate Digger is primarily maintained by [@brunchboy][brunchboy].
 
-## License
+## Licenses
 
-<a href="http://deepsymmetry.org"><img style="float:right" alt="Deep Symmetry"
- src="doc/assets/DS-logo-bw-200-padded-left.png" width="216" height="123"></a>
-
-Copyright © 2018 [Deep Symmetry, LLC](http://deepsymmetry.org)
++++<a href="http://deepsymmetry.org"><img src="doc/assets/DS-logo-github.png"
+      style="float:right" alt="Deep Symmetry logo" width="250" height="150"></a>+++
+Copyright © 2018–2022 http://deepsymmetry.org[Deep Symmetry, LLC]
 
 Distributed under the
-[Eclipse Public License 1.0](http://opensource.org/licenses/eclipse-1.0.php).
-By using this software in any fashion, you are agreeing to be bound by
-the terms of this license. You must not remove this notice, or any
-other, from this software.
+https://opensource.org/licenses/EPL-2.0[Eclipse Public License
+2.0]. By using this software in any fashion, you
+are agreeing to be bound by the terms of this license. You must not
+remove this notice, or any other, from this software.
+
+Secondary Licenses: This Source Code may also be made available under
+the following Secondary Licenses when the conditions for such
+availability set forth in the Eclipse Public License, v. 2.0 are
+satisfied: https://www.mozilla.org/en-US/MPL/2.0/[Mozilla Public
+License 2.0], or https://opensource.org/licenses/LGPL-3.0[GNU Lesser
+General Public License v. 3].
 
 [contributions-released]: https://help.github.com/articles/github-terms-of-service/#6-contributions-under-repository-license
 [covenant]: http://contributor-covenant.org/
