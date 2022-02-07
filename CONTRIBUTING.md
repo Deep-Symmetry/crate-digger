@@ -46,7 +46,7 @@ Crate Digger is primarily maintained by [@brunchboy][brunchboy].
 ## Licenses
 
 <a href="http://deepsymmetry.org"><img src="doc/assets/DS-logo-github.png"
-      style="float:right" alt="Deep Symmetry logo" width="250" height="150"></a>
+      align="right" alt="Deep Symmetry logo" width="250" height="150"></a>
 Copyright © 2018–2022 [Deep Symmetry, LLC](http://deepsymmetry.org)
 
 Distributed under the [Eclipse Public License
