@@ -261,7 +261,7 @@ link:CONTRIBUTING.md[guidelines] and get in touch!
 
 == Licenses
 
-+++<a href="http://deepsymmetry.org"><img src="doc/assets/DS-logo-bw-200-padded-left.png"
++++<a href="http://deepsymmetry.org"><img src="doc/assets/DS-logo-github.png"
       style="float:right" alt="Deep Symmetry logo" width="216" height="123"></a>+++
 Copyright © 2018–2021 http://deepsymmetry.org[Deep Symmetry, LLC]
 
