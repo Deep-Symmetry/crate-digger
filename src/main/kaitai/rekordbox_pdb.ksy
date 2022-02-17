@@ -938,7 +938,7 @@ types:
       - id: length
         type: u2
         doc: |
-          Contains the length of the string in bytes, plus four trailing bytes that are usually 0 but must be ignored.
+          Contains the length of the string in bytes, plus four trailing bytes that must be ignored.
       - type: u1
       - id: text
         type: str
