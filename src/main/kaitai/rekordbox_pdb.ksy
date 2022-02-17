@@ -891,6 +891,7 @@ types:
             _: device_sql_short_ascii(length_and_kind)
         -webide-parse-mode: eager
     -webide-representation: '{body.text}'
+
   device_sql_short_ascii:
     doc: |
       An ASCII-encoded string up to 127 bytes long.
@@ -922,9 +923,10 @@ types:
         type: u2
         doc: |
           Contains the length of the string in bytes.
+      - type: u1
       - id: text
         type: str
-        size: length
+        size: length - 4
         encoding: ascii
         doc: |
           The content of the string.
