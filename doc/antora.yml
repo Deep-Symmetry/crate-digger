@@ -1,6 +1,6 @@
 name: rekordbox-export-analysis
 title: Rekordbox Export Structure Analysis
-version: 'master'
+version: ~
 display_version: 'main'
 prerelease: false
 start_page: ROOT:exports.adoc
@@ -8,7 +8,7 @@ asciidoc:
   attributes:
     icons: font
     experimental: ''
-    page-copyright: 2018–2021
+    page-copyright: 2018–2022
     page-pagination: ''
 nav:
 - modules/ROOT/nav.adoc
