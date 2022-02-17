@@ -210,7 +210,7 @@ following structure:
   (doseq [n ns]
     (draw-box (text "ofs" :math [:sub n]) {:span 2})))
 
-(draw-ofs (take 3 (reverse (range 20))))
+(draw-ofs (take 3 (reverse (range 19))))
 (draw-box (text "row" :math [:sub "pf1"]) {:span 2})
 (draw-box (text "pad" :math [:sub "1"]) {:span 2})
 (draw-ofs (reverse (range 16)))
