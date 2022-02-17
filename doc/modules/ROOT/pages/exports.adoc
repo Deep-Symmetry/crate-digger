@@ -212,10 +212,10 @@ following structure:
 
 (draw-ofs (take 3 (reverse (range 20))))
 (draw-box (text "row" :math [:sub "pf1"]) {:span 2})
-(draw-box (text "u" :math [:sub "8"]) {:span 2})
+(draw-box (text "pad" :math [:sub "1"]) {:span 2})
 (draw-ofs (reverse (range 16)))
 (draw-box (text "row" :math [:sub "pf0"]) {:span 2})
-(draw-box (text "u" :math [:sub "8"]) {:span 2})
+(draw-box (text "pad" :math [:sub "0"]) {:span 2})
 ----
 
 Data pages all seem to have the header structure described here, but
@@ -298,11 +298,12 @@ __num_rows_large__.
 
 The bit mask for the first group of up to sixteen rows, labeled
 _row~pf0~_ in the diagram (meaning “row presence flags group 0”), is
-found near the end of the page. The last two bytes after the _row~pf0~_
-bitmask (_u~8~_) have an unknown purpose, and the _row~pf0~_ bitmask 
-takes up the two bytes that precede them. The low order bit of this
-value will be set if row 0 is really present, the next bit if row 1 is 
-really present, and so on. The two bytes before these flags, labeled
+found near the end of the page. The last two bytes after each row
+bitmask (for example _pad~0~_ after _row~pf0~_) have an unknown
+purpose and may always be zero, and the _row~pf0~_ bitmask takes up
+the two bytes that precede them. The low order bit of this value will
+be set if row 0 is really present, the next bit if row 1 is really
+present, and so on. The two bytes before these flags, labeled
 _ofs~0~_, store the offset of the first row in the page. This offset
 is the number of bytes past the end of the page header at which the
 row itself can be found. So if row 0 begins at the very beginning of
@@ -314,10 +315,10 @@ heap, and additional index entries are added at the end of the heap,
 growing backwards. Once there have been sixteen rows added, all of the
 bits in _row~pf0~_ are accounted for, and when another row is added,
 before its offset entry _ofs~16~_ can be added, another row bit-mask
-entry _row~pf1~_ needs to be allocated. And so the row index grows
-backwards towards the rows that are being added forwards, and once
-they are too close for a new row to fit, the page is full, and another
-page gets allocated to the table.
+entry _row~pf1~_ needs to be allocated, followed by its corresponding
+_pad~1~_. And so the row index grows backwards towards the rows that
+are being added forwards, and once they are too close for a new row to
+fit, the page is full, and another page gets allocated to the table.
 
 == Table Rows
 
