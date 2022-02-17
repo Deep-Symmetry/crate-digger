@@ -210,8 +210,9 @@ following structure:
   (doseq [n ns]
     (draw-box (text "ofs" :math [:sub n]) {:span 2})))
 
-(draw-ofs (take 4 (reverse (range 20))))
+(draw-ofs (take 3 (reverse (range 20))))
 (draw-box (text "row" :math [:sub "pf1"]) {:span 2})
+(draw-box (text "u" :math [:sub "8"]) {:span 2})
 (draw-ofs (reverse (range 16)))
 (draw-box (text "row" :math [:sub "pf0"]) {:span 2})
 (draw-box (text "u" :math [:sub "8"]) {:span 2})
@@ -297,11 +298,11 @@ __num_rows_large__.
 
 The bit mask for the first group of up to sixteen rows, labeled
 _row~pf0~_ in the diagram (meaning “row presence flags group 0”), is
-found near the end of the page. The last two bytes of the page
-(_u~8~_) have an unknown purpose, and the _row~pf0~_ bitmask takes up
-the two bytes that precede them. The low order bit of this value will
-be set if row 0 is really present, the next bit if row 1 is really
-present, and so on. The two bytes before these flags, labeled
+found near the end of the page. The last two bytes after the _row~pf0~_
+bitmask (_u~8~_) have an unknown purpose, and the _row~pf0~_ bitmask 
+takes up the two bytes that precede them. The low order bit of this
+value will be set if row 0 is really present, the next bit if row 1 is 
+really present, and so on. The two bytes before these flags, labeled
 _ofs~0~_, store the offset of the first row in the page. This offset
 is the number of bytes past the end of the page header at which the
 row itself can be found. So if row 0 begins at the very beginning of
