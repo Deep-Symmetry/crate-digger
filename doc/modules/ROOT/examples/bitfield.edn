@@ -1,0 +1,7 @@
+;; Sets up a bitfield environment.
+;; You won't be able to bytefields in the same environment when using this.
+
+(def box-width 20)
+(def boxes-per-row 8)
+(def left-margin 1)
+(draw-column-headers {:labels (reverse (take 8 column-labels))})
