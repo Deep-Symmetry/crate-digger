@@ -194,6 +194,7 @@
                 <version>0.1.6</version>
                 <configuration>
                     <version>0.9</version>
+                    <url>https://github.com/kaitai-io/kaitai_struct_compiler/releases/download/0.9/kaitai-struct-compiler-0.9.zip</url>
                     <sourceDirectory>src/main/kaitai</sourceDirectory>
                     <packageName>org.deepsymmetry.cratedigger.pdb</packageName>
                     <overwrite>true</overwrite>
