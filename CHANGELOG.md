@@ -20,6 +20,14 @@ This change log follows the conventions of
   track analysis files. This makes the parsed values more readable
   in the Web IDE, and in the generated classes as well.
   > :wrench:  This is a backwards-incompatible change.
+- @Swiftb0y improved our understanding of the format of DeviceSQL
+  strings in export files, which simplified the Kaitai Struct
+  definitions for them, and greatly improved the documentation.
+
+### Fixed
+
+- The offset numbers in table page diagrams were incorrect (the
+  documentation did not accurately reflect the Kaitai Struct parser).
 
 ## [0.1.5] - 2020-12-28
 
