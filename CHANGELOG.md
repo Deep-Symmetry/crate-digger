@@ -6,6 +6,11 @@ This change log follows the conventions of
 
 ## [Unreleased][unreleased]
 
+Nothing so far.
+
+
+## [0.1.6] - 2022-03-07
+
 ### Added
 
 - Ability to parse `PSSI` (song structure/phrase analysis) tags now
@@ -111,7 +116,8 @@ This change log follows the conventions of
 - Initial release.
 
 
-[unreleased]: https://github.com/Deep-Symmetry/crate-digger/compare/v0.1.5...HEAD
+[unreleased]: https://github.com/Deep-Symmetry/crate-digger/compare/v0.1.6...HEAD
+[0.1.6]: https://github.com/Deep-Symmetry/crate-digger/compare/v0.1.5...v0.1.6
 [0.1.5]: https://github.com/Deep-Symmetry/crate-digger/compare/v0.1.4...v0.1.5
 [0.1.4]: https://github.com/Deep-Symmetry/crate-digger/compare/v0.1.3...v0.1.4
 [0.1.3]: https://github.com/Deep-Symmetry/crate-digger/compare/v0.1.2...v0.1.3
