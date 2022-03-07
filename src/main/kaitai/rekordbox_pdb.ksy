@@ -917,7 +917,7 @@ types:
 
   device_sql_long_ascii:
     doc: |
-      An ASCII-encoded string preceded by a two-byte length field.
+      An ASCII-encoded string preceded by a two-byte length field in a four-byte header.
     seq:
       - id: length
         type: u2
@@ -933,7 +933,7 @@ types:
 
   device_sql_long_utf16le:
     doc: |
-      A UTF-16LE-encoded string preceded by a two-byte length field.
+      A UTF-16LE-encoded string preceded by a two-byte length field in a four-byte header.
     seq:
       - id: length
         type: u2

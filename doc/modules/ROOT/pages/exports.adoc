@@ -788,113 +788,128 @@ the track.]
 
 Many row types store string values, sometimes by directly embedding
 them, but more often by storing an offset to a location elsewhere in
-the heap. In either case the string itself uses the strange structure
+the heap. In either case the string itself uses the structure
 described in this section. Strings can be stored in a variety of
 formats. The first byte of the structure seems to be a bunch of flags
-and in case a the least significant bit/flag is set, the length of a <<short-ascii>>
-string.
+from which the format can be determined. We are not certain of the
+details because not all formats are present in the export files we
+have seen, so this represents our best guess so far.footnote:[Improved
+thanks to research by https://github.com/Swiftb0y[@Swiftboy], including
+finding
+https://bufferpool.quora.com/What-does-a-db-engine-string-look-like[this
+article] by the creator of DeviceSQL.]
 
 [[long-string-interpretation]]
-.long string interpretation
+.String format flags for long or wide strings
 [bytefield]
 ----
 include::example$bitfield.edn[]
 
-(draw-box "E")
-(draw-box "A")
-(draw-box "N")
-(draw-box "W")
+(draw-box (text "E" :math))
+(draw-box (text "A" :math))
+(draw-box (text "N" :math))
+(draw-box (text "W" :math))
 (doseq [n (range 3)]
   (draw-box (text "u" :math [:sub n])))
-(draw-box (hex-text 0 1))
+(draw-box (text "S" :math))
 ----
 
-In this form, the more significant bit is likely interpreted as follows:
+Our best guess as to the interpretation of these bits follows:
+
+[cols=">1l,2,8"]
 |===
-|ID/bit |explanation
+|bit |label |purpose
 
-|_E_ / `7` | If set, the endianess of the string seems to be little-endian
-|_A_ / `6` | The string following is encoded in ASCII, endianness does not apply
-|_N_ / `5` | The contained string is encoded in UTF-8, endianness does not apply
-             (not yet seen in practice though DeviceSQL claims to support
-             encoding in ASCII, UTF-8, and UTF-16)
-|_W_ / `4` | The contained string is encoded in UTF-16, endiannes is determined by _E_ / `7`
-
+|7 |_E_ (endianness) |If set, the string seems to be little-endian
+|6 |_A_ (ASCII)      |The string following is encoded in ASCII, endianness does not apply
+|5 |_N_ (narrow)     |The contained string is encoded in UTF-8, endianness does not apply
+                      (not yet seen in practice though DeviceSQL claims to support
+                      encoding in ASCII, UTF-8, and UTF-16)
+|4 |_W_ (wide)       |The contained string is encoded in UTF-16, endianness is determined by _E_
+|0 |_S_ (short)      |If this bit is set, then the string is a <<short-string-interpretation,Short ASCII>>
+                      string, and the other "flag" bits in this byte actually store its length (see below)
 |===
 
-This is pure speculation though. The only bitpatterns seen in practice were
-`0b0100` for long-form ascii strings and `0b1001` for long-form utf16le strings.
+The details of this analysis are somewhat speculative because the only
+bit patterns we have seen in practice when S is zero are `0b01000000`
+for long-form ascii strings and `0b10010000` for long-form utf16le
+strings (rekordbox probably just does not use the other supported
+string formats).
 
-.short ascii interpretation
+As described above, when S is `1`, we are dealing with a short ASCII
+string, and other flags are replaced by the seven-bit length field for
+the string field (including this type-and-length byte, so the string
+itself can be up to 126 characters long).
+
+[[short-string-interpretation]]
+.Format flag and length for short ASCII strings
 [bytefield]
 ----
 include::example$bitfield.edn[]
 
-(draw-box "length" {:span 7})
+(draw-box (text "length" :math) {:span 7})
 (draw-box (hex-text 1 1))
 ----
 
 [[short-ascii]]
 === Short ASCII Strings
-The bitfield from above is labeled _m~l~_ below. The length can be extracted
-by rightshifting _m~l~_ once. The length includes _m~l~_, so the maximum length
-of actual string data is 126 bytes. 
+
+The flag byte described above is labeled _l~k~_ (_lengthAndKind_)
+below. If _S_ (the low-order bit of _l~k~_) is set, it means the
+string field holds a short ASCII string. The length of such a field
+can be extracted by right-shifting _l~k~_ once (or, equivalently,
+dividing it by two). This length is for the entire string field,
+including _l~k~_ itself, so the maximum length of actual string data
+is 126 bytes.
 
 .Short ASCII DeviceSQL string.
 [bytefield]
 ----
 (draw-column-headers)
-(draw-box (text "m" :math [:sub "l"]))
+(draw-box (text "l" :math [:sub "k"]))
 (draw-gap "ASCII data")
 (draw-bottom)
 ----
 
-NOTE: DeviceSQL strings do not have terminator bytes, attempting to read more
-bytes than present can lead to garbage characters being present or crashing the
-parser for the more complex unicode strings. <<isrc-strings, ISRC Strings>> are
-the only exception.
+NOTE: DeviceSQL strings do not have terminator bytes, so attempting to
+read more bytes than present can lead to garbage characters being
+present or crashing the parser for the more complex unicode strings.
+<<isrc-strings, ISRC Strings>> are the only exception.
 
-[[long-ascii]]
-[[long-utf16le]]
+[[long-strings]]
 === Long Strings
 
-If the first byte matches the structure described in the long strings interpretation
-format, then the resulting string has the following format:
+Again the flag byte described above is labeled _l~k~_
+(_lengthAndKind_) below. If _S_ (the low-order bit of _l~k~_) is zero,
+it means the string field holds a long or wide string, whose format is
+specified by the other flag bits described
+<<long-string-interpretation,above>>, and whose length is determined
+by a two-byte _length_ field which follows the flag byte:
 
 .Long DeviceSQL string.
 [bytefield]
 ----
 (draw-column-headers)
-(draw-box (text "m" :math [:sub "t"]))
+(draw-box (text "l" :math [:sub "k"]))
 (draw-box (text "length" :math) {:span 2})
 (draw-box (text "pad"))
 (draw-gap "String data")
 (draw-bottom)
 ----
 
-The length designates the length of the entire structure, so the length of the
-actual string data is $$ length - 4 $$. The `pad` has been observed to be `00`
-always. The encoding of the string data can be extracted from _m~t~_ who'se 
-structure has been described in <<long-string-interpretation, long string interpretation>>.
+As always, _length_ represents the length of the entire field
+including the header bytes, so the length of the actual string data is
+latexmath:[length - 4]. We have only ever seen zero values for the pad
+byte. The encoding of the string data is determined by the flag bits
+in l~k~_ as described <<long-string-interpretation,above>>.
 
 
 [[isrc-strings]]
-.ISRC Strings
-NOTE: When an International Standard Recording Code is present as the
+=== ISRC Strings
+
+When an International Standard Recording Code is present as the
 first string pointer in a track row, it is marked with kind `90` but
 does not actually hold a UTF-16-LE string. Instead, the first byte
 after the `pad` value following the length is the value `03` and then there are
-$$ length - 7 $$ bytes of ascii, followed by a null-byte. Crate
+latexmath:[length - 7] bytes of ASCII, followed by a null byte. Crate
 Digger does not yet attempt to cope with this.
-
-[[long-ascii]]
-=== Short ASCII Strings
-
-Many row types store string values, sometimes by directly embedding
-them, but more often by storing an offset to a location elsewhere in
-the heap. In either case the string itself uses the strange structure
-described in this section. Strings can be stored in a variety of
-formats. The first byte of the structure, labeled __length_and_kind__
-in the parsed Kaitai Struct, identifies the encoding type and, when
-the value is odd, also the length (for short ASCII strings), as
-detailed in <<short-ascii>>.
