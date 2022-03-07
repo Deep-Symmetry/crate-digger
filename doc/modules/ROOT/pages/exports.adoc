@@ -790,64 +790,55 @@ Many row types store string values, sometimes by directly embedding
 them, but more often by storing an offset to a location elsewhere in
 the heap. In either case the string itself uses the strange structure
 described in this section. Strings can be stored in a variety of
-formats. The first byte of the structure, labeled __length_and_kind__
-in the parsed Kaitai Struct, identifies the encoding type and, when
-the value is odd, also the length (for short ASCII strings), as
-detailed in <<short-ascii>>.
+formats. The first byte of the structure seems to be a bunch of flags
+and in case a the least significant bit/flag is set, the length of a <<short-ascii>>
+string.
 
-[[long-ascii]]
-=== Long ASCII Strings
-
-If __length_and_kind__ has the value `40`, it is followed by a
-two-byte _length_ field, and then followed by that many bytes of
-ASCII-encoded string data, as shown below:
-
-.Long ASCII DeviceSQL string.
+[[long-string-interpretation]]
+.long string interpretation
 [bytefield]
 ----
-(draw-column-headers)
-(draw-box 0x40)
-(draw-box (text "length" :math) {:span 2})
-(draw-gap "ASCII data")
-(draw-bottom)
+include::example$bitfield.edn[]
+
+(draw-box "E")
+(draw-box "A")
+(draw-box "N")
+(draw-box "W")
+(doseq [n (range 3)]
+  (draw-box (text "u" :math [:sub n])))
+(draw-box (hex-text 0 1))
 ----
 
-[[long-utf16le]]
-=== Long UTF-16 Little-Endian Strings
+In this form, the more significant bit is likely interpreted as follows:
+|===
+|ID/bit |explanation
 
-If __length_and_kind__ has the value `90`, it is followed by a
-two-byte _length_ field, an unknown byte (always `00`?) and then by
-that many bytes of UTF-16 little-endian{blank}footnote:evilfred[]
-encoded string data, as shown below:
+|_E_ / `7` | If set, the endianess of the string seems to be little-endian
+|_A_ / `6` | The string following is encoded in ASCII, endianness does not apply
+|_N_ / `5` | The contained string is encoded in UTF-8, endianness does not apply
+             (not yet seen in practice though DeviceSQL claims to support
+             encoding in ASCII, UTF-8, and UTF-16)
+|_W_ / `4` | The contained string is encoded in UTF-16, endiannes is determined by _E_ / `7`
 
-.Long UTF-16-LE DeviceSQL string.
+|===
+
+This is pure speculation though. The only bitpatterns seen in practice were
+`0b0100` for long-form ascii strings and `0b1001` for long-form utf16le strings.
+
+.short ascii interpretation
 [bytefield]
 ----
-(draw-column-headers)
-(draw-box 0x90)
-(draw-box (text "length" :math) {:span 2})
-(draw-box 0)
-(draw-gap "UTF-16 Little-Endian data")
-(draw-bottom)
-----
+include::example$bitfield.edn[]
 
-[[isrc-strings]]
-.ISRC Strings
-NOTE: When an International Standard Recording Code is present as the
-first string pointer in a track row, it is marked with kind `90` but
-does not actually hold a UTF-16-LE string. Instead, the first byte
-after the `00` value following the length is the value `03`, and then
-there are _length_ bytes of ordinary ASCII holding the ISRC. Crate
-Digger does not yet attempt to cope with this.
+(draw-box "length" {:span 7})
+(draw-box (hex-text 1 1))
+----
 
 [[short-ascii]]
 === Short ASCII Strings
-
-If __length_and_kind__ has an odd value it is a __mangled_length__,
-labeled _m~l~_ below. This means we are dealing with a short ASCII
-DeviceSQL string. To find the length of the string data (which
-immediately follows this byte), subtract 1 from __mangled_length__,
-divide it by 2, and subtract 1 again.
+The bitfield from above is labeled _m~l~_ below. The length can be extracted
+by rightshifting _m~l~_ once. The length includes _m~l~_, so the maximum length
+of actual string data is 126 bytes. 
 
 .Short ASCII DeviceSQL string.
 [bytefield]
@@ -857,3 +848,53 @@ divide it by 2, and subtract 1 again.
 (draw-gap "ASCII data")
 (draw-bottom)
 ----
+
+NOTE: DeviceSQL strings do not have terminator bytes, attempting to read more
+bytes than present can lead to garbage characters being present or crashing the
+parser for the more complex unicode strings. <<isrc-strings, ISRC Strings>> are
+the only exception.
+
+[[long-ascii]]
+[[long-utf16le]]
+=== Long Strings
+
+If the first byte matches the structure described in the long strings interpretation
+format, then the resulting string has the following format:
+
+.Long DeviceSQL string.
+[bytefield]
+----
+(draw-column-headers)
+(draw-box (text "m" :math [:sub "t"]))
+(draw-box (text "length" :math) {:span 2})
+(draw-box (text "pad"))
+(draw-gap "String data")
+(draw-bottom)
+----
+
+The length designates the length of the entire structure, so the length of the
+actual string data is $$ length - 4 $$. The `pad` has been observed to be `00`
+always. The encoding of the string data can be extracted from _m~t~_ who'se 
+structure has been described in <<long-string-interpretation, long string interpretation>>.
+
+
+[[isrc-strings]]
+.ISRC Strings
+NOTE: When an International Standard Recording Code is present as the
+first string pointer in a track row, it is marked with kind `90` but
+does not actually hold a UTF-16-LE string. Instead, the first byte
+after the `pad` value following the length is the value `03` and then there are
+$$ length - 7 $$ bytes of ascii, followed by a null-byte. Crate
+Digger does not yet attempt to cope with this.
+
+[[long-ascii]]
+=== Short ASCII Strings
+
+Many row types store string values, sometimes by directly embedding
+them, but more often by storing an offset to a location elsewhere in
+the heap. In either case the string itself uses the strange structure
+described in this section. Strings can be stored in a variety of
+formats. The first byte of the structure, labeled __length_and_kind__
+in the parsed Kaitai Struct, identifies the encoding type and, when
+the value is odd, also the length (for short ASCII strings), as
+detailed in <<short-ascii>>.
