@@ -896,7 +896,7 @@ types:
     doc: |
       An ASCII-encoded string up to 127 bytes long.
     params:
-      - id: mangled_length
+      - id: length_and_kind
         type: u1
         doc: |
           Contains the actual length, incremented, doubled, and
@@ -904,16 +904,15 @@ types:
     seq:
       - id: text
         type: str
-        size: length
+        size: length - 1
         encoding: ascii
-        if: '(mangled_length % 2 > 0) and (length >= 0)'  # Skip invalid strings
         doc: |
           The content of the string.
     instances:
       length:
-        value: '((mangled_length - 1) / 2) - 1'
+        value: '(length_and_kind >> 1)'
         doc: |
-          The un-mangled length of the string, in bytes.
+          the length extracted of the entire device_sql_short_ascii type
         -webide-parse-mode: eager
 
   device_sql_long_ascii:
@@ -924,9 +923,10 @@ types:
         type: u2
         doc: |
           Contains the length of the string in bytes.
+      - type: u1
       - id: text
         type: str
-        size: length
+        size: length - 4
         encoding: ascii
         doc: |
           The content of the string.
