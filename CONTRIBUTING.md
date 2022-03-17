@@ -33,9 +33,8 @@ for us.
 ## Giving back
 
 The most informal and fun way to get involved in the project is to
-introduce yourself and start chatting on the
-https://deep-symmetry.zulipchat.com/#narrow/stream/275855-dysentery-.26-crate-digger[Zulip
-stream].
+introduce yourself and start chatting on the [Zulip
+stream](https://deep-symmetry.zulipchat.com/#narrow/stream/275855-dysentery-.26-crate-digger).
 
 Once you have something working you’d like to share, you can open a
 [pull request][pulls].
