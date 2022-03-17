@@ -15,12 +15,12 @@ ifdef::env-github[]
 :warning-caption: :warning:
 endif::env-github[]
 
-image:https://img.shields.io/badge/chat-on%20zulip-brightgreen[Chat on Zulip,link="https://deep-symmetry.zulipchat.com/#narrow/stream/275855-dysentery-.26-crate-digger"]
-
 +++
 <img align="right" width="275" height="250" alt="Record crate"
 src="doc/assets/crate-padded-left.png">
 +++
+
+image:https://img.shields.io/badge/chat-on%20zulip-brightgreen[Chat on Zulip,link="https://deep-symmetry.zulipchat.com/#narrow/stream/275855-dysentery-.26-crate-digger"]
 
 A Java library for fetching and parsing rekordbox media exports and
 track analysis files.
