@@ -441,6 +441,14 @@ string itself is still as described in <<devicesql-strings>>.
 (draw-bottom)
 ----
 
+TIP: The art file pointed to by this path will be the original
+resolution 80x80 pixel image. Recent versions of rekordbox will also
+add a higher resolution image, at 240x240 pixels. Its path can be
+found by adding the string `_m` right before the file extension. So
+for example if the original resolution path is `/a/b/foo.jpg`, the
+high resolution file can be found at `/a/b/foo_m.jpg`.
+
+
 [[color-rows]]
 === Color Rows
 
