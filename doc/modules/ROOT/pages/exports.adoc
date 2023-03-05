@@ -57,7 +57,7 @@ they do not contain valid (or even necessarily well-formed) data.
 
 The majority of the work in reverse-engineering this format was
 performed by https://github.com/henrybetts/Rekordbox-Decoding[Henry
-Betts] and https://github.com/flesniak/python-prodj-links[Fabian
+Betts] and https://github.com/flesniak/python-prodj-link[Fabian
 Lesniak], to whom I am hugely grateful.
 
 [[file-header]]
