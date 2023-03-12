@@ -45,6 +45,21 @@ non-standard NFSv2 file servers running in Link-capable players, so
 the rekordbox data can be reliably obtained even during big shows
 where all four players are in use.
 
+== Getting Help
+
++++
+<a href="http://zulip.com"><img align="right" alt="Zulip logo"
+ src="doc/assets/zulip-icon-circle.svg" width="128" height="128"></a>
++++
+
+Deep Symmetry's projects are generously sponsored with hosting by
+https://zulip.com[Zulip], an open-source modern team chat app designed
+to keep both live and asynchronous conversations organized. Thanks to
+them, you can
+https://deep-symmetry.zulipchat.com/#narrow/stream/278354-carabiner[chat
+with our community], ask questions, get inspiration, and share your
+own ideas.
+
 == PDB Database
 
 The file link:src/main/kaitai/rekordbox_pdb.ksy[`rekordbox_pdb.ksy`] contains
@@ -265,7 +280,7 @@ link:CONTRIBUTING.md[guidelines] and get in touch!
 
 +++<a href="http://deepsymmetry.org"><img src="doc/assets/DS-logo-github.png"
       align="right" alt="Deep Symmetry logo" width="250" height="150"></a>+++
-Copyright © 2018–2022 http://deepsymmetry.org[Deep Symmetry, LLC]
+Copyright © 2018–2023 http://deepsymmetry.org[Deep Symmetry, LLC]
 
 Distributed under the
 https://opensource.org/licenses/EPL-2.0[Eclipse Public License
