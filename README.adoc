@@ -56,7 +56,7 @@ Deep Symmetry's projects are generously sponsored with hosting by
 https://zulip.com[Zulip], an open-source modern team chat app designed
 to keep both live and asynchronous conversations organized. Thanks to
 them, you can
-https://deep-symmetry.zulipchat.com/#narrow/stream/278354-carabiner[chat
+https://deep-symmetry.zulipchat.com/#narrow/stream/275855-dysentery-.26-crate-digger[chat
 with our community], ask questions, get inspiration, and share your
 own ideas.
 
