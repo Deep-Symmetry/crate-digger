@@ -905,7 +905,7 @@ types:
       - id: text
         type: str
         size: length - 1
-        encoding: ascii
+        encoding: ASCII
         doc: |
           The content of the string.
     instances:
@@ -927,7 +927,7 @@ types:
       - id: text
         type: str
         size: length - 4
-        encoding: ascii
+        encoding: ASCII
         doc: |
           The content of the string.
 
@@ -943,7 +943,7 @@ types:
       - id: text
         type: str
         size: length - 4
-        encoding: utf-16le
+        encoding: UTF-16LE
         doc: |
           The content of the string.
 
