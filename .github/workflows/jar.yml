@@ -16,7 +16,7 @@ jobs:
 
     steps:
     - name: Check out main branch
-      uses: actions/checkout@v3
+      uses: actions/checkout@v4
 
     - name: Install SSH Key
       env:
@@ -28,7 +28,7 @@ jobs:
         known_hosts: 'deepsymmetry.org ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIOMKq8T1IXQHNYLgO715YbxTXoVxEsJcha9h1lxyOXpa'
 
     - name: Prepare Java
-      uses: actions/setup-java@v3
+      uses: actions/setup-java@v4
       with:
         java-version: '11'
         distribution: 'corretto'
@@ -50,7 +50,7 @@ jobs:
         fi
 
     - name: Cache Maven dependencies
-      uses: actions/cache@v3
+      uses: actions/cache@v4
       with:
         path: ~/.m2/repository
         key: ${{ runner.os }}-mvn-${{ hashFiles('**/pom.xml') }}
