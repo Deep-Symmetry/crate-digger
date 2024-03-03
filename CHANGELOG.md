@@ -31,6 +31,12 @@ This change log follows the conventions of
      `CueTag.numCues` and `ExtendedCueTag.numCues` in the generated Java
      classes.
 
+### Fixed
+
+- With the help of new linting in the latest unreleased version of KSC,
+  changed all character encoding names to use their soon-to-be-canonical
+  uppercase versions.
+
 
 ## [0.1.6] - 2022-03-07
 
