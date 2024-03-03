@@ -93,14 +93,14 @@ types:
     seq:
       - type: u4
       - type: u4  # @flesniak says this is always 0x80000
-      - id: len_beats
+      - id: num_beats
         type: u4
         doc: |
           The number of beat entries which follow.
       - id: beats
         type: beat_grid_beat
         repeat: expr
-        repeat-expr: len_beats
+        repeat-expr: num_beats
         doc: The entries of the beat grid.
 
   beat_grid_beat:
@@ -134,7 +134,7 @@ types:
         doc: |
           Identifies whether this tag stores ordinary or hot cues.
       - size: 2
-      - id: len_cues
+      - id: num_cues
         type: u2
         doc: |
           The length of the cue list.
@@ -145,7 +145,7 @@ types:
       - id: cues
         type: cue_entry
         repeat: expr
-        repeat-expr: len_cues
+        repeat-expr: num_cues
 
   cue_entry:
     doc: |
@@ -207,7 +207,7 @@ types:
         enum: cue_list_type
         doc: |
           Identifies whether this tag stores ordinary or hot cues.
-      - id: len_cues
+      - id: num_cues
         type: u2
         doc: |
           The length of the cue comment list.
@@ -215,7 +215,7 @@ types:
       - id: cues
         type: cue_extended_entry
         repeat: expr
-        repeat-expr: len_cues
+        repeat-expr: num_cues
 
   cue_extended_entry:
     doc: |
@@ -329,7 +329,7 @@ types:
       Stores a waveform preview image suitable for display above
       the touch strip for jumping to a track position.
     seq:
-      - id: len_preview
+      - id: len_data
         type: u4
         doc: |
           The length, in bytes, of the preview data itself. This is
@@ -337,7 +337,7 @@ types:
           length of the tag.
       - type: u4  # This seems to always have the value 0x10000
       - id: data
-        size: len_preview
+        size: len_data
         doc: |
           The actual bytes of the waveform preview.
         if: _parent.len_tag > _parent.len_header

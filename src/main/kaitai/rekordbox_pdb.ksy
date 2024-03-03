@@ -70,7 +70,7 @@ seq:
   - id: next_unused_page
     type: u4
     doc: |
-      @flesinak said: "Not used as any `empty_candidate`, points
+      @flesniak said: "Not used as any `empty_candidate`, points
       past the end of the file."
   - type: u4
   - id: sequence
@@ -240,7 +240,7 @@ types:
           index entries there are, but some of those may not be marked
           as present in the table due to deletion).
         -webide-parse-mode: eager
-      num_groups:
+      num_row_groups:
         value: '(num_rows - 1) / 16 + 1'
         doc: |
           The number of row groups that are present in the index. Each
@@ -249,7 +249,7 @@ types:
       row_groups:
         type: 'row_group(_index)'
         repeat: expr
-        repeat-expr: num_groups
+        repeat-expr: num_row_groups
         doc: |
           The actual row groups making up the row index. Each group
           can hold up to sixteen rows. Non-data pages do not have
@@ -286,7 +286,7 @@ types:
       rows:
         type: row_ref(_index)
         repeat: expr
-        repeat-expr: '(group_index < (_parent.num_groups - 1)) ? 16 : ((_parent.num_rows - 1) % 16 + 1)'
+        repeat-expr: '(group_index < (_parent.num_row_groups - 1)) ? 16 : ((_parent.num_rows - 1) % 16 + 1)'
         doc: |
           The row offsets in this group.
 
@@ -370,7 +370,7 @@ types:
       - type: u4
       - type: u1
         doc: |
-          @flesniak says: "alwayx 0x03, maybe an unindexed empty string"
+          @flesniak says: "always 0x03, maybe an unindexed empty string"
       - id: ofs_name
         type: u1
         doc: |
@@ -742,14 +742,14 @@ types:
         type: device_sql_string
         pos: _parent.row_base + ofs_strings[1]
         doc: |
-          A string of unknown purpose, which @flesnik named.
+          A string of unknown purpose, which @flesniak named.
         -webide-parse-mode: eager
       unknown_string_2:
         type: device_sql_string
         pos: _parent.row_base + ofs_strings[2]
         doc: |
           A string of unknown purpose; @flesniak said "thought
-          tracknumber -> wrong!"
+          track number -> wrong!"
       unknown_string_3:
         type: device_sql_string
         pos: _parent.row_base + ofs_strings[3]
@@ -769,7 +769,7 @@ types:
         type: device_sql_string
         pos: _parent.row_base + ofs_strings[5]
         doc: |
-          A string of unknown purpose, which @flesnik named.
+          A string of unknown purpose, which @flesniak named.
         -webide-parse-mode: eager
       kuvo_public:
         type: device_sql_string
@@ -780,7 +780,7 @@ types:
           a single bit somewhere, to control whether the track
           information is visible on Kuvo.
         -webide-parse-mode: eager
-      autoload_hotcues:
+      autoload_hot_cues:
         type: device_sql_string
         pos: _parent.row_base + ofs_strings[7]
         doc: |

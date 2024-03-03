@@ -6,7 +6,30 @@ This change log follows the conventions of
 
 ## [Unreleased][unreleased]
 
-Nothing so far.
+### Changed
+
+- Upgraded Kaitai Struct to version 0.10, which includes a number of
+  fixes and adds linting of mapped values.
+  > :wrench:  This is a backwards-incompatible change.
+- Since we are already backwards incompatible with pervious releases,
+  changed some mapped value names to correspond to
+  the KSY style guide and fix linter errors reported by KSC 0.10:
+  1. In `rekordbox_pdb.ksy` renamed `num_groups` to `num_row_groups`.
+     This means that `Page.numGroups` is now `Page.numRowGroups` in
+     the generated Java class.
+  2. In `rekordbox_pdb.ksy` renamed `autoload_hotcues` to `autoload_hot_cues`.
+     This means that `TrackRow.autoloadHotcues` is now
+     `TrackRow.autoloadHotCues` in the generated Java class.
+  3. In `rekordbox_anlz.ksy` renamed `len_preview` to `len_data`.
+     This means that `WavePreviewTag.lenPreview` is now
+     `WavePreviewTag.lenData` in the generated Java class.
+  4. In `rekordbox_anlz.ksy` renamed `len_beats` to `num_beats`.
+     This means that `BeatGridTag.lenBeats` is now
+     `BeatGridTag.numBeats` in the generated Java class.
+  5. In `rekordbox_anlz.ksy` renamed `len_cues` to `num_cues`.
+     This means that `CueTag.lenCues` and `ExtendedCueTag.lenCues` are now
+     `CueTag.numCues` and `ExtendedCueTag.numCues` in the generated Java
+     classes.
 
 
 ## [0.1.6] - 2022-03-07
