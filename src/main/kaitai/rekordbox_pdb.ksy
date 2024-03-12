@@ -141,6 +141,7 @@ types:
         pos: _root.len_page * index
         size: _root.len_page
         type: page
+        if: index < _root.tables[_root.num_tables-1].empty_candidate
 
   page:
     doc: |
