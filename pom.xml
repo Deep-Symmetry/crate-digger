@@ -288,7 +288,7 @@
                                     <version>3.2.2</version>
                                 </requireMavenVersion>
                                 <requireJavaVersion>
-                                    <version>9</version>
+                                    <version>11</version>
                                 </requireJavaVersion>
                             </rules>
                         </configuration>
@@ -300,7 +300,9 @@
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
                 <configuration>
-                    <release>6</release>
+                    <release>11</release>
+                    <source>11</source>
+                    <target>11</target>
                 </configuration>
             </plugin>
 

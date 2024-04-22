@@ -30,6 +30,11 @@ This change log follows the conventions of
      This means that `CueTag.lenCues` and `ExtendedCueTag.lenCues` are now
      `CueTag.numCues` and `ExtendedCueTag.numCues` in the generated Java
      classes.
+- Also upgraded to Java 11 as a compilation target, in order to be able to work with the new IO API, among other things.
+
+### Added
+
+- New API to create an archive of all the metadata from a media export volume needed to support Beat Link (to support working with the Opus Quad, which cannot provide metadata itself).
 
 ### Fixed
 
