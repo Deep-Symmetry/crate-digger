@@ -90,6 +90,8 @@ public class Archivist {
         Files.deleteIfExists(archivePath);
         final URI fileUri = archivePath.toUri();
         final int totalTracks = database.trackIndex.size();
+        boolean failed = false;
+
         try (FileSystem fileSystem = FileSystems.newFileSystem(new URI("jar:" + fileUri.getScheme(), fileUri.getPath(), null),
                 Map.of("create", "true"))) {
 
@@ -134,15 +136,19 @@ public class Archivist {
             }
 
             if (iterator.hasNext()) {
-                // We were canceled, so delete the partial archive.
-                Files.deleteIfExists(archivePath);
+                failed = true;  // We were canceled.
             }
         } catch (URISyntaxException e) {
-            Files.deleteIfExists(archivePath);
+            failed = true;
             throw new IOException("Unable to create jar filesystem at file location", e);
         } catch (IOException e) {
-            Files.deleteIfExists(archivePath);
+            failed = true;
             throw e;
+        }
+        finally {
+            if (failed) {
+                Files.deleteIfExists(archivePath);
+            }
         }
     }
 }
