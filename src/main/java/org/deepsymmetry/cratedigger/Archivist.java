@@ -132,6 +132,11 @@ public class Archivist {
 
                 ++completed;  // For use in providing progress feedback if there is a listener.
             }
+
+            if (iterator.hasNext()) {
+                // We were canceled, so delete the partial archive.
+                Files.deleteIfExists(archivePath);
+            }
         } catch (URISyntaxException e) {
             Files.deleteIfExists(archivePath);
             throw new IOException("Unable to create jar filesystem at file location", e);
