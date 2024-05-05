@@ -6,6 +6,12 @@ This change log follows the conventions of
 
 ## [Unreleased][unreleased]
 
+Nothing so far.
+
+## [0.2.0] - 2024-05-04
+
+May the Fourth be with you.
+
 ### Changed
 
 - Upgraded Kaitai Struct to version 0.10, which includes a number of
@@ -150,7 +156,8 @@ This change log follows the conventions of
 - Initial release.
 
 
-[unreleased]: https://github.com/Deep-Symmetry/crate-digger/compare/v0.1.6...HEAD
+[unreleased]: https://github.com/Deep-Symmetry/crate-digger/compare/v0.2.0...HEAD
+[0.2.0]: https://github.com/Deep-Symmetry/crate-digger/compare/v0.1.6...v0.2.0
 [0.1.6]: https://github.com/Deep-Symmetry/crate-digger/compare/v0.1.5...v0.1.6
 [0.1.5]: https://github.com/Deep-Symmetry/crate-digger/compare/v0.1.4...v0.1.5
 [0.1.4]: https://github.com/Deep-Symmetry/crate-digger/compare/v0.1.3...v0.1.4

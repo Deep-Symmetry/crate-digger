@@ -125,10 +125,19 @@ public class Archivist {
                 if (artwork != null) {
                     final String artPathString = Database.getText(artwork.path());
                     final Path artPath = mediaPath.resolve(artPathString.substring(1));
+                    // First copy the regular resolution album art
                     if (artPath.toFile().canRead()) {
                         destPath = fileSystem.getPath(artPathString);
                         Files.createDirectories(destPath.getParent());
                         Files.copy(artPath, destPath);
+                    }
+                    // Then, copy the high resolution album art, if it exists
+                    final String highResArtPathString = artPathString.replaceFirst("(\\.\\w+$)", "_m$1");
+                    final Path highResArtPath = mediaPath.resolve(highResArtPathString.substring(1));
+                    if (highResArtPath.toFile().canRead()) {
+                        destPath = fileSystem.getPath(highResArtPathString);
+                        Files.createDirectories(destPath.getParent());
+                        Files.copy(highResArtPath, destPath);
                     }
                 }
 
