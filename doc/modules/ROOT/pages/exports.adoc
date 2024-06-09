@@ -255,6 +255,8 @@ playlist entries) have a lot of very small rows, too many to count
 with a single byte. But then why not just always use
 __num_rows_large__?
 
+NOTE: The row counter entries represent the number of actually-present rows in the page. To find them, you need to scan all 16 entries of each of the row groups present in the page, ignoring any whose <<#row-presence-bits,row presence bit>> is zero.
+
 The purpose of the next two bytes are is also unclear. Of _u~3~_ Mr.
 Flesniak said “a bitmask (first track: 32)”, and he described _u~4~_
 as “often 0, sometimes larger, especially for pages with a high number
@@ -296,6 +298,7 @@ deleted). The number of row index entries is determined, as described
 above, by the value of either __num_rows_small__ or
 __num_rows_large__.
 
+[#row-presence-bits]
 The bit mask for the first group of up to sixteen rows, labeled
 _row~pf0~_ in the diagram (meaning “row presence flags group 0”), is
 found near the end of the page. The last two bytes after each row
