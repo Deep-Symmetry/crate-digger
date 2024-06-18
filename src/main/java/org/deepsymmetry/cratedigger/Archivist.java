@@ -114,21 +114,21 @@ public class Archivist {
 
                 // First the original analysis file.
                 final String anlzPathString = Database.getText(track.analyzePath());
-                archiveMediaItem(mediaPath, anlzPathString, fileSystem, "analysis file");
+                archiveMediaItem(mediaPath, anlzPathString, fileSystem, "analysis file", true);
 
                 // Then the extended analysis file, if it exists.
                 final String extPathString = anlzPathString.substring(0, anlzPathString.length() - 3) + "EXT";
-                archiveMediaItem(mediaPath, extPathString, fileSystem, "extended analysis file");
+                archiveMediaItem(mediaPath, extPathString, fileSystem, "extended analysis file", false);
 
                 // Finally, the album art.
                 final RekordboxPdb.ArtworkRow artwork = database.artworkIndex.get(track.artworkId());
                 if (artwork != null) {
                     final String artPathString = Database.getText(artwork.path());
-                    archiveMediaItem(mediaPath, artPathString, fileSystem, "artwork file");
+                    archiveMediaItem(mediaPath, artPathString, fileSystem, "artwork file", true);
 
                     // Then, copy the high resolution album art, if it exists
                     final String highResArtPathString = artPathString.replaceFirst("(\\.\\w+$)", "_m$1");
-                    archiveMediaItem(mediaPath, highResArtPathString, fileSystem, "high-resolution artwork file");
+                    archiveMediaItem(mediaPath, highResArtPathString, fileSystem, "high-resolution artwork file", false);
                 }
 
                 ++completed;  // For use in providing progress feedback if there is a listener.
@@ -158,17 +158,22 @@ public class Archivist {
      * @param pathString the string which holds the absolute path to the media item
      * @param archive the ZIP filesystem in which the metadata archive is being created
      * @param description the text identifying the type of file being archived, in case we need to log a warning
+     * @param expected indicates whether a file is always supposed to be there, so we should warn about its absence
      *
      * @throws IOException if there is an unexpected problem adding the media item to the archive
      */
-    private static void archiveMediaItem(Path mediaPath, String pathString, FileSystem archive, String description) throws IOException {
+    private static void archiveMediaItem(Path mediaPath, String pathString, FileSystem archive, String description, boolean expected) throws IOException {
         final Path sourcePath = mediaPath.resolve(pathString.substring(1));
-        final Path destinationPath = archive.getPath(pathString);
-        Files.createDirectories(destinationPath.getParent());
-        try {
-            Files.copy(sourcePath, destinationPath);
-        } catch (FileAlreadyExistsException e) {
-            logger.warn("Skipping copy of {} {} because it has already been archived." , description, destinationPath);
+        if (sourcePath.toFile().canRead()) {
+            final Path destinationPath = archive.getPath(pathString);
+            Files.createDirectories(destinationPath.getParent());
+            try {
+                Files.copy(sourcePath, destinationPath);
+            } catch (FileAlreadyExistsException e) {
+                logger.warn("Skipping copy of {} {} because it has already been archived." , description, destinationPath);
+            }
+        } else if (expected) {
+            logger.warn("Could not find expected {} {}, omitting from archive.", description, sourcePath);
         }
     }
 }
