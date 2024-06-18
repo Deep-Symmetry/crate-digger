@@ -558,7 +558,7 @@ color preview data begins at byte{nbsp}``18`` and is 7,200 (decimal)
 bytes long, representing 1,200 columns of waveform preview
 information.
 
-The color waveform preview entries are the most complex of any of the
+The color waveform preview entries are the most complex of the
 waveform tags. See the
 <<djl-analysis:ROOT:track_metadata.adoc#color-preview-analysis,protocol
 analysis document>> for the details.
@@ -659,8 +659,7 @@ include::example$tag_shared.edn[]
 ----
 
 __len_entry_bytes__ identifies how many bytes each phrase entry takes
-up; so far it always has the value `18`, so each entry takes twenty
-four bytes. __len_entries__ at bytes{nbsp}``10``-`11` (labeled
+up; so far it always has the value `18`, so each entry takes twenty-four bytes. __len_entries__ at bytes{nbsp}``10``-`11` (labeled
 _len~e~_ in the diagram) specifies how many entries are present in the
 tag. Each entry represents one recognized phrase.
 

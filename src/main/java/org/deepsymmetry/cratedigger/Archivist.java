@@ -1,15 +1,15 @@
 package org.deepsymmetry.cratedigger;
 
+import org.apiguardian.api.API;
 import org.deepsymmetry.cratedigger.pdb.RekordboxPdb;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.nio.file.FileSystem;
-import java.nio.file.FileSystems;
-import java.nio.file.Files;
-import java.nio.file.Path;
+import java.nio.file.*;
 import java.util.Iterator;
 import java.util.Map;
 
@@ -17,8 +17,11 @@ import java.util.Map;
  * Supports the creation of archives of all the metadata needed from rekordbox media exports to enable full Beat Link
  * features when working with the Opus Quad, which is unable to serve the metadata itself.
  */
+@API(status = API.Status.EXPERIMENTAL)
 public class Archivist {
 
+    private static final Logger logger = LoggerFactory.getLogger(Archivist.class);
+    
     /**
      * Holds the singleton instance of this class.
      */
@@ -29,6 +32,7 @@ public class Archivist {
      *
      * @return the only instance that exists
      */
+    @API(status = API.Status.EXPERIMENTAL)
     public static Archivist getInstance() {
         return instance;
     }
@@ -44,6 +48,7 @@ public class Archivist {
      * An interface that can be used to display progress to the user as an archive is being created, and allow
      * them to cancel the process if desired.
      */
+    @API(status = API.Status.EXPERIMENTAL)
     public interface ArchiveListener {
 
         /**
@@ -68,6 +73,7 @@ public class Archivist {
      *
      * @throws IOException if there is a problem creating the archive
      */
+    @API(status = API.Status.EXPERIMENTAL)
     public void createArchive(Database database, File file) throws IOException {
         createArchive(database, file, null);
     }
@@ -84,6 +90,7 @@ public class Archivist {
      *
      * @throws IOException if there is a problem creating the archive
      */
+    @API(status = API.Status.EXPERIMENTAL)
     public void createArchive(Database database, File archiveFile, ArchiveListener listener) throws IOException {
         final Path archivePath = archiveFile.toPath();
         final Path mediaPath = database.sourceFile.getParentFile().getParentFile().getParentFile().toPath();
@@ -107,38 +114,21 @@ public class Archivist {
 
                 // First the original analysis file.
                 final String anlzPathString = Database.getText(track.analyzePath());
-                final Path anlzPath = mediaPath.resolve(anlzPathString.substring(1));
-                Path destPath = fileSystem.getPath(anlzPathString);
-                Files.createDirectories(destPath.getParent());
-                Files.copy(anlzPath, destPath);
+                archiveMediaItem(mediaPath, anlzPathString, fileSystem, "analysis file");
 
                 // Then the extended analysis file, if it exists.
                 final String extPathString = anlzPathString.substring(0, anlzPathString.length() - 3) + "EXT";
-                final Path extPath = mediaPath.resolve(extPathString.substring(1));
-                if (extPath.toFile().canRead()) {
-                    destPath = fileSystem.getPath(extPathString);
-                    Files.copy(extPath, destPath);
-                }
+                archiveMediaItem(mediaPath, extPathString, fileSystem, "extended analysis file");
 
                 // Finally, the album art.
                 final RekordboxPdb.ArtworkRow artwork = database.artworkIndex.get(track.artworkId());
                 if (artwork != null) {
                     final String artPathString = Database.getText(artwork.path());
-                    final Path artPath = mediaPath.resolve(artPathString.substring(1));
-                    // First copy the regular resolution album art
-                    if (artPath.toFile().canRead()) {
-                        destPath = fileSystem.getPath(artPathString);
-                        Files.createDirectories(destPath.getParent());
-                        Files.copy(artPath, destPath);
-                    }
+                    archiveMediaItem(mediaPath, artPathString, fileSystem, "artwork file");
+
                     // Then, copy the high resolution album art, if it exists
                     final String highResArtPathString = artPathString.replaceFirst("(\\.\\w+$)", "_m$1");
-                    final Path highResArtPath = mediaPath.resolve(highResArtPathString.substring(1));
-                    if (highResArtPath.toFile().canRead()) {
-                        destPath = fileSystem.getPath(highResArtPathString);
-                        Files.createDirectories(destPath.getParent());
-                        Files.copy(highResArtPath, destPath);
-                    }
+                    archiveMediaItem(mediaPath, highResArtPathString, fileSystem, "high-resolution artwork file");
                 }
 
                 ++completed;  // For use in providing progress feedback if there is a listener.
@@ -158,6 +148,27 @@ public class Archivist {
             if (failed) {
                 Files.deleteIfExists(archivePath);
             }
+        }
+    }
+
+    /**
+     * Helper method to archive a single media export file when creating a metadata archive.
+     *
+     * @param mediaPath the path to the file to be archived
+     * @param pathString the string which holds the absolute path to the media item
+     * @param archive the ZIP filesystem in which the metadata archive is being created
+     * @param description the text identifying the type of file being archived, in case we need to log a warning
+     *
+     * @throws IOException if there is an unexpected problem adding the media item to the archive
+     */
+    private static void archiveMediaItem(Path mediaPath, String pathString, FileSystem archive, String description) throws IOException {
+        final Path sourcePath = mediaPath.resolve(pathString.substring(1));
+        final Path destinationPath = archive.getPath(pathString);
+        Files.createDirectories(destinationPath.getParent());
+        try {
+            Files.copy(sourcePath, destinationPath);
+        } catch (FileAlreadyExistsException e) {
+            logger.warn("Skipping copy of {} {} because it has already been archived." , description, destinationPath);
         }
     }
 }

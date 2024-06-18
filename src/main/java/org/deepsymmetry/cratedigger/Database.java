@@ -2,6 +2,7 @@ package org.deepsymmetry.cratedigger;
 
 import io.kaitai.struct.KaitaiStruct;
 import io.kaitai.struct.RandomAccessFileKaitaiStream;
+import org.apiguardian.api.API;
 import org.deepsymmetry.cratedigger.pdb.RekordboxPdb;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -15,7 +16,8 @@ import java.util.*;
 /**
  * <p>Parses rekordbox database export files, providing access to the information they contain.</p>
  */
-@SuppressWarnings("WeakerAccess")
+@SuppressWarnings("ClassEscapesDefinedScope")
+@API(status = API.Status.STABLE)
 public class Database implements Closeable {
 
     private static final Logger logger = LoggerFactory.getLogger(Database.class);
@@ -31,55 +33,56 @@ public class Database implements Closeable {
     public final File sourceFile;
 
     /**
-     * Construct a database access instance from the specified recordbox export file.
+     * <p>Construct a database access instance from the specified recordbox export file.
      * The file can obtained either from the SD or USB media, or directly from a player
-     * using {@link FileFetcher#fetch(InetAddress, String, String, File)}.
+     * using {@link FileFetcher#fetch(InetAddress, String, String, File)}.</p>
      *
-     * Be sure to call {@link #close()} when you are done using the parsed database
+     * <p>Be sure to call {@link #close()} when you are done using the parsed database
      * to close the underlying file or users will be unable to unmount the drive holding
-     * it until they quit your program.
+     * it until they quit your program.</p>
      *
      * @param sourceFile an export.pdb file
      *
      * @throws IOException if there is a problem reading the file
      */
+    @API(status = API.Status.STABLE)
     public Database(File sourceFile) throws IOException {
         this.sourceFile = sourceFile;
         pdb = new RekordboxPdb(new RandomAccessFileKaitaiStream(sourceFile.getAbsolutePath()));
 
-        final SortedMap<String, SortedSet<Long>> mutableTrackTitleIndex = new TreeMap<String, SortedSet<Long>>(String.CASE_INSENSITIVE_ORDER);
-        final SortedMap<Long, SortedSet<Long>> mutableTrackArtistIndex = new TreeMap<Long, SortedSet<Long>>();
-        final SortedMap<Long, SortedSet<Long>> mutableTrackAlbumIndex = new TreeMap<Long, SortedSet<Long>>();
-        final SortedMap<Long, SortedSet<Long>> mutableTrackGenreIndex = new TreeMap<Long, SortedSet<Long>>();
+        final SortedMap<String, SortedSet<Long>> mutableTrackTitleIndex = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
+        final SortedMap<Long, SortedSet<Long>> mutableTrackArtistIndex = new TreeMap<>();
+        final SortedMap<Long, SortedSet<Long>> mutableTrackAlbumIndex = new TreeMap<>();
+        final SortedMap<Long, SortedSet<Long>> mutableTrackGenreIndex = new TreeMap<>();
         trackIndex = indexTracks(mutableTrackTitleIndex, mutableTrackArtistIndex, mutableTrackAlbumIndex, mutableTrackGenreIndex);
         trackTitleIndex = freezeSecondaryIndex(mutableTrackTitleIndex);
         trackAlbumIndex = freezeSecondaryIndex(mutableTrackAlbumIndex);
         trackArtistIndex = freezeSecondaryIndex(mutableTrackArtistIndex);
         trackGenreIndex = freezeSecondaryIndex(mutableTrackGenreIndex);
 
-        final SortedMap<String, SortedSet<Long>> mutableArtistNameIndex = new TreeMap<String, SortedSet<Long>>(String.CASE_INSENSITIVE_ORDER);
+        final SortedMap<String, SortedSet<Long>> mutableArtistNameIndex = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
         artistIndex = indexArtists(mutableArtistNameIndex);
         artistNameIndex = freezeSecondaryIndex(mutableArtistNameIndex);
 
-        final SortedMap<String, SortedSet<Long>> mutableColorNameIndex = new TreeMap<String, SortedSet<Long>>(String.CASE_INSENSITIVE_ORDER);
+        final SortedMap<String, SortedSet<Long>> mutableColorNameIndex = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
         colorIndex = indexColors(mutableColorNameIndex);
         colorNameIndex = freezeSecondaryIndex(mutableColorNameIndex);
 
-        final SortedMap<String, SortedSet<Long>> mutableAlbumNameIndex = new TreeMap<String, SortedSet<Long>>(String.CASE_INSENSITIVE_ORDER);
-        final SortedMap<Long, SortedSet<Long>> mutableAlbumArtistIndex = new TreeMap<Long, SortedSet<Long>>();
+        final SortedMap<String, SortedSet<Long>> mutableAlbumNameIndex = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
+        final SortedMap<Long, SortedSet<Long>> mutableAlbumArtistIndex = new TreeMap<>();
         albumIndex = indexAlbums(mutableAlbumNameIndex, mutableAlbumArtistIndex);
         albumNameIndex = freezeSecondaryIndex(mutableAlbumNameIndex);
         albumArtistIndex = freezeSecondaryIndex(mutableAlbumArtistIndex);
 
-        final SortedMap<String, SortedSet<Long>> mutableLabelNameIndex = new TreeMap<String, SortedSet<Long>>(String.CASE_INSENSITIVE_ORDER);
+        final SortedMap<String, SortedSet<Long>> mutableLabelNameIndex = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
         labelIndex = indexLabels(mutableLabelNameIndex);
         labelNameIndex = freezeSecondaryIndex(mutableLabelNameIndex);
 
-        final SortedMap<String, SortedSet<Long>> mutableMusicalKeyNameIndex = new TreeMap<String, SortedSet<Long>>(String.CASE_INSENSITIVE_ORDER);
+        final SortedMap<String, SortedSet<Long>> mutableMusicalKeyNameIndex = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
         musicalKeyIndex = indexKeys(mutableMusicalKeyNameIndex);
         musicalKeyNameIndex = freezeSecondaryIndex(mutableMusicalKeyNameIndex);
 
-        final SortedMap<String, SortedSet<Long>> mutableGenreNameIndex = new TreeMap<String, SortedSet<Long>>(String.CASE_INSENSITIVE_ORDER);
+        final SortedMap<String, SortedSet<Long>> mutableGenreNameIndex = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
         genreIndex = indexGenres(mutableGenreNameIndex);
         genreNameIndex = freezeSecondaryIndex(mutableGenreNameIndex);
 
@@ -164,11 +167,7 @@ public class Database implements Closeable {
      * @param <K> the type of the key (often String, but may be Long, e.g. to index tracks by artist ID)
      */
     private <K> void addToSecondaryIndex(SortedMap<K, SortedSet<Long>> index, K key, Long id) {
-        SortedSet<Long> existingIds = index.get(key);
-        if (existingIds ==  null) {
-            existingIds = new TreeSet<Long>();
-            index.put(key, existingIds);
-        }
+        SortedSet<Long> existingIds = index.computeIfAbsent(key, k -> new TreeSet<>());
         existingIds.add(id);
     }
 
@@ -182,9 +181,7 @@ public class Database implements Closeable {
      * @return an unmodifiable top-level view of the unmodifiable children
      */
     private <K> SortedMap<K, SortedSet<Long>> freezeSecondaryIndex(SortedMap<K, SortedSet<Long>> index) {
-        for (K key : index.keySet()) {
-            index.put(key, Collections.unmodifiableSortedSet(index.get(key)));
-        }
+        index.replaceAll((k, v) -> Collections.unmodifiableSortedSet(index.get(k)));
         return Collections.unmodifiableSortedMap(index);
     }
 
@@ -196,41 +193,43 @@ public class Database implements Closeable {
      * figure out how to find and use the index tables that must exist in the file somewhere, and avoid
      * building this at all.
      */
-    @SuppressWarnings("WeakerAccess")
+    @API(status = API.Status.STABLE)
     public final Map<Long, RekordboxPdb.TrackRow> trackIndex;
 
     /**
      * A sorted map from track title to the set of track IDs with that title.
      */
-    @SuppressWarnings("WeakerAccess")
+    @API(status = API.Status.STABLE)
     public final SortedMap<String, SortedSet<Long>> trackTitleIndex;
 
     /**
      * A sorted map from artist ID to the set of track IDs associated with that artist.
      */
-    @SuppressWarnings("WeakerAccess")
+    @API(status = API.Status.STABLE)
     public final SortedMap<Long, SortedSet<Long>> trackArtistIndex;
 
     /**
      * A sorted map from album ID to the set of track IDs associated with that album.
      */
-    @SuppressWarnings("WeakerAccess")
+    @API(status = API.Status.STABLE)
     public final SortedMap<Long, SortedSet<Long>> trackAlbumIndex;
 
     /**
      * A sorted map from genre ID to the set of track IDs associated with that genre.
      */
-    @SuppressWarnings("WeakerAccess")
+    @API(status = API.Status.STABLE)
     public final SortedMap<Long, SortedSet<Long>> trackGenreIndex;
 
     /**
      * A sorted map from history playlist name to the ID by which its entries can be found.
      */
+    @API(status = API.Status.STABLE)
     public final SortedMap<String, Long> historyPlaylistNameIndex;
 
     /**
      * A map from playlist ID to the list of tracks IDs making up a history playlist.
      */
+    @API(status = API.Status.STABLE)
     public final Map<Long, List<Long>> historyPlaylistIndex;
 
     /**
@@ -247,43 +246,40 @@ public class Database implements Closeable {
                                                     final SortedMap<Long, SortedSet<Long>> artistIndex,
                                                     final SortedMap<Long, SortedSet<Long>> albumIndex,
                                                     final SortedMap<Long, SortedSet<Long>> genreIndex) {
-        final Map<Long, RekordboxPdb.TrackRow> index = new HashMap<Long, RekordboxPdb.TrackRow>();
+        final Map<Long, RekordboxPdb.TrackRow> index = new HashMap<>();
 
-        indexRows(RekordboxPdb.PageType.TRACKS, new RowHandler() {
-            @Override
-            public void rowFound(KaitaiStruct row) {
-                // We found a track; index it by its ID.
-                RekordboxPdb.TrackRow trackRow = (RekordboxPdb.TrackRow)row;
-                final long id = trackRow.id();
-                index.put(id, trackRow);
+        indexRows(RekordboxPdb.PageType.TRACKS, row -> {
+            // We found a track; index it by its ID.
+            RekordboxPdb.TrackRow trackRow = (RekordboxPdb.TrackRow)row;
+            final long id = trackRow.id();
+            index.put(id, trackRow);
 
-                // Index the track ID by title, artist (in all roles), album, and genre as well.
-                final String title = getText(trackRow.title());
-                if (title.length() > 0) {
-                    addToSecondaryIndex(titleIndex, title, id);
-                }
-                if (trackRow.artistId() > 0) {
-                    addToSecondaryIndex(artistIndex, trackRow.artistId(), id);
-                }
-                if (trackRow.composerId() > 0) {
-                    addToSecondaryIndex(artistIndex, trackRow.composerId(), id);
-                }
-                if (trackRow.originalArtistId() > 0) {
-                    addToSecondaryIndex(artistIndex, trackRow.originalArtistId(), id);
-                }
-                if (trackRow.remixerId() > 0) {
-                    addToSecondaryIndex(artistIndex, trackRow.remixerId(), id);
-                }
-                if (trackRow.albumId() > 0) {
-                    addToSecondaryIndex(albumIndex, trackRow.albumId(), id);
-                }
-                if (trackRow.genreId() > 0) {
-                    addToSecondaryIndex(genreIndex, trackRow.genreId(), id);
-                }
+            // Index the track ID by title, artist (in all roles), album, and genre as well.
+            final String title = getText(trackRow.title());
+            if (!title.isEmpty()) {
+                addToSecondaryIndex(titleIndex, title, id);
+            }
+            if (trackRow.artistId() > 0) {
+                addToSecondaryIndex(artistIndex, trackRow.artistId(), id);
+            }
+            if (trackRow.composerId() > 0) {
+                addToSecondaryIndex(artistIndex, trackRow.composerId(), id);
+            }
+            if (trackRow.originalArtistId() > 0) {
+                addToSecondaryIndex(artistIndex, trackRow.originalArtistId(), id);
+            }
+            if (trackRow.remixerId() > 0) {
+                addToSecondaryIndex(artistIndex, trackRow.remixerId(), id);
+            }
+            if (trackRow.albumId() > 0) {
+                addToSecondaryIndex(albumIndex, trackRow.albumId(), id);
+            }
+            if (trackRow.genreId() > 0) {
+                addToSecondaryIndex(genreIndex, trackRow.genreId(), id);
             }
         });
 
-        logger.info("Indexed " + index.size() + " Tracks.");
+        logger.info("Indexed {} Tracks.", index.size());
         return Collections.unmodifiableMap(index);
     }
 
@@ -291,13 +287,13 @@ public class Database implements Closeable {
     /**
      * A map from artist ID to the actual artist object.
      */
-    @SuppressWarnings("WeakerAccess")
+    @API(status = API.Status.STABLE)
     public final Map<Long, RekordboxPdb.ArtistRow> artistIndex;
 
     /**
      * A sorted map from artist name to the set of artist IDs with that name.
      */
-    @SuppressWarnings("WeakerAccess")
+    @API(status = API.Status.STABLE)
     public final SortedMap<String, SortedSet<Long>> artistNameIndex;
 
     /**
@@ -308,24 +304,21 @@ public class Database implements Closeable {
      * @return the populated and unmodifiable primary artist index
      */
     private Map<Long, RekordboxPdb.ArtistRow> indexArtists(final SortedMap<String, SortedSet<Long>> nameIndex) {
-        final Map<Long, RekordboxPdb.ArtistRow> index = new HashMap<Long, RekordboxPdb.ArtistRow>();
+        final Map<Long, RekordboxPdb.ArtistRow> index = new HashMap<>();
 
-        indexRows(RekordboxPdb.PageType.ARTISTS, new RowHandler() {
-            @Override
-            public void rowFound(KaitaiStruct row) {
-                RekordboxPdb.ArtistRow artistRow = (RekordboxPdb.ArtistRow)row;
-                final long id = artistRow.id();
-                index.put(id, artistRow);
+        indexRows(RekordboxPdb.PageType.ARTISTS, row -> {
+            RekordboxPdb.ArtistRow artistRow = (RekordboxPdb.ArtistRow)row;
+            final long id = artistRow.id();
+            index.put(id, artistRow);
 
-                // Index the artist ID by name as well.
-                final String  name = getText(artistRow.name());
-                if (name.length() > 0) {
-                    addToSecondaryIndex(nameIndex, name, id);
-                }
+            // Index the artist ID by name as well.
+            final String  name = getText(artistRow.name());
+            if (!name.isEmpty()) {
+                addToSecondaryIndex(nameIndex, name, id);
             }
         });
 
-        logger.info("Indexed " + index.size() + " Artists.");
+        logger.info("Indexed {} Artists.", index.size());
         return Collections.unmodifiableMap(index);
     }
 
@@ -333,13 +326,13 @@ public class Database implements Closeable {
     /**
      * A map from color ID to the actual color object.
      */
-    @SuppressWarnings("WeakerAccess")
+    @API(status = API.Status.STABLE)
     public final Map<Long,RekordboxPdb.ColorRow> colorIndex;
 
     /**
      * A sorted map from color name to the set of color IDs with that name.
      */
-    @SuppressWarnings("WeakerAccess")
+    @API(status = API.Status.STABLE)
     public final SortedMap<String, SortedSet<Long>> colorNameIndex;
 
     /**
@@ -350,43 +343,40 @@ public class Database implements Closeable {
      * @return the populated and unmodifiable primary color index
      */
     private Map<Long, RekordboxPdb.ColorRow> indexColors(final SortedMap<String, SortedSet<Long>> nameIndex) {
-        final Map<Long, RekordboxPdb.ColorRow> index = new HashMap<Long, RekordboxPdb.ColorRow>();
+        final Map<Long, RekordboxPdb.ColorRow> index = new HashMap<>();
 
-        indexRows(RekordboxPdb.PageType.COLORS, new RowHandler() {
-            @Override
-            public void rowFound(KaitaiStruct row) {
-                RekordboxPdb.ColorRow colorRow = (RekordboxPdb.ColorRow)row;
-                final long id = colorRow.id();
-                index.put(id, colorRow);
+        indexRows(RekordboxPdb.PageType.COLORS, row -> {
+            RekordboxPdb.ColorRow colorRow = (RekordboxPdb.ColorRow)row;
+            final long id = colorRow.id();
+            index.put(id, colorRow);
 
-                // Index the color by name as well.
-                final String name = Database.getText(colorRow.name());
-                if (name.length() > 0) {
-                    addToSecondaryIndex(nameIndex, name, id);
-                }
+            // Index the color by name as well.
+            final String name = Database.getText(colorRow.name());
+            if (!name.isEmpty()) {
+                addToSecondaryIndex(nameIndex, name, id);
             }
         });
 
-        logger.info("Indexed " + index.size() + " Colors.");
+        logger.info("Indexed {} Colors.", index.size());
         return Collections.unmodifiableMap(index);
     }
 
     /**
      * A map from album ID to the actual album object.
      */
-    @SuppressWarnings("WeakerAccess")
+    @API(status = API.Status.STABLE)
     public final Map<Long, RekordboxPdb.AlbumRow> albumIndex;
 
     /**
      * A sorted map from album name to the set of album IDs with that name.
      */
-    @SuppressWarnings("WeakerAccess")
+    @API(status = API.Status.STABLE)
     public final SortedMap<String, SortedSet<Long>> albumNameIndex;
 
     /**
      * A sorted map from artist ID to the set of album IDs associated with that artist.
      */
-    @SuppressWarnings("WeakerAccess")
+    @API(status = API.Status.STABLE)
     public final SortedMap<Long, SortedSet<Long>> albumArtistIndex;
 
     /**
@@ -399,27 +389,24 @@ public class Database implements Closeable {
      */
     private Map<Long, RekordboxPdb.AlbumRow> indexAlbums(final SortedMap<String, SortedSet<Long>> nameIndex,
                                                     final SortedMap<Long, SortedSet<Long>> artistIndex) {
-        final Map<Long, RekordboxPdb.AlbumRow> index = new HashMap<Long, RekordboxPdb.AlbumRow>();
+        final Map<Long, RekordboxPdb.AlbumRow> index = new HashMap<>();
 
-        indexRows(RekordboxPdb.PageType.ALBUMS, new RowHandler() {
-            @Override
-            public void rowFound(KaitaiStruct row) {
-                RekordboxPdb.AlbumRow albumRow = (RekordboxPdb.AlbumRow) row;
-                final long id = albumRow.id();
-                index.put(id, albumRow);
+        indexRows(RekordboxPdb.PageType.ALBUMS, row -> {
+            RekordboxPdb.AlbumRow albumRow = (RekordboxPdb.AlbumRow) row;
+            final long id = albumRow.id();
+            index.put(id, albumRow);
 
-                // Index the album ID by name and artist as well.
-                final String name = getText(albumRow.name());
-                if (name.length() > 0) {
-                    addToSecondaryIndex(nameIndex, name, id);
-                }
-                if (albumRow.artistId() > 0) {
-                    addToSecondaryIndex(artistIndex, albumRow.artistId(), id);
-                }
+            // Index the album ID by name and artist as well.
+            final String name = getText(albumRow.name());
+            if (!name.isEmpty()) {
+                addToSecondaryIndex(nameIndex, name, id);
+            }
+            if (albumRow.artistId() > 0) {
+                addToSecondaryIndex(artistIndex, albumRow.artistId(), id);
             }
         });
 
-        logger.info("Indexed " + index.size() + " Albums.");
+        logger.info("Indexed {} Albums.", index.size());
         return Collections.unmodifiableMap(index);
     }
 
@@ -427,13 +414,13 @@ public class Database implements Closeable {
     /**
      * A map from label ID to the actual label object.
      */
-    @SuppressWarnings("WeakerAccess")
+    @API(status = API.Status.STABLE)
     public final Map<Long, RekordboxPdb.LabelRow> labelIndex;
 
     /**
      * A sorted map from label name to the set of label IDs with that name.
      */
-    @SuppressWarnings("WeakerAccess")
+    @API(status = API.Status.STABLE)
     public final SortedMap<String, SortedSet<Long>> labelNameIndex;
 
     /**
@@ -444,24 +431,21 @@ public class Database implements Closeable {
      * @return the populated and unmodifiable primary label index
      */
     private Map<Long, RekordboxPdb.LabelRow> indexLabels(final SortedMap<String, SortedSet<Long>> nameIndex) {
-        final Map<Long, RekordboxPdb.LabelRow> index = new HashMap<Long, RekordboxPdb.LabelRow>();
+        final Map<Long, RekordboxPdb.LabelRow> index = new HashMap<>();
 
-        indexRows(RekordboxPdb.PageType.LABELS, new RowHandler() {
-            @Override
-            public void rowFound(KaitaiStruct row) {
-                RekordboxPdb.LabelRow labelRow = (RekordboxPdb.LabelRow) row;
-                final long id = labelRow.id();
-                index.put(id, labelRow);
+        indexRows(RekordboxPdb.PageType.LABELS, row -> {
+            RekordboxPdb.LabelRow labelRow = (RekordboxPdb.LabelRow) row;
+            final long id = labelRow.id();
+            index.put(id, labelRow);
 
-                // Index the label ID by name as well.
-                final String name = getText(labelRow.name());
-                if (name.length() > 0) {
-                    addToSecondaryIndex(nameIndex, name, id);
-                }
+            // Index the label ID by name as well.
+            final String name = getText(labelRow.name());
+            if (!name.isEmpty()) {
+                addToSecondaryIndex(nameIndex, name, id);
             }
         });
 
-        logger.info("Indexed " + index.size() + " Labels.");
+        logger.info("Indexed {} Labels.", index.size());
         return Collections.unmodifiableMap(index);
     }
 
@@ -469,13 +453,13 @@ public class Database implements Closeable {
     /**
      * A map from (musical) key ID to the actual key object.
      */
-    @SuppressWarnings("WeakerAccess")
+    @API(status = API.Status.STABLE)
     public final Map<Long, RekordboxPdb.KeyRow> musicalKeyIndex;
 
     /**
      * A sorted map from musical key name to the set of musical key IDs with that name.
      */
-    @SuppressWarnings("WeakerAccess")
+    @API(status = API.Status.STABLE)
     public final SortedMap<String, SortedSet<Long>> musicalKeyNameIndex;
 
     /**
@@ -486,24 +470,21 @@ public class Database implements Closeable {
      * @return the populated and unmodifiable primary musical key index
      */
     private Map<Long, RekordboxPdb.KeyRow> indexKeys(final SortedMap<String, SortedSet<Long>> nameIndex) {
-        final Map<Long, RekordboxPdb.KeyRow> index = new HashMap<Long, RekordboxPdb.KeyRow>();
+        final Map<Long, RekordboxPdb.KeyRow> index = new HashMap<>();
 
-        indexRows(RekordboxPdb.PageType.KEYS, new RowHandler() {
-            @Override
-            public void rowFound(KaitaiStruct row) {
-                RekordboxPdb.KeyRow keyRow = (RekordboxPdb.KeyRow) row;
-                final long id = keyRow.id();
-                index.put(id, keyRow);
+        indexRows(RekordboxPdb.PageType.KEYS, row -> {
+            RekordboxPdb.KeyRow keyRow = (RekordboxPdb.KeyRow) row;
+            final long id = keyRow.id();
+            index.put(id, keyRow);
 
-                // Index the musical key ID by name as well.
-                final String name = getText(keyRow.name());
-                if (name.length() > 0) {
-                    addToSecondaryIndex(nameIndex, name,  id);
-                }
+            // Index the musical key ID by name as well.
+            final String name = getText(keyRow.name());
+            if (!name.isEmpty()) {
+                addToSecondaryIndex(nameIndex, name,  id);
             }
         });
 
-        logger.info("Indexed " + index.size() + " Musical Keys.");
+        logger.info("Indexed {} Musical Keys.", index.size());
         return Collections.unmodifiableMap(index);
     }
 
@@ -511,13 +492,13 @@ public class Database implements Closeable {
     /**
      * A map from genre ID to the actual genre object.
      */
-    @SuppressWarnings("WeakerAccess")
+    @API(status = API.Status.STABLE)
     public final Map<Long, RekordboxPdb.GenreRow> genreIndex;
 
     /**
      * A sorted map from genre name to the set of genre IDs with that name.
      */
-    @SuppressWarnings("WeakerAccess")
+    @API(status = API.Status.STABLE)
     public final SortedMap<String, SortedSet<Long>> genreNameIndex;
 
     /**
@@ -528,31 +509,28 @@ public class Database implements Closeable {
      * @return the populated and unmodifiable primary genre index
      */
     private Map<Long, RekordboxPdb.GenreRow> indexGenres(final SortedMap<String, SortedSet<Long>> nameIndex) {
-        final Map<Long, RekordboxPdb.GenreRow> index = new HashMap<Long, RekordboxPdb.GenreRow>();
+        final Map<Long, RekordboxPdb.GenreRow> index = new HashMap<>();
 
-        indexRows(RekordboxPdb.PageType.GENRES, new RowHandler() {
-            @Override
-            public void rowFound(KaitaiStruct row) {
-                RekordboxPdb.GenreRow genreRow = (RekordboxPdb.GenreRow) row;
-                final long id = genreRow.id();
-                index.put(id, genreRow);
+        indexRows(RekordboxPdb.PageType.GENRES, row -> {
+            RekordboxPdb.GenreRow genreRow = (RekordboxPdb.GenreRow) row;
+            final long id = genreRow.id();
+            index.put(id, genreRow);
 
-                // Index the genre by name as well.
-                final String name = getText(genreRow.name());
-                if (name.length() > 0) {
-                    addToSecondaryIndex(nameIndex, name, id);
-                }
+            // Index the genre by name as well.
+            final String name = getText(genreRow.name());
+            if (!name.isEmpty()) {
+                addToSecondaryIndex(nameIndex, name, id);
             }
         });
 
-        logger.info("Indexed " + index.size() + " Genres.");
+        logger.info("Indexed {} Genres.", index.size());
         return Collections.unmodifiableMap(index);
     }
 
     /**
      * A map from artwork ID to the artwork row containing its file path.
      */
-    @SuppressWarnings("WeakerAccess")
+    @API(status = API.Status.STABLE)
     public final Map<Long, RekordboxPdb.ArtworkRow> artworkIndex;
 
     /**
@@ -561,29 +539,28 @@ public class Database implements Closeable {
      * @return the populated and unmodifiable artwork path index
      */
     private Map<Long, RekordboxPdb.ArtworkRow> indexArtwork() {
-        final Map<Long, RekordboxPdb.ArtworkRow> index = new HashMap<Long, RekordboxPdb.ArtworkRow>();
+        final Map<Long, RekordboxPdb.ArtworkRow> index = new HashMap<>();
 
-        indexRows(RekordboxPdb.PageType.ARTWORK, new RowHandler() {
-            @Override
-            public void rowFound(KaitaiStruct row) {
-                RekordboxPdb.ArtworkRow artworkRow = (RekordboxPdb.ArtworkRow) row;
-                index.put(artworkRow.id(), artworkRow);
-            }
+        indexRows(RekordboxPdb.PageType.ARTWORK, row -> {
+            RekordboxPdb.ArtworkRow artworkRow = (RekordboxPdb.ArtworkRow) row;
+            index.put(artworkRow.id(), artworkRow);
         });
 
-        logger.info(("Indexed " + index.size() + " Artwork Paths."));
+        logger.info("Indexed {} Artwork Paths.", index.size());
         return Collections.unmodifiableMap(index);
     }
 
     /**
      * A map from playlist ID to the list of tracks IDs making up a playlist.
      */
+    @API(status = API.Status.STABLE)
     public final Map<Long, List<Long>> playlistIndex;
 
     /**
      * Playlist folders can either contain playlists or other folders. Each
      * entry has a flag explaining how the ID should be interpreted.
      */
+    @API(status = API.Status.STABLE)
     public static class PlaylistFolderEntry {
         /**
          * The name by which this playlist or folder is known.
@@ -619,6 +596,10 @@ public class Database implements Closeable {
         }
     }
 
+    /**
+     * A map from folder ID to the list of playlists or folders in a playlist folder.
+     */
+    @API(status = API.Status.STABLE)
     public final Map<Long, List<PlaylistFolderEntry>> playlistFolderIndex;
 
     /**
@@ -627,27 +608,22 @@ public class Database implements Closeable {
      * @return the populated and unmodifiable playlist index
      */
     private Map<Long, List<Long>> indexPlaylists() {
-        final Map<Long, List<Long>> result = new HashMap<Long, List<Long>>();
-        indexRows(RekordboxPdb.PageType.PLAYLIST_ENTRIES, new RowHandler() {
-            @Override
-            public void rowFound(KaitaiStruct row) {
-                RekordboxPdb.PlaylistEntryRow entryRow = (RekordboxPdb.PlaylistEntryRow) row;
-                ArrayList<Long> playlist = (ArrayList<Long>) result.get(entryRow.playlistId());
-                if (playlist == null) {
-                    playlist = new ArrayList<Long>();
-                    result.put(entryRow.playlistId(), playlist);
-                }
-                while (playlist.size() <= entryRow.entryIndex()) {  // Grow to hold the new entry we are going to set.
-                    playlist.add(0L);
-                }
-                playlist.set((int) entryRow.entryIndex(), entryRow.trackId());
+        final Map<Long, List<Long>> result = new HashMap<>();
+        indexRows(RekordboxPdb.PageType.PLAYLIST_ENTRIES, row -> {
+            RekordboxPdb.PlaylistEntryRow entryRow = (RekordboxPdb.PlaylistEntryRow) row;
+            ArrayList<Long> playlist = (ArrayList<Long>) result.get(entryRow.playlistId());
+            if (playlist == null) {
+                playlist = new ArrayList<>();
+                result.put(entryRow.playlistId(), playlist);
             }
+            while (playlist.size() <= entryRow.entryIndex()) {  // Grow to hold the new entry we are going to set.
+                playlist.add(0L);
+            }
+            playlist.set((int) entryRow.entryIndex(), entryRow.trackId());
         });
         // Freeze the finished lists and overall map
-        for (Map.Entry<Long, List<Long>> entry : result.entrySet()) {
-            result.put(entry.getKey(), Collections.unmodifiableList(entry.getValue()));
-        }
-        logger.info("Indexed " + result.size() + " playlists.");
+        result.replaceAll((k, v) -> Collections.unmodifiableList(v));
+        logger.info("Indexed {} playlists.", result.size());
         return Collections.unmodifiableMap(result);
     }
 
@@ -657,28 +633,23 @@ public class Database implements Closeable {
      * @return the populated and unmodifiable playlist folder index
      */
     private Map<Long, List<PlaylistFolderEntry>> indexPlaylistFolders() {
-        final Map<Long, List<PlaylistFolderEntry>> result = new HashMap<Long, List<PlaylistFolderEntry>>();
-        indexRows(RekordboxPdb.PageType.PLAYLIST_TREE, new RowHandler() {
-            @Override
-            public void rowFound(KaitaiStruct row) {
-                RekordboxPdb.PlaylistTreeRow treeRow = (RekordboxPdb.PlaylistTreeRow) row;
-                ArrayList<PlaylistFolderEntry> parent = (ArrayList<PlaylistFolderEntry>) result.get(treeRow.parentId());
-                if (parent == null) {
-                    parent = new ArrayList<PlaylistFolderEntry>();
-                    result.put(treeRow.parentId(), parent);
-                }
-                while (parent.size() <= treeRow.sortOrder()) {  // Grow to hold the new entry we are going to set.
-                    parent.add(null);
-                }
-                parent.set((int) treeRow.sortOrder(), new PlaylistFolderEntry(Database.getText(treeRow.name()),
-                        treeRow.isFolder(), treeRow.id()));
+        final Map<Long, List<PlaylistFolderEntry>> result = new HashMap<>();
+        indexRows(RekordboxPdb.PageType.PLAYLIST_TREE, row -> {
+            RekordboxPdb.PlaylistTreeRow treeRow = (RekordboxPdb.PlaylistTreeRow) row;
+            ArrayList<PlaylistFolderEntry> parent = (ArrayList<PlaylistFolderEntry>) result.get(treeRow.parentId());
+            if (parent == null) {
+                parent = new ArrayList<>();
+                result.put(treeRow.parentId(), parent);
             }
+            while (parent.size() <= treeRow.sortOrder()) {  // Grow to hold the new entry we are going to set.
+                parent.add(null);
+            }
+            parent.set((int) treeRow.sortOrder(), new PlaylistFolderEntry(Database.getText(treeRow.name()),
+                    treeRow.isFolder(), treeRow.id()));
         });
         // Freeze the finished lists and overall map
-        for (Map.Entry<Long, List<PlaylistFolderEntry>> entry : result.entrySet()) {
-            result.put(entry.getKey(), Collections.unmodifiableList(entry.getValue()));
-        }
-        logger.info("Indexed " + result.size() + " playlist folders.");
+        result.replaceAll((k, v) -> Collections.unmodifiableList(v));
+        logger.info("Indexed {} playlist folders.", result.size());
         return Collections.unmodifiableMap(result);
     }
 
@@ -688,15 +659,12 @@ public class Database implements Closeable {
      * @return a map sorted by the history playlist names identifying the IDs by which their entries can be found.
      */
     private SortedMap<String, Long> indexHistoryPlaylistNames() {
-        final SortedMap<String, Long> result = new TreeMap<String, Long>();
-        indexRows(RekordboxPdb.PageType.HISTORY_PLAYLISTS, new RowHandler() {
-            @Override
-            public void rowFound(KaitaiStruct row) {
-                RekordboxPdb.HistoryPlaylistRow historyRow = (RekordboxPdb.HistoryPlaylistRow) row;
-                result.put(getText(historyRow.name()), historyRow.id());
-            }
+        final SortedMap<String, Long> result = new TreeMap<>();
+        indexRows(RekordboxPdb.PageType.HISTORY_PLAYLISTS, row -> {
+            RekordboxPdb.HistoryPlaylistRow historyRow = (RekordboxPdb.HistoryPlaylistRow) row;
+            result.put(getText(historyRow.name()), historyRow.id());
         });
-        logger.info("Indexed " + result.size() + " history playlists.");
+        logger.info("Indexed {} history playlist names.", result.size());
         return Collections.unmodifiableSortedMap(result);
     }
 
@@ -706,27 +674,22 @@ public class Database implements Closeable {
      * @return the populated and unmodifiable history playlist index.
      */
     private Map<Long, List<Long>> indexHistoryPlaylists() {
-        final Map<Long, List<Long>> result = new HashMap<Long, List<Long>>();
-        indexRows(RekordboxPdb.PageType.HISTORY_ENTRIES, new RowHandler() {
-            @Override
-            public void rowFound(KaitaiStruct row) {
-                RekordboxPdb.HistoryEntryRow entryRow = (RekordboxPdb.HistoryEntryRow) row;
-                ArrayList<Long> playList = (ArrayList<Long>) result.get(entryRow.playlistId());
-                if (playList == null) {
-                    playList = new ArrayList<Long>();
-                    result.put(entryRow.playlistId(), playList);
-                }
-                while (playList.size() <= entryRow.entryIndex()) {  // Grow to hold the new entry we are going to set.
-                    playList.add(0L);
-                }
-                playList.set((int) entryRow.entryIndex(), entryRow.trackId());
+        final Map<Long, List<Long>> result = new HashMap<>();
+        indexRows(RekordboxPdb.PageType.HISTORY_ENTRIES, row -> {
+            RekordboxPdb.HistoryEntryRow entryRow = (RekordboxPdb.HistoryEntryRow) row;
+            ArrayList<Long> playList = (ArrayList<Long>) result.get(entryRow.playlistId());
+            if (playList == null) {
+                playList = new ArrayList<>();
+                result.put(entryRow.playlistId(), playList);
             }
+            while (playList.size() <= entryRow.entryIndex()) {  // Grow to hold the new entry we are going to set.
+                playList.add(0L);
+            }
+            playList.set((int) entryRow.entryIndex(), entryRow.trackId());
         });
         // Freeze the finished lists and overall map.
-        for (Map.Entry<Long, List<Long>> entry : result.entrySet()) {
-            result.put(entry.getKey(), Collections.unmodifiableList(entry.getValue()));
-        }
-        logger.info("Indexed " + result.size() + " history playlists.");
+        result.replaceAll((k, v) -> Collections.unmodifiableList(v));
+        logger.info("Indexed {} history playlists.", result.size());
         return Collections.unmodifiableMap(result);
     }
 
@@ -750,7 +713,7 @@ public class Database implements Closeable {
      *
      * @return the text it contains, which may have zero length, but will never be {@code null}
      */
-    @SuppressWarnings("WeakerAccess")
+    @API(status = API.Status.STABLE)
     public static String getText(RekordboxPdb.DeviceSqlString string) {
         String text = null;
         if (string.body() instanceof RekordboxPdb.DeviceSqlShortAscii) {
@@ -763,7 +726,7 @@ public class Database implements Closeable {
         if (text != null) {
             return text;
         }
-        logger.warn("Received unusable DeviceSqlString, returning empty string; lengthAndKind: " + string.lengthAndKind());
+        logger.warn("Received unusable DeviceSqlString, returning empty string; lengthAndKind: {}", string.lengthAndKind());
         return "";
     }
 }

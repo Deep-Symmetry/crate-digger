@@ -1,6 +1,7 @@
 package org.deepsymmetry.cratedigger;
 
 import org.acplt.oncrpc.*;
+import org.apiguardian.api.API;
 import org.deepsymmetry.cratedigger.rpc.*;
 
 import java.io.File;
@@ -9,6 +10,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.net.InetAddress;
 import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -21,27 +23,28 @@ import java.util.concurrent.ConcurrentHashMap;
  *
  * <p>This is a singleton, so the single instance is obtained through the {@link #getInstance()} method.</p>
  */
+@API(status = API.Status.STABLE)
 public class FileFetcher {
 
     /**
      * The character set with which paths are sent to the NFS servers running on players.
      */
-    @SuppressWarnings("WeakerAccess")
-    public final static Charset CHARSET = Charset.forName("UTF-16LE");
+    @API(status = API.Status.STABLE)
+    public final static Charset CHARSET = StandardCharsets.UTF_16LE;
 
     /**
      * The default number of bytes to read from the player in each request for file data. This is a trade-off
      * between reducing the number of requests and reducing IP fragmentation and expensive retransmissions
      * of already-sent fragments whenever one is lost.
      */
-    @SuppressWarnings("WeakerAccess")
+    @API(status = API.Status.STABLE)
     public final static int DEFAULT_READ_SIZE = 2048;
 
     /**
      * How long to wait for a response to our UDP RPC calls before retransmitting. The players respond within a
      * few milliseconds if they are going to at all.
      */
-    @SuppressWarnings("WeakerAccess")
+    @API(status = API.Status.STABLE)
     public static final int DEFAULT_RPC_RETRANSMIT_TIMEOUT = 250;
 
     /**
@@ -54,6 +57,7 @@ public class FileFetcher {
      *
      * @return the only instance that exists
      */
+    @API(status = API.Status.STABLE)
     public static FileFetcher getInstance() {
         return instance;
     }
@@ -72,6 +76,7 @@ public class FileFetcher {
      *
      * @return the current read size
      */
+    @API(status = API.Status.STABLE)
     public int getReadSize() {
         return readSize;
     }
@@ -84,6 +89,7 @@ public class FileFetcher {
      * @param readSize the new read size, must be between 1024 and the largest value supported by NFS, inclusive
      * @throws IllegalArgumentException if {@code readSize} is less than 1024 or greater than {@link nfs#MAXDATA}
      */
+    @API(status = API.Status.STABLE)
     public void setReadSize(int readSize) {
         if (readSize < 1024 || readSize > nfs.MAXDATA) {
             throw new IllegalArgumentException("readSize must be between 1024 and " + nfs.MAXDATA + ", inclusive.");
@@ -104,6 +110,7 @@ public class FileFetcher {
      *
      * @return the current retransmit timeout
      */
+    @API(status = API.Status.STABLE)
     public int getRetransmitTimeout() {
         return retransmitTimeout;
     }
@@ -114,6 +121,7 @@ public class FileFetcher {
      *
      * @param retransmitTimeout the new retransmit timeout, must be between 1 an 30000, inclusive
      */
+    @API(status = API.Status.STABLE)
     public void setRetransmitTimeout(int retransmitTimeout) {
         if (retransmitTimeout < 1 || retransmitTimeout > 30000) {
             throw new IllegalArgumentException("retransmitTimeout must be between 1 and 30000, inclusive.");
@@ -128,10 +136,10 @@ public class FileFetcher {
     private int retransmitTimeout = DEFAULT_RPC_RETRANSMIT_TIMEOUT;
 
     /**
-     * Keeps track of the root filesystems of the known players so we don't have to mount them every time we want a
+     * Keeps track of the root filesystems of the known players, so we don't have to mount them every time we want a
      * file. Keys are the address of the player, values are a map from mount paths to the corresponding file handles.
      */
-    private final Map<InetAddress, Map<String, FHandle>> mounts = new ConcurrentHashMap<InetAddress,  Map<String, FHandle>>();
+    private final Map<InetAddress, Map<String, FHandle>> mounts = new ConcurrentHashMap<>();
 
     /**
      * Mount a filesystem in preparation to retrieving files from it. Since NFS is a stateless protocol, and the
@@ -186,7 +194,7 @@ public class FileFetcher {
 
         // Create a cache for the player if one does not yet exist.
         if (playerMap == null) {
-            playerMap = new ConcurrentHashMap<String, FHandle>();
+            playerMap = new ConcurrentHashMap<>();
             mounts.put(player, playerMap);
         }
 
@@ -203,6 +211,7 @@ public class FileFetcher {
      *
      * @param player the player that has disappeared or unmounted a filesystem
      */
+    @API(status = API.Status.STABLE)
     public void removePlayer(InetAddress player) {
         mounts.remove(player);
         nfsClients.remove(player);
@@ -213,7 +222,7 @@ public class FileFetcher {
      * each time we retrieve another file from the player. The client will be created the first time we need a file
      * from a player, and removed when {@link #removePlayer(InetAddress)} is called.
      */
-    private final Map<InetAddress, OncRpcUdpClient> nfsClients = new ConcurrentHashMap<InetAddress, OncRpcUdpClient>();
+    private final Map<InetAddress, OncRpcUdpClient> nfsClients = new ConcurrentHashMap<>();
 
     /**
      * Find or create the NFS client that can talk to a particular player.
@@ -253,13 +262,13 @@ public class FileFetcher {
         FHandle root = findRoot(player, mountPath);
         OncRpcUdpClient client = getNfsClient(player);
 
-        // Iterate over the elements of the path to the file we want to find (the players can't handle multi-part
+        // Iterate over the elements of the path to the file we want to find (the players can't handle multipart
         // path names themselves).
         String[] elements = filePath.split("/");
         FHandle fileHandle = root;
         DirOpRes result = null;
         for (String element : elements) {
-            if (element.length() > 0) {
+            if (!element.isEmpty()) {
                 DirOpArgs args = new DirOpArgs();
                 args.dir = fileHandle;
                 args.name = new Filename(element.getBytes(CHARSET));
@@ -292,9 +301,9 @@ public class FileFetcher {
      *
      * @throws IOException if there is a problem retrieving the file
      */
+    @API(status = API.Status.STABLE)
     public void fetch(InetAddress player, String mountPath, String sourcePath, File destination) throws IOException {
-        FileOutputStream outputStream = new FileOutputStream(destination);
-        try {
+        try (FileOutputStream outputStream = new FileOutputStream(destination)) {
             // Make sure the file exists on the player, and find its file handle.
             DirOpResBody found = find(player, mountPath, sourcePath);
             if (found.attributes.type != FType.NFREG) {
@@ -330,8 +339,6 @@ public class FileFetcher {
 
         } catch (OncRpcException e) {
             throw new IOException("Unable to download file \"" + sourcePath + "\", caught ONC RPC exception.", e);
-        } finally {
-            outputStream.close();
         }
     }
 }

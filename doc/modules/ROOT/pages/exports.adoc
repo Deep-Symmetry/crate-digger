@@ -38,7 +38,7 @@ be mounted in DJ controllers and used to play and mix music.
 The file consists of a series of fixed size pages. The first page
 contains a file header which defines the page size and the locations
 of database tables of different types, by the index of their first
-page. The rest of the pages consist of the data pages for all of the
+page. The rest of the pages consist of the data pages for all the
 tables identified in the header.
 
 Each table is made up of a series of rows which may be spread across
@@ -63,7 +63,7 @@ Lesniak], to whom I am hugely grateful.
 [[file-header]]
 === File Header
 
-Unless otherwise stated, all multi-byte numbers in the file are stored
+Unless otherwise stated, all multibyte numbers in the file are stored
 in little-endian byte order. Field names used in the byte field
 diagrams match the IDs assigned to them in the
 https://github.com/Deep-Symmetry/crate-digger/blob/master/src/main/kaitai/rekordbox_pdb.ksy[Kaitai
@@ -304,7 +304,7 @@ _row~pf0~_ in the diagram (meaning “row presence flags group 0”), is
 found near the end of the page. The last two bytes after each row
 bitmask (for example _pad~0~_ after _row~pf0~_) have an unknown
 purpose and may always be zero, and the _row~pf0~_ bitmask takes up
-the two bytes that precede them. The low order bit of this value will
+the two bytes that precede them. The low-order bit of this value will
 be set if row 0 is really present, the next bit if row 1 is really
 present, and so on. The two bytes before these flags, labeled
 _ofs~0~_, store the offset of the first row in the page. This offset
@@ -315,7 +315,7 @@ the heap, at byte `28` in the page, _ofs~0~_ would have the value
 
 As more rows are added to the page, space is allocated for them in the
 heap, and additional index entries are added at the end of the heap,
-growing backwards. Once there have been sixteen rows added, all of the
+growing backwards. Once there have been sixteen rows added, all the
 bits in _row~pf0~_ are accounted for, and when another row is added,
 before its offset entry _ofs~16~_ can be added, another row bit-mask
 entry _row~pf1~_ needs to be allocated, followed by its corresponding
