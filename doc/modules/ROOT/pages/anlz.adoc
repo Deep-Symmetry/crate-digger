@@ -454,6 +454,9 @@ include::example$tag_shared.edn[]
 __len_tag__ is always 1620 (decimal) bytes (400x4+4+16(header))
 but only VBR files have values other than 0 in the entries.
 
+Newer versions exports the last entry (total numer of samples) even for CBR MP3
+(but does not for flac)
+
 [[waveform-preview-tag]]
 === Waveform Preview Tag
 
