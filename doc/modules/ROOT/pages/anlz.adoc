@@ -447,7 +447,7 @@ and __len_header__ is `10`.
 include::example$tag_shared.edn[]
 (draw-tag-header "PVBR")
 (draw-box (text "unknown" :math [:sub 1]) [:bg-yellow {:span 4}])
-(draw-gap (text "entries" :math [:sub 2]))
+(draw-gap (text "entries" :math))
 (draw-bottom)
 ----
 
