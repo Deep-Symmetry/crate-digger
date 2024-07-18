@@ -425,14 +425,21 @@ at byte{nbsp}``10``, is a UTF-16 Big Endian string with a trailing `NUL`
 [[vbr]]
 === VBR Tag
 
-This kind of section has not yet been explained, but it is believed to
-hold an index allowing rapid seeking to particular times within
-variable-bit-rate tracks. (Without such a structure, it would be
-necessary to scan the entire file from the beginning to find a frame
-starting at a particular time, which would be too slow for jumping to
-memory points or hot cues deep within the track.) What is known of the
-structure is shown below. The four-character code that identifies this
-type of section is `PVBR` and __len_header__ is `10`.
+This kind of section can hold offset values in the file, if the file's
+bitrate varies (VBR). In that case there are 400(decimal) 32bit file 
+offsets counted from the first valid syncword (Not from the beginning
+of the file!) and also an extra 32bit field with the total number of 
+decoded samples.
+
+(don't forget to be able to properly seek an mpeg1 layer3 file, it is
+advised to load from ~1500bytes(decimal) before the intended frame, as the
+audio_data_start is calculated from the previous frame's audio_data_end,
+so need to process that frame, and also, in small frames it can even index
+earlier -- audio_data_end is a 9bit negative offset from next frame sync --
+just throw out the result until arrive back to the desired frame)
+
+The four-character code that identifies this type of section is `PVBR` 
+and __len_header__ is `10`.
 
 .VBR tag.
 [bytefield]
@@ -440,9 +447,12 @@ type of section is `PVBR` and __len_header__ is `10`.
 include::example$tag_shared.edn[]
 (draw-tag-header "PVBR")
 (draw-box (text "unknown" :math [:sub 1]) [:bg-yellow {:span 4}])
-(draw-gap (text "unknown" :math [:sub 2]))
+(draw-gap (text "entries" :math [:sub 2]))
 (draw-bottom)
 ----
+
+__len_tag__ is always 1620 (decimal) bytes (400x4+4+16(header))
+but only VBR files have values other than 0 in the entries.
 
 [[waveform-preview-tag]]
 === Waveform Preview Tag
