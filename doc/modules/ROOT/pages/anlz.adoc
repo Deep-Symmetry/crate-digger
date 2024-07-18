@@ -431,10 +431,10 @@ offsets counted from the first valid syncword (Not from the beginning
 of the file!) and also an extra 32bit field with the total number of 
 decoded samples.
 
-(don't forget to be able to properly seek an mpeg1 layer3 file, it is
-advised to load from ~1500bytes(decimal) before the intended frame, as the
+(don't forget: to be able to properly seek an mpeg1 layer3 file it is
+advised to load from ~1500bytes(decimal) before the intended frame as the
 audio_data_start is calculated from the previous frame's audio_data_end,
-so need to process that frame, and also, in small frames it can even index
+so need to process that frame; and also in small frames it can even index
 earlier -- audio_data_end is a 9bit negative offset from next frame sync --
 just throw out the result until arrive back to the desired frame)
 
