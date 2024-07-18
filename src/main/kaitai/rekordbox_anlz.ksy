@@ -315,14 +315,26 @@ types:
 
   vbr_tag:
     doc: |
-      Stores an index allowing rapid seeking to particular times
-      within a variable-bitrate audio file.
+      Can store 400 offsets from the start of the first valid syncword
+      to allow rapid seeking to particular times
+      within a variable-bitrate audio (MP3 only?) file.
+      (offsets to MP3 frame starts for every 1/400 of the 
+      total decoded samples rounded(?) to nearest 1152nd 
+      (number of samples in an MP3 frame))
     seq:
       - type: u4
-      - id: index
+      - id: offset
         type: u4
+        doc: |
+          Bigger than 0 values only for VBR MP3 (but still have 0s 
+          in every other case)
         repeat: expr
         repeat-expr: 400
+      - type: u4
+      - id: total_samples
+        doc: |
+          Total number of decoded samples for VBR MP3; later versions
+          fills in even for CBR MP3
 
   wave_preview_tag:
     doc: |
