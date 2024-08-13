@@ -236,16 +236,17 @@ types:
         value: |
           (num_rows_large > num_rows_small) and (num_rows_large != 0x1fff) ? num_rows_large : num_rows_small
         doc: |
-          The number of rows on this page (controls the number of row
-          index entries there are, but some of those may not be marked
-          as present in the table due to deletion).
+          The number of rows that have ever been allocated on this
+          page (controls the number of row groups there are, but some
+          entries in each group may not be marked as present in the
+          table due to deletion or updates).
         -webide-parse-mode: eager
       num_row_groups:
         value: '(num_rows - 1) / 16 + 1'
         doc: |
           The number of row groups that are present in the index. Each
-          group can hold up to sixteen rows. All but the final one
-          will hold sixteen rows.
+          group can hold up to sixteen rows, but `row_present_flags`
+          must be consulted to determine whether each is valid.
       row_groups:
         type: 'row_group(_index)'
         repeat: expr

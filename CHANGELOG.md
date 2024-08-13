@@ -8,7 +8,7 @@ This change log follows the conventions of
 
 ### Fixed
 
-- An error in interpreting a value in the database export file format could lead to some rows that were actually present in tables not being found. Thanks to [@IvanOnishchenko](https://github.com/IvanOnishchenko) for [pointing this out](https://github.com/Deep-Symmetry/crate-digger/issues/32).
+- An error in interpreting a value in the database export file format could lead to some rows that were actually present in tables not being found. Thanks to [@IvanOnishchenko](https://github.com/IvanOnishchenko) for [pointing this out](https://github.com/Deep-Symmetry/crate-digger/issues/32), and [Jan Holthuis (@Holzhaus)](https://github.com/Holzhaus) for identifying a flaw in the first attempt at correcting it.
 
 ## [0.2.0] - 2024-05-04
 
