@@ -153,7 +153,6 @@ types:
         pos: _root.len_page * index
         size: _root.len_page
         type: page
-        if: index > 0x0
 
   page:
     doc: |
@@ -361,6 +360,10 @@ types:
             'page_type::history_playlists': history_playlist_row
             'page_type::history_entries': history_entry_row
             'page_type::tracks': track_row
+        if: present
+        doc: |
+          The actual content of the row, as long as it is present.
+        -webide-parse-mode: eager
       body_ext:
         pos: row_base
         if: _root.is_ext
@@ -369,6 +372,11 @@ types:
           cases:
             'page_type_ext::tags': tag_row
             'page_type_ext::tag_tracks': tag_track_row
+        if: present
+        doc: |
+          The actual content of the row, as long as it is present.
+        -webide-parse-mode: eager
+    -webide-representation: '{body.name.body.text}{body.title.body.text} ({body.id})'
 
   album_row:
     doc: |
