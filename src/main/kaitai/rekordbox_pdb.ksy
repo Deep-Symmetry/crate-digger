@@ -48,6 +48,13 @@ doc: |
 
 doc-ref: https://github.com/Deep-Symmetry/crate-digger/blob/master/doc/Analysis.pdf
 
+params:
+  - id: is_ext
+    type: bool
+    doc: |
+      Indicates whether the database schema is export or exportExt.
+      Set this to true when parsing an exportExt.pdb file.
+
 seq:
   - type: u4
     doc: |
@@ -90,13 +97,6 @@ seq:
     repeat-expr: num_tables
     doc: |
       Describes and links to the tables present in the database.
-
-instances:
-  is_ext:
-    value: false
-  doc: |
-    Indicates whether the database schema is export or exportExt.
-    Set this to true when parsing an exportExt.pdb file.
 
 types:
   table:
