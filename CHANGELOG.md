@@ -6,6 +6,11 @@ This change log follows the conventions of
 
 ## [Unreleased][unreleased]
 
+### Added
+
+- Thanks to [Dominik Stolz (@voidc)](https://github.com/voidc), we can now
+  parse `exportExt.pdb` files for the tag information they contain.
+
 ### Fixed
 
 - An error in interpreting a value in the database export file format could lead to some rows that were actually present in tables not being found. Thanks to [@IvanOnishchenko](https://github.com/IvanOnishchenko) for [pointing this out](https://github.com/Deep-Symmetry/crate-digger/issues/32), and [Jan Holthuis (@Holzhaus)](https://github.com/Holzhaus) for identifying a flaw in the first attempt at correcting it.

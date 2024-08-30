@@ -344,7 +344,7 @@ types:
         -webide-parse-mode: eager
       body:
         pos: row_base
-        if: not _root.is_ext
+        if: present and not _root.is_ext
         type:
           switch-on: _parent._parent.type
           cases:
@@ -360,19 +360,17 @@ types:
             'page_type::history_playlists': history_playlist_row
             'page_type::history_entries': history_entry_row
             'page_type::tracks': track_row
-        if: present
         doc: |
           The actual content of the row, as long as it is present.
         -webide-parse-mode: eager
       body_ext:
         pos: row_base
-        if: _root.is_ext
+        if: present and _root.is_ext
         type:
           switch-on: _parent._parent.type_ext
           cases:
             'page_type_ext::tags': tag_row
             'page_type_ext::tag_tracks': tag_track_row
-        if: present
         doc: |
           The actual content of the row, as long as it is present.
         -webide-parse-mode: eager

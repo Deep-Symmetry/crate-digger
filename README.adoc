@@ -109,6 +109,20 @@ line of the listing, then tell your browser to save it to disk. Be
 sure to keep the `.ksy` extension. Then you can upload it to the
 Kaitai Struct Web IDE.
 
+If you want to look at an `exportExt.pdb` file, follow the procedure above but then also put the following content into an auxiliary file (named
+something like `redkordboxExt_pdb.ksy`) and drag it into the web IDE before
+you drag in the database, that will tell the web IDE which variant of the
+file it is working with:
+
+```yaml
+meta:
+  id: rekordbox_pdb_ext
+  imports:
+    - rekordbox_pdb
+seq:
+  - id: root
+    type: rekordbox_pdb(true)
+```
 
 == ANLZ Data
 
