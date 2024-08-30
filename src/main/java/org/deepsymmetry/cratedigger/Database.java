@@ -16,7 +16,6 @@ import java.util.*;
 /**
  * <p>Parses rekordbox database export files, providing access to the information they contain.</p>
  */
-@SuppressWarnings("ClassEscapesDefinedScope")
 @API(status = API.Status.STABLE)
 public class Database implements Closeable {
 

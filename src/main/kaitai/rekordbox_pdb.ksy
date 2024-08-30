@@ -115,6 +115,8 @@ types:
         type: u4
         enum: page_type_ext
         if: _root.is_ext
+        doc: |
+          Identifies the kind of rows that are found in this table from an exportExt.pdb file.
       - id: empty_candidate
         type: u4
       - id: first_page
@@ -181,6 +183,8 @@ types:
         type: u4
         enum: page_type_ext
         if: _root.is_ext
+        doc: |
+          Identifies the type of information stored in the rows of this page in an exportExt.pdb file.
       - id: next_page
         doc: |
           Index of the next page containing this type of rows. Points past
@@ -372,7 +376,7 @@ types:
             'page_type_ext::tags': tag_row
             'page_type_ext::tag_tracks': tag_track_row
         doc: |
-          The actual content of the row, as long as it is present.
+          The actual content of the row in an exportExt.pdb file, as long as it is present.
         -webide-parse-mode: eager
     -webide-representation: '{body.name.body.text}{body.title.body.text} ({body.id})'
 
@@ -902,7 +906,7 @@ types:
 
   tag_row:
     doc: |
-      A row that holds a tag name and its ID.
+      A row that holds a tag name and its ID (found only in exportExt.pdb files).
     seq:
       - type: u2
         doc: |
@@ -950,7 +954,7 @@ types:
 
   tag_track_row:
     doc: |
-      A row that associates a track and a tag.
+      A row that associates a track and a tag (found only in exportExt.pdb files).
     seq:
       - type: u4
         doc: |
