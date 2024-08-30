@@ -47,8 +47,9 @@ public class Database implements Closeable {
      */
     @API(status = API.Status.STABLE)
     public Database(File sourceFile) throws IOException {
+        // TODO add arity where we can set isExt.
         this.sourceFile = sourceFile;
-        pdb = new RekordboxPdb(new RandomAccessFileKaitaiStream(sourceFile.getAbsolutePath()));
+        pdb = new RekordboxPdb(new RandomAccessFileKaitaiStream(sourceFile.getAbsolutePath()), false);
 
         final SortedMap<String, SortedSet<Long>> mutableTrackTitleIndex = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
         final SortedMap<Long, SortedSet<Long>> mutableTrackArtistIndex = new TreeMap<>();
