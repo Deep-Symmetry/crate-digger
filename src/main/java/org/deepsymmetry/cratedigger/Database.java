@@ -22,6 +22,11 @@ public class Database implements Closeable {
     private static final Logger logger = LoggerFactory.getLogger(Database.class);
 
     /**
+     * Tracks whether we were configured to parse an {@code exportExt.pdb} file.
+     */
+    private final boolean isExportExt;
+
+    /**
      * Holds a reference to the parser for the file we were constructed with.
      */
     private final RekordboxPdb pdb;
@@ -34,7 +39,8 @@ public class Database implements Closeable {
     /**
      * <p>Construct a database access instance from the specified recordbox export file.
      * The file can obtained either from the SD or USB media, or directly from a player
-     * using {@link FileFetcher#fetch(InetAddress, String, String, File)}.</p>
+     * using {@link FileFetcher#fetch(InetAddress, String, String, File)}. This version
+     * of the constructor only handles {@code export.pdb} files.</p>
      *
      * <p>Be sure to call {@link #close()} when you are done using the parsed database
      * to close the underlying file or users will be unable to unmount the drive holding
@@ -46,9 +52,28 @@ public class Database implements Closeable {
      */
     @API(status = API.Status.STABLE)
     public Database(File sourceFile) throws IOException {
-        // TODO add arity where we can set isExt.
+        this(sourceFile, false);
+    }
+
+    /**
+     * <p>Construct a database access instance from the specified recordbox export file.
+     * The file can obtained either from the SD or USB media, or directly from a player
+     * using {@link FileFetcher#fetch(InetAddress, String, String, File)}.</p>
+     *
+     * <p>Be sure to call {@link #close()} when you are done using the parsed database
+     * to close the underlying file or users will be unable to unmount the drive holding
+     * it until they quit your program.</p>
+     *
+     * @param sourceFile an export.pdb or exportExt.pdb file
+     * @param isExportExt indicates which type of file is to be parsed
+     *
+     * @throws IOException if there is a problem reading the file
+     */
+    @API(status = API.Status.EXPERIMENTAL)
+    public Database(File sourceFile, boolean isExportExt) throws IOException {
         this.sourceFile = sourceFile;
-        pdb = new RekordboxPdb(new RandomAccessFileKaitaiStream(sourceFile.getAbsolutePath()), false);
+        this.isExportExt = isExportExt;
+        pdb = new RekordboxPdb(new RandomAccessFileKaitaiStream(sourceFile.getAbsolutePath()), isExportExt);
 
         final SortedMap<String, SortedSet<Long>> mutableTrackTitleIndex = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
         final SortedMap<Long, SortedSet<Long>> mutableTrackArtistIndex = new TreeMap<>();
@@ -137,7 +162,7 @@ public class Database implements Closeable {
                             for (RekordboxPdb.RowRef rowRef : rowGroup.rows()) {
                                 if (rowRef.present()) {
                                     // We found a row, pass it to the handler to be indexed appropriately.
-                                    handler.rowFound(rowRef.body());
+                                    handler.rowFound(isExportExt? rowRef.bodyExt() : rowRef.body());
                                 }
                             }
                         }
