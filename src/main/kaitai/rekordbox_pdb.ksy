@@ -48,6 +48,13 @@ doc: |
 
 doc-ref: https://github.com/Deep-Symmetry/crate-digger/blob/master/doc/Analysis.pdf
 
+params:
+  - id: is_ext
+    type: bool
+    doc: |
+      Indicates whether the database schema is export or exportExt.
+      Set this to true when parsing an exportExt.pdb file.
+
 seq:
   - type: u4
     doc: |
@@ -101,8 +108,13 @@ types:
       - id: type
         type: u4
         enum: page_type
+        if: not _root.is_ext
         doc: |
           Identifies the kind of rows that are found in this table.
+      - id: type_ext
+        type: u4
+        enum: page_type_ext
+        if: _root.is_ext
       - id: empty_candidate
         type: u4
       - id: first_page
@@ -162,8 +174,13 @@ types:
       - id: type
         type: u4
         enum: page_type
+        if: not _root.is_ext
         doc: |
           Identifies the type of information stored in the rows of this page.
+      - id: type_ext
+        type: u4
+        enum: page_type_ext
+        if: _root.is_ext
       - id: next_page
         doc: |
           Index of the next page containing this type of rows. Points past
@@ -327,6 +344,7 @@ types:
         -webide-parse-mode: eager
       body:
         pos: row_base
+        if: not _root.is_ext
         type:
           switch-on: _parent._parent.type
           cases:
@@ -342,6 +360,18 @@ types:
             'page_type::history_playlists': history_playlist_row
             'page_type::history_entries': history_entry_row
             'page_type::tracks': track_row
+        if: present
+        doc: |
+          The actual content of the row, as long as it is present.
+        -webide-parse-mode: eager
+      body_ext:
+        pos: row_base
+        if: _root.is_ext
+        type:
+          switch-on: _parent._parent.type_ext
+          cases:
+            'page_type_ext::tags': tag_row
+            'page_type_ext::tag_tracks': tag_track_row
         if: present
         doc: |
           The actual content of the row, as long as it is present.
@@ -872,6 +902,69 @@ types:
           The file path of the track audio file.
         -webide-parse-mode: eager
 
+  tag_row:
+    doc: |
+      A row that holds a tag name and its ID.
+    seq:
+      - type: u2
+        doc: |
+          Seems to always be 0x80, 0x06.
+      - id: tag_index
+        type: u2
+        doc: |
+          Increasing index for each row in multiples of 0x20.
+      - type: u8
+        doc: |
+          Seems to always be zero.
+      - id: category
+        type: u4
+        doc: |
+          The index of the tag category this tag belongs to.
+          If this row represents a tag category, this field is zero.
+      - id: category_pos
+        type: u4
+        doc: |
+          The position of this tag in its category.
+          If this row represents a tag category, this field equals (id - 1).
+      - id: id
+        type: u4
+        doc: |
+          The ID of this tag or tag category.
+          Referenced by tag_track_row if this row is a tag.
+      - id: is_category
+        type: u4
+        doc: |
+          Whether this row stores a tag category name instead of a tag.
+      - type: u2
+        doc: |
+          Seems to always be 0x03, 0x1f.
+      - id: flags
+        type: u1
+        doc: |
+          Maybe some kind of flags?
+      - id: name
+        type: device_sql_string
+        doc: |
+          The name of the tag or tag category.
+      - type: u1
+        doc: |
+          This seems to always be 0x03.
+
+  tag_track_row:
+    doc: |
+      A row that associates a track and a tag.
+    seq:
+      - type: u4
+        doc: |
+          Seems to always be zero.
+      - id: track_id
+        type: u4
+      - id: tag_id
+        type: u4
+      - type: u4
+        doc: |
+          Seems to always be 3.
+
   device_sql_string:
     doc: |
       A variable length string which can be stored in a variety of
@@ -1023,3 +1116,27 @@ enums:
       id: history
       doc: |
         Holds information to help rekordbox sync history playlists.
+
+  page_type_ext:
+    0:
+      id: unknown_0
+    1:
+      id: unknown_1
+    2:
+      id: unknown_2
+    3:
+      id: tags
+      doc: |
+        Holds rows naming tags.
+    4:
+      id: tag_tracks
+      doc: |
+        Holds rows associating tags and tracks.
+    5:
+      id: unknown_5
+    6:
+      id: unknown_6
+    7:
+      id: unknown_7
+    8:
+      id: unknown_8
