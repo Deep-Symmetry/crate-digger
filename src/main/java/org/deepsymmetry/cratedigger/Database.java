@@ -1,7 +1,5 @@
 package org.deepsymmetry.cratedigger;
 
-import io.kaitai.struct.KaitaiStruct;
-import io.kaitai.struct.RandomAccessFileKaitaiStream;
 import org.apiguardian.api.API;
 import org.deepsymmetry.cratedigger.pdb.RekordboxPdb;
 import org.slf4j.Logger;
@@ -14,7 +12,7 @@ import java.net.InetAddress;
 import java.util.*;
 
 /**
- * <p>Parses rekordbox database export files, providing access to the information they contain.</p>
+ * <p>Parses rekordbox database {@code export.pdb} files, providing access to the information they contain.</p>
  */
 @API(status = API.Status.STABLE)
 public class Database implements Closeable {
@@ -22,14 +20,9 @@ public class Database implements Closeable {
     private static final Logger logger = LoggerFactory.getLogger(Database.class);
 
     /**
-     * Tracks whether we were configured to parse an {@code exportExt.pdb} file.
+     * Helper class to parse and interact with the database file conveniently.
      */
-    private final boolean isExportExt;
-
-    /**
-     * Holds a reference to the parser for the file we were constructed with.
-     */
-    private final RekordboxPdb pdb;
+    private final DatabaseUtil databaseUtil;
 
     /**
      * Holds a reference to the file this database was constructed from.
@@ -39,8 +32,7 @@ public class Database implements Closeable {
     /**
      * <p>Construct a database access instance from the specified recordbox export file.
      * The file can obtained either from the SD or USB media, or directly from a player
-     * using {@link FileFetcher#fetch(InetAddress, String, String, File)}. This version
-     * of the constructor only handles {@code export.pdb} files.</p>
+     * using {@link FileFetcher#fetch(InetAddress, String, String, File)}.</p>
      *
      * <p>Be sure to call {@link #close()} when you are done using the parsed database
      * to close the underlying file or users will be unable to unmount the drive holding
@@ -52,64 +44,44 @@ public class Database implements Closeable {
      */
     @API(status = API.Status.STABLE)
     public Database(File sourceFile) throws IOException {
-        this(sourceFile, false);
-    }
-
-    /**
-     * <p>Construct a database access instance from the specified recordbox export file.
-     * The file can obtained either from the SD or USB media, or directly from a player
-     * using {@link FileFetcher#fetch(InetAddress, String, String, File)}.</p>
-     *
-     * <p>Be sure to call {@link #close()} when you are done using the parsed database
-     * to close the underlying file or users will be unable to unmount the drive holding
-     * it until they quit your program.</p>
-     *
-     * @param sourceFile an export.pdb or exportExt.pdb file
-     * @param isExportExt indicates which type of file is to be parsed
-     *
-     * @throws IOException if there is a problem reading the file
-     */
-    @API(status = API.Status.EXPERIMENTAL)
-    public Database(File sourceFile, boolean isExportExt) throws IOException {
         this.sourceFile = sourceFile;
-        this.isExportExt = isExportExt;
-        pdb = new RekordboxPdb(new RandomAccessFileKaitaiStream(sourceFile.getAbsolutePath()), isExportExt);
+        databaseUtil = new DatabaseUtil(sourceFile, false);
 
         final SortedMap<String, SortedSet<Long>> mutableTrackTitleIndex = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
         final SortedMap<Long, SortedSet<Long>> mutableTrackArtistIndex = new TreeMap<>();
         final SortedMap<Long, SortedSet<Long>> mutableTrackAlbumIndex = new TreeMap<>();
         final SortedMap<Long, SortedSet<Long>> mutableTrackGenreIndex = new TreeMap<>();
         trackIndex = indexTracks(mutableTrackTitleIndex, mutableTrackArtistIndex, mutableTrackAlbumIndex, mutableTrackGenreIndex);
-        trackTitleIndex = freezeSecondaryIndex(mutableTrackTitleIndex);
-        trackAlbumIndex = freezeSecondaryIndex(mutableTrackAlbumIndex);
-        trackArtistIndex = freezeSecondaryIndex(mutableTrackArtistIndex);
-        trackGenreIndex = freezeSecondaryIndex(mutableTrackGenreIndex);
+        trackTitleIndex = databaseUtil.freezeSecondaryIndex(mutableTrackTitleIndex);
+        trackAlbumIndex = databaseUtil.freezeSecondaryIndex(mutableTrackAlbumIndex);
+        trackArtistIndex = databaseUtil.freezeSecondaryIndex(mutableTrackArtistIndex);
+        trackGenreIndex = databaseUtil.freezeSecondaryIndex(mutableTrackGenreIndex);
 
         final SortedMap<String, SortedSet<Long>> mutableArtistNameIndex = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
         artistIndex = indexArtists(mutableArtistNameIndex);
-        artistNameIndex = freezeSecondaryIndex(mutableArtistNameIndex);
+        artistNameIndex = databaseUtil.freezeSecondaryIndex(mutableArtistNameIndex);
 
         final SortedMap<String, SortedSet<Long>> mutableColorNameIndex = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
         colorIndex = indexColors(mutableColorNameIndex);
-        colorNameIndex = freezeSecondaryIndex(mutableColorNameIndex);
+        colorNameIndex = databaseUtil.freezeSecondaryIndex(mutableColorNameIndex);
 
         final SortedMap<String, SortedSet<Long>> mutableAlbumNameIndex = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
         final SortedMap<Long, SortedSet<Long>> mutableAlbumArtistIndex = new TreeMap<>();
         albumIndex = indexAlbums(mutableAlbumNameIndex, mutableAlbumArtistIndex);
-        albumNameIndex = freezeSecondaryIndex(mutableAlbumNameIndex);
-        albumArtistIndex = freezeSecondaryIndex(mutableAlbumArtistIndex);
+        albumNameIndex = databaseUtil.freezeSecondaryIndex(mutableAlbumNameIndex);
+        albumArtistIndex = databaseUtil.freezeSecondaryIndex(mutableAlbumArtistIndex);
 
         final SortedMap<String, SortedSet<Long>> mutableLabelNameIndex = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
         labelIndex = indexLabels(mutableLabelNameIndex);
-        labelNameIndex = freezeSecondaryIndex(mutableLabelNameIndex);
+        labelNameIndex = databaseUtil.freezeSecondaryIndex(mutableLabelNameIndex);
 
         final SortedMap<String, SortedSet<Long>> mutableMusicalKeyNameIndex = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
         musicalKeyIndex = indexKeys(mutableMusicalKeyNameIndex);
-        musicalKeyNameIndex = freezeSecondaryIndex(mutableMusicalKeyNameIndex);
+        musicalKeyNameIndex = databaseUtil.freezeSecondaryIndex(mutableMusicalKeyNameIndex);
 
         final SortedMap<String, SortedSet<Long>> mutableGenreNameIndex = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
         genreIndex = indexGenres(mutableGenreNameIndex);
-        genreNameIndex = freezeSecondaryIndex(mutableGenreNameIndex);
+        genreNameIndex = databaseUtil.freezeSecondaryIndex(mutableGenreNameIndex);
 
         artworkIndex = indexArtwork();
 
@@ -118,96 +90,6 @@ public class Database implements Closeable {
 
         historyPlaylistIndex = indexHistoryPlaylists();
         historyPlaylistNameIndex = indexHistoryPlaylistNames();
-    }
-
-    /**
-     * An interface used to process each row found in a table when traversing them to build our indices.
-     * This allows the common code for traversing a table to be reused, while specializing the handling
-     * of each kind of table's rows.
-     */
-    private interface RowHandler {
-        /**
-         * Each row found in a table being scanned will be passed to this function.
-         *
-         * @param row the row that has just been found
-         */
-        void rowFound(KaitaiStruct row);
-    }
-
-    /**
-     * Parse and index all the rows found in a particular table. This method performs a scan of the
-     * specified table, passing all rows that are encountered to an interface that knows what to do
-     * with them.
-     *
-     * @param type the type of table to be scanned and parsed
-     * @param handler the code that knows how to index that kind of row
-     *
-     * @throws IllegalStateException if there is more than (or less than) one table of that type in the file
-     */
-    private void indexRows(RekordboxPdb.PageType type, RowHandler handler) {
-        boolean done = false;
-        for (RekordboxPdb.Table table : pdb.tables()) {
-            if (table.type() == type) {
-                if (done) throw new IllegalStateException("More than one table found with type " + type);
-                final long lastIndex = table.lastPage().index();  // This is how we know when to stop.
-                RekordboxPdb.PageRef currentRef = table.firstPage();
-                boolean moreLeft = true;
-                do {
-                    // logger.info("Indexing page " + currentRef.index());
-                    final RekordboxPdb.Page page = currentRef.body();
-
-                    // Process only ordinary data pages.
-                    if (page.isDataPage()) {
-                        for (RekordboxPdb.RowGroup rowGroup : page.rowGroups()) {
-                            for (RekordboxPdb.RowRef rowRef : rowGroup.rows()) {
-                                if (rowRef.present()) {
-                                    // We found a row, pass it to the handler to be indexed appropriately.
-                                    handler.rowFound(isExportExt? rowRef.bodyExt() : rowRef.body());
-                                }
-                            }
-                        }
-                    }
-
-                    // Was this the final page in the table? If so, stop, otherwise, move on to the next page.
-                    if (currentRef.index() == lastIndex) {
-                        moreLeft = false;
-                    } else {
-                        currentRef = page.nextPage();
-                    }
-                } while (moreLeft);
-                done = true;
-            }
-        }
-
-        if (!done) throw new IllegalStateException("No table found of type " + type);
-    }
-
-    /**
-     * Adds a row ID to a secondary index which is sorted by some other attribute of the record (for example,
-     * add a track id to the title index, so the track can be found by title).
-     *
-     * @param index the secondary index, which holds all the row IDs that have the specified key
-     * @param key the secondary index value by which this row can be looked up
-     * @param id the ID of the row to index under the specified key
-     * @param <K> the type of the key (often String, but may be Long, e.g. to index tracks by artist ID)
-     */
-    private <K> void addToSecondaryIndex(SortedMap<K, SortedSet<Long>> index, K key, Long id) {
-        SortedSet<Long> existingIds = index.computeIfAbsent(key, k -> new TreeSet<>());
-        existingIds.add(id);
-    }
-
-    /**
-     * Protects a secondary index against further changes once we have finished indexing all the rows that
-     * are going in to it.
-     *
-     * @param index the index that should no longer be modified.
-     * @param <K> the type of the key (often String, but may be Long, e.g. to index tracks by artist ID)
-     *
-     * @return an unmodifiable top-level view of the unmodifiable children
-     */
-    private <K> SortedMap<K, SortedSet<Long>> freezeSecondaryIndex(SortedMap<K, SortedSet<Long>> index) {
-        index.replaceAll((k, v) -> Collections.unmodifiableSortedSet(index.get(k)));
-        return Collections.unmodifiableSortedMap(index);
     }
 
     /**
@@ -273,7 +155,7 @@ public class Database implements Closeable {
                                                     final SortedMap<Long, SortedSet<Long>> genreIndex) {
         final Map<Long, RekordboxPdb.TrackRow> index = new HashMap<>();
 
-        indexRows(RekordboxPdb.PageType.TRACKS, row -> {
+        databaseUtil.indexRows(RekordboxPdb.PageType.TRACKS, row -> {
             // We found a track; index it by its ID.
             RekordboxPdb.TrackRow trackRow = (RekordboxPdb.TrackRow)row;
             final long id = trackRow.id();
@@ -282,25 +164,25 @@ public class Database implements Closeable {
             // Index the track ID by title, artist (in all roles), album, and genre as well.
             final String title = getText(trackRow.title());
             if (!title.isEmpty()) {
-                addToSecondaryIndex(titleIndex, title, id);
+                databaseUtil.addToSecondaryIndex(titleIndex, title, id);
             }
             if (trackRow.artistId() > 0) {
-                addToSecondaryIndex(artistIndex, trackRow.artistId(), id);
+                databaseUtil.addToSecondaryIndex(artistIndex, trackRow.artistId(), id);
             }
             if (trackRow.composerId() > 0) {
-                addToSecondaryIndex(artistIndex, trackRow.composerId(), id);
+                databaseUtil.addToSecondaryIndex(artistIndex, trackRow.composerId(), id);
             }
             if (trackRow.originalArtistId() > 0) {
-                addToSecondaryIndex(artistIndex, trackRow.originalArtistId(), id);
+                databaseUtil.addToSecondaryIndex(artistIndex, trackRow.originalArtistId(), id);
             }
             if (trackRow.remixerId() > 0) {
-                addToSecondaryIndex(artistIndex, trackRow.remixerId(), id);
+                databaseUtil.addToSecondaryIndex(artistIndex, trackRow.remixerId(), id);
             }
             if (trackRow.albumId() > 0) {
-                addToSecondaryIndex(albumIndex, trackRow.albumId(), id);
+                databaseUtil.addToSecondaryIndex(albumIndex, trackRow.albumId(), id);
             }
             if (trackRow.genreId() > 0) {
-                addToSecondaryIndex(genreIndex, trackRow.genreId(), id);
+                databaseUtil.addToSecondaryIndex(genreIndex, trackRow.genreId(), id);
             }
         });
 
@@ -331,7 +213,7 @@ public class Database implements Closeable {
     private Map<Long, RekordboxPdb.ArtistRow> indexArtists(final SortedMap<String, SortedSet<Long>> nameIndex) {
         final Map<Long, RekordboxPdb.ArtistRow> index = new HashMap<>();
 
-        indexRows(RekordboxPdb.PageType.ARTISTS, row -> {
+        databaseUtil.indexRows(RekordboxPdb.PageType.ARTISTS, row -> {
             RekordboxPdb.ArtistRow artistRow = (RekordboxPdb.ArtistRow)row;
             final long id = artistRow.id();
             index.put(id, artistRow);
@@ -339,7 +221,7 @@ public class Database implements Closeable {
             // Index the artist ID by name as well.
             final String  name = getText(artistRow.name());
             if (!name.isEmpty()) {
-                addToSecondaryIndex(nameIndex, name, id);
+                databaseUtil.addToSecondaryIndex(nameIndex, name, id);
             }
         });
 
@@ -370,7 +252,7 @@ public class Database implements Closeable {
     private Map<Long, RekordboxPdb.ColorRow> indexColors(final SortedMap<String, SortedSet<Long>> nameIndex) {
         final Map<Long, RekordboxPdb.ColorRow> index = new HashMap<>();
 
-        indexRows(RekordboxPdb.PageType.COLORS, row -> {
+        databaseUtil.indexRows(RekordboxPdb.PageType.COLORS, row -> {
             RekordboxPdb.ColorRow colorRow = (RekordboxPdb.ColorRow)row;
             final long id = colorRow.id();
             index.put(id, colorRow);
@@ -378,7 +260,7 @@ public class Database implements Closeable {
             // Index the color by name as well.
             final String name = Database.getText(colorRow.name());
             if (!name.isEmpty()) {
-                addToSecondaryIndex(nameIndex, name, id);
+                databaseUtil.addToSecondaryIndex(nameIndex, name, id);
             }
         });
 
@@ -416,7 +298,7 @@ public class Database implements Closeable {
                                                     final SortedMap<Long, SortedSet<Long>> artistIndex) {
         final Map<Long, RekordboxPdb.AlbumRow> index = new HashMap<>();
 
-        indexRows(RekordboxPdb.PageType.ALBUMS, row -> {
+        databaseUtil.indexRows(RekordboxPdb.PageType.ALBUMS, row -> {
             RekordboxPdb.AlbumRow albumRow = (RekordboxPdb.AlbumRow) row;
             final long id = albumRow.id();
             index.put(id, albumRow);
@@ -424,10 +306,10 @@ public class Database implements Closeable {
             // Index the album ID by name and artist as well.
             final String name = getText(albumRow.name());
             if (!name.isEmpty()) {
-                addToSecondaryIndex(nameIndex, name, id);
+                databaseUtil.addToSecondaryIndex(nameIndex, name, id);
             }
             if (albumRow.artistId() > 0) {
-                addToSecondaryIndex(artistIndex, albumRow.artistId(), id);
+                databaseUtil.addToSecondaryIndex(artistIndex, albumRow.artistId(), id);
             }
         });
 
@@ -458,7 +340,7 @@ public class Database implements Closeable {
     private Map<Long, RekordboxPdb.LabelRow> indexLabels(final SortedMap<String, SortedSet<Long>> nameIndex) {
         final Map<Long, RekordboxPdb.LabelRow> index = new HashMap<>();
 
-        indexRows(RekordboxPdb.PageType.LABELS, row -> {
+        databaseUtil.indexRows(RekordboxPdb.PageType.LABELS, row -> {
             RekordboxPdb.LabelRow labelRow = (RekordboxPdb.LabelRow) row;
             final long id = labelRow.id();
             index.put(id, labelRow);
@@ -466,7 +348,7 @@ public class Database implements Closeable {
             // Index the label ID by name as well.
             final String name = getText(labelRow.name());
             if (!name.isEmpty()) {
-                addToSecondaryIndex(nameIndex, name, id);
+                databaseUtil.addToSecondaryIndex(nameIndex, name, id);
             }
         });
 
@@ -497,7 +379,7 @@ public class Database implements Closeable {
     private Map<Long, RekordboxPdb.KeyRow> indexKeys(final SortedMap<String, SortedSet<Long>> nameIndex) {
         final Map<Long, RekordboxPdb.KeyRow> index = new HashMap<>();
 
-        indexRows(RekordboxPdb.PageType.KEYS, row -> {
+        databaseUtil.indexRows(RekordboxPdb.PageType.KEYS, row -> {
             RekordboxPdb.KeyRow keyRow = (RekordboxPdb.KeyRow) row;
             final long id = keyRow.id();
             index.put(id, keyRow);
@@ -505,7 +387,7 @@ public class Database implements Closeable {
             // Index the musical key ID by name as well.
             final String name = getText(keyRow.name());
             if (!name.isEmpty()) {
-                addToSecondaryIndex(nameIndex, name,  id);
+                databaseUtil.addToSecondaryIndex(nameIndex, name,  id);
             }
         });
 
@@ -536,7 +418,7 @@ public class Database implements Closeable {
     private Map<Long, RekordboxPdb.GenreRow> indexGenres(final SortedMap<String, SortedSet<Long>> nameIndex) {
         final Map<Long, RekordboxPdb.GenreRow> index = new HashMap<>();
 
-        indexRows(RekordboxPdb.PageType.GENRES, row -> {
+        databaseUtil.indexRows(RekordboxPdb.PageType.GENRES, row -> {
             RekordboxPdb.GenreRow genreRow = (RekordboxPdb.GenreRow) row;
             final long id = genreRow.id();
             index.put(id, genreRow);
@@ -544,7 +426,7 @@ public class Database implements Closeable {
             // Index the genre by name as well.
             final String name = getText(genreRow.name());
             if (!name.isEmpty()) {
-                addToSecondaryIndex(nameIndex, name, id);
+                databaseUtil.addToSecondaryIndex(nameIndex, name, id);
             }
         });
 
@@ -566,7 +448,7 @@ public class Database implements Closeable {
     private Map<Long, RekordboxPdb.ArtworkRow> indexArtwork() {
         final Map<Long, RekordboxPdb.ArtworkRow> index = new HashMap<>();
 
-        indexRows(RekordboxPdb.PageType.ARTWORK, row -> {
+        databaseUtil.indexRows(RekordboxPdb.PageType.ARTWORK, row -> {
             RekordboxPdb.ArtworkRow artworkRow = (RekordboxPdb.ArtworkRow) row;
             index.put(artworkRow.id(), artworkRow);
         });
@@ -634,7 +516,7 @@ public class Database implements Closeable {
      */
     private Map<Long, List<Long>> indexPlaylists() {
         final Map<Long, List<Long>> result = new HashMap<>();
-        indexRows(RekordboxPdb.PageType.PLAYLIST_ENTRIES, row -> {
+        databaseUtil.indexRows(RekordboxPdb.PageType.PLAYLIST_ENTRIES, row -> {
             RekordboxPdb.PlaylistEntryRow entryRow = (RekordboxPdb.PlaylistEntryRow) row;
             ArrayList<Long> playlist = (ArrayList<Long>) result.get(entryRow.playlistId());
             if (playlist == null) {
@@ -659,7 +541,7 @@ public class Database implements Closeable {
      */
     private Map<Long, List<PlaylistFolderEntry>> indexPlaylistFolders() {
         final Map<Long, List<PlaylistFolderEntry>> result = new HashMap<>();
-        indexRows(RekordboxPdb.PageType.PLAYLIST_TREE, row -> {
+        databaseUtil.indexRows(RekordboxPdb.PageType.PLAYLIST_TREE, row -> {
             RekordboxPdb.PlaylistTreeRow treeRow = (RekordboxPdb.PlaylistTreeRow) row;
             ArrayList<PlaylistFolderEntry> parent = (ArrayList<PlaylistFolderEntry>) result.get(treeRow.parentId());
             if (parent == null) {
@@ -685,7 +567,7 @@ public class Database implements Closeable {
      */
     private SortedMap<String, Long> indexHistoryPlaylistNames() {
         final SortedMap<String, Long> result = new TreeMap<>();
-        indexRows(RekordboxPdb.PageType.HISTORY_PLAYLISTS, row -> {
+        databaseUtil.indexRows(RekordboxPdb.PageType.HISTORY_PLAYLISTS, row -> {
             RekordboxPdb.HistoryPlaylistRow historyRow = (RekordboxPdb.HistoryPlaylistRow) row;
             result.put(getText(historyRow.name()), historyRow.id());
         });
@@ -700,7 +582,7 @@ public class Database implements Closeable {
      */
     private Map<Long, List<Long>> indexHistoryPlaylists() {
         final Map<Long, List<Long>> result = new HashMap<>();
-        indexRows(RekordboxPdb.PageType.HISTORY_ENTRIES, row -> {
+        databaseUtil.indexRows(RekordboxPdb.PageType.HISTORY_ENTRIES, row -> {
             RekordboxPdb.HistoryEntryRow entryRow = (RekordboxPdb.HistoryEntryRow) row;
             ArrayList<Long> playList = (ArrayList<Long>) result.get(entryRow.playlistId());
             if (playList == null) {
@@ -727,7 +609,7 @@ public class Database implements Closeable {
      */
     @Override
     public void close() throws IOException {
-        pdb._io().close();
+        databaseUtil.close();
     }
 
     /**
