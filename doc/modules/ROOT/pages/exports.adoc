@@ -28,6 +28,8 @@ Digger `FileFetcher`] to request this file, use that path as the
 `filePath` argument, and use a `mountPath` value of `/B/` if you want
 to read it from the SD slot, or `/C/` to obtain it from the USB slot).
 
+NOTE: Newer players also support an additonal database with the filename `exportExt.pdb` in the same location, which holds a different and smaller set of table types in it.
+
 The file is a relational database format designed to be efficiently
 used by very low power devices (there were deployments on 16 bit
 devices with 32K of RAM). Today you are most likely to encounter it
@@ -55,10 +57,9 @@ other data. There is a bit map in the row index that identifies which
 rows are actually present. Rows that are not present must be ignored:
 they do not contain valid (or even necessarily well-formed) data.
 
-The majority of the work in reverse-engineering this format was
-performed by https://github.com/henrybetts/Rekordbox-Decoding[Henry
-Betts] and https://github.com/flesniak/python-prodj-link[Fabian
-Lesniak], to whom I am hugely grateful.
+The majority of the work in reverse-engineering this format was performed by https://github.com/henrybetts/Rekordbox-Decoding[Henry Betts] and https://github.com/flesniak/python-prodj-link[Fabian Lesniak], to whom I am hugely grateful.
+More recently, https://github.com/voidc[Dominik Stolz (@voidc)] figured out what was in
+ `exportExt.pdb` files.
 
 [[file-header]]
 === File Header
@@ -134,7 +135,7 @@ a chain of empty pages if the database is ever garbage collected, but
 this is speculation on my part.
 
 [[table-types]]
-.Table types.
+.Table types present in `export.pdb` files.
 [cols=">1m,<2,<8"]
 |===
 |Type |Name |Meaning
@@ -153,6 +154,16 @@ this is speculation on my part.
 |11 |history_playlists |Holds the list of <<history-playlist-rows,history playlists>> in the History menu.
 |12 |history_entries |Links tracks to <<history-entry-rows,history playlists entries>>, in the right order.
 |13 |history |Data used by rekordbox to synchronize history playlists (not yet studied).
+|===
+
+[[ext-table-types]]
+.Table types present in `exportExt.pdb` files.
+[cols=">1m,<2,<8"]
+|===
+|Type |Name |Meaning
+
+|03 |tags |<<tag-rows,Tags>>: can be assigned to tracks for the purpose of categorization.
+|04 |tag_tracks |<<tag-track-rows,Tag Tracks>>: holds the associations between tag ids and track ids.
 |===
 
 Other than the type, the two important values are __first_page__ at
@@ -325,8 +336,8 @@ fit, the page is full, and another page gets allocated to the table.
 
 == Table Rows
 
-The structure of the rows themselves is determined by the _type_ of
-the table, using the values shown in <<table-types,Table types>>.
+The structure of the rows themselves is determined by the _type_ of the table, using the values shown in <<table-types,Table types>>.
+Unless otherwise noted, these table types and rows appear in `export.pdb` files.
 
 [[album-rows]]
 === Album Rows
@@ -672,7 +683,26 @@ corresponding to the __id__ of a row in the
 (draw-box (text "playlist_id" :math) {:span 4})
 ----
 
+[[tag-rows]]
+=== Tag Rows
+
+NOTE: These are present in `exportExt.pdb` files, _not_ the main `export.pdb` database.
+
+Tags provide a flexible way for DJs to group tracks. Tags have names, and can be assigned to any number of tracks.
+Tags themselves can be grouped into categories, which are stored in the same table.
+
+TODO: Diagram and document structure.
+
+[[tag-track-rows]]
+=== Tag Track Rows
+
+NOTE: These are present in `exportExt.pdb` files, _not_ the main `export.pdb` database.
 [[track-rows]]
+
+These rows establish the relationship between tags and tracks.
+
+TODO: Diagram and document structure.
+
 === Track Rows
 
 Track rows describe audio tracks that can be played from the media
