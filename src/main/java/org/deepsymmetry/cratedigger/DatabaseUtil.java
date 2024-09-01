@@ -80,16 +80,18 @@ class DatabaseUtil implements Closeable {
     }
 
     /**
-     * Parse and index all the rows found in a particular table. This method performs a scan of the
-     * specified table, passing all rows that are encountered to an interface that knows what to do
-     * with them.
+     * Parse and index all the rows found in a particular {@code export.pdb} table. This method performs a scan of the
+     * specified table, passing all rows that are encountered to an interface that knows what to do with them.
      *
-     * @param type the type of table to be scanned and parsed
+     * @param type the type of table present in export.pdb files to be scanned and parsed
      * @param handler the code that knows how to index that kind of row
      *
      * @throws IllegalStateException if there is more than (or less than) one table of that type in the file
      */
     void indexRows(RekordboxPdb.PageType type, DatabaseUtil.RowHandler handler) {
+        if (isExportExt) {
+            throw new IllegalStateException("Calling indexRows() with a non-ext page type can never succeed for an exportExt.pdb file");
+        }
         boolean done = false;
         for (RekordboxPdb.Table table : pdb.tables()) {
             if (table.type() == type) {
@@ -107,7 +109,57 @@ class DatabaseUtil implements Closeable {
                             for (RekordboxPdb.RowRef rowRef : rowGroup.rows()) {
                                 if (rowRef.present()) {
                                     // We found a row, pass it to the handler to be indexed appropriately.
-                                    handler.rowFound(isExportExt? rowRef.bodyExt() : rowRef.body());
+                                    handler.rowFound(rowRef.body());
+                                }
+                            }
+                        }
+                    }
+
+                    // Was this the final page in the table? If so, stop, otherwise, move on to the next page.
+                    if (currentRef.index() == lastIndex) {
+                        moreLeft = false;
+                    } else {
+                        currentRef = page.nextPage();
+                    }
+                } while (moreLeft);
+                done = true;
+            }
+        }
+
+        if (!done) throw new IllegalStateException("No table found of type " + type);
+    }
+
+    /**
+     * Parse and index all the rows found in a particular {@code exportExt.pdb} table. This method performs a scan of the
+     * specified table, passing all rows that are encountered to an interface that knows what to do with them.
+     *
+     * @param type the type of table present in exportExt.pdb files to be scanned and parsed
+     * @param handler the code that knows how to index that kind of row
+     *
+     * @throws IllegalStateException if there is more than (or less than) one table of that type in the file
+     */
+    void indexRows(RekordboxPdb.PageTypeExt type, DatabaseUtil.RowHandler handler) {
+        if (!isExportExt) {
+            throw new IllegalStateException("Calling indexRows() with an ext page type can never succeed for an export.pdb file");
+        }
+        boolean done = false;
+        for (RekordboxPdb.Table table : pdb.tables()) {
+            if (table.typeExt() == type) {
+                if (done) throw new IllegalStateException("More than one table found with type " + type);
+                final long lastIndex = table.lastPage().index();  // This is how we know when to stop.
+                RekordboxPdb.PageRef currentRef = table.firstPage();
+                boolean moreLeft = true;
+                do {
+                    // logger.info("Indexing page " + currentRef.index());
+                    final RekordboxPdb.Page page = currentRef.body();
+
+                    // Process only ordinary data pages.
+                    if (page.isDataPage()) {
+                        for (RekordboxPdb.RowGroup rowGroup : page.rowGroups()) {
+                            for (RekordboxPdb.RowRef rowRef : rowGroup.rows()) {
+                                if (rowRef.present()) {
+                                    // We found a row, pass it to the handler to be indexed appropriately.
+                                    handler.rowFound(rowRef.bodyExt());
                                 }
                             }
                         }
