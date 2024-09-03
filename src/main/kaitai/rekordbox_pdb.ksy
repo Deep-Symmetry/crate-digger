@@ -378,7 +378,7 @@ types:
         doc: |
           The actual content of the row in an exportExt.pdb file, as long as it is present.
         -webide-parse-mode: eager
-    -webide-representation: '{body.name.body.text}{body.title.body.text} ({body.id})'
+    -webide-representation: '{body.name.body.text}{body.title.body.text}{body_ext.name.body.text} ({body.id}{body_ext.id})'
 
   album_row:
     doc: |
@@ -921,22 +921,22 @@ types:
       - id: category
         type: u4
         doc: |
-          The index of the tag category this tag belongs to.
+          The ID of the tag category this tag belongs to.
           If this row represents a tag category, this field is zero.
       - id: category_pos
         type: u4
         doc: |
-          The position of this tag in its category.
-          If this row represents a tag category, this field equals (id - 1).
+          The zero-based position of this tag in its category.
+          If this row represents a tag category, the zero-based position of the category itself in the category list.
       - id: id
         type: u4
         doc: |
           The ID of this tag or tag category.
           Referenced by tag_track_row if this row is a tag.
-      - id: is_category
+      - id: raw_is_category
         type: u4
         doc: |
-          Whether this row stores a tag category name instead of a tag.
+          Non-zero when this row stores a tag category instead of a tag.
       - type: u2
         doc: |
           Seems to always be 0x03, 0x1f.
@@ -951,6 +951,12 @@ types:
       - type: u1
         doc: |
           This seems to always be 0x03.
+    instances:
+      is_category:
+        value: raw_is_category != 0
+        doc: |
+          Indicates whether this row stores a tag category instead of a tag.
+        -webide-parse-mode: eager
 
   tag_track_row:
     doc: |
@@ -961,11 +967,15 @@ types:
           Seems to always be zero.
       - id: track_id
         type: u4
+        doc: |
+          The ID of the track that has a tag assigned to it.
       - id: tag_id
         type: u4
+        doc: |
+          The ID of the tag that has been assigned to a track.
       - type: u4
         doc: |
-          Seems to always be 3.
+          Seems to always be 0x03.
 
   device_sql_string:
     doc: |

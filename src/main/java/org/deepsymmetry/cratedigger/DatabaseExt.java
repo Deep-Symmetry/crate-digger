@@ -42,34 +42,122 @@ public class DatabaseExt implements Closeable {
         databaseUtil = new DatabaseUtil(sourceFile, true);
         final Map<Long, RekordboxPdb.TagRow> mutableTagIndex = new HashMap<>();
         final SortedMap<String, SortedSet<Long>> mutableTagNameIndex = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
+        final Map<Long, RekordboxPdb.TagRow> mutableCategoryIndex = new HashMap<>();
+        final SortedMap<String, SortedSet<Long>> mutableCategoryNameIndex = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
 
         databaseUtil.indexRows(RekordboxPdb.PageTypeExt.TAGS, row -> {
-            // We found a tag; index it by its ID.
+            // We found a tag or category; index it by its ID.
             RekordboxPdb.TagRow tagRow = (RekordboxPdb.TagRow)row;
             final long id = tagRow.id();
-            mutableTagIndex.put(id, tagRow);
-            // ALso index the tags by name.
+            if (tagRow.isCategory()) {
+                mutableCategoryIndex.put(id, tagRow);
+            } else {
+                mutableTagIndex.put(id, tagRow);
+            }
+            // ALso index the tag and categories by name.
             final String title = Database.getText(tagRow.name());
-            databaseUtil.addToSecondaryIndex(mutableTagNameIndex, title, tagRow.id());
+            if (tagRow.isCategory()) {
+                databaseUtil.addToSecondaryIndex(mutableCategoryNameIndex, title, tagRow.id());
+
+            } else {
+                databaseUtil.addToSecondaryIndex(mutableTagNameIndex, title, tagRow.id());
+            }
         });
         tagIndex = Collections.unmodifiableMap(mutableTagIndex);
-        logger.info("Indexed {} Tags.", tagIndex.size());
+        tagCategoryIndex = Collections.unmodifiableMap(mutableCategoryIndex);
+        logger.info("Indexed {} Tag names in {} categories.", tagIndex.size(), tagCategoryIndex.size());
         tagNameIndex = databaseUtil.freezeSecondaryIndex(mutableTagNameIndex);
+        tagCategoryNameIndex = databaseUtil.freezeSecondaryIndex(mutableCategoryNameIndex);
 
-        // TODO: Gather and index the track tag information.
+        // Build the list of category names in the order in which they should be displayed.
+        String[] mutableTagCategoryNameOrder = new String[tagCategoryIndex.size()];
+        for (RekordboxPdb.TagRow row : tagCategoryIndex.values()) {
+            mutableTagCategoryNameOrder[(int) row.categoryPos()] = Database.getText(row.name());
+        }
+        tagCategoryNameOrder = List.of(mutableTagCategoryNameOrder);
+
+        // For each category build the list of tag names in that category, in the order they should be displayed.
+        final Map<Long,ArrayList<RekordboxPdb.TagRow>> mutableCategoryContents = new HashMap<>();
+        for (RekordboxPdb.TagRow row : tagIndex.values()) {
+            mutableCategoryContents.computeIfAbsent(row.category(), k -> new ArrayList<>()).add(row);
+        }
+        final Map<Long,List<String>> mutableTagCategoryTagNameOrder = new HashMap<>();
+        for (Long categoryId : mutableCategoryContents.keySet()) {
+            final List<RekordboxPdb.TagRow> category = mutableCategoryContents.get(categoryId);
+            final String[] mutableNames = new String[category.size()];
+            for (RekordboxPdb.TagRow row : category) {
+                mutableNames[(int) row.categoryPos()] = Database.getText(row.name());
+            }
+            mutableTagCategoryTagNameOrder.put(categoryId, List.of(mutableNames));
+        }
+        tagCategoryTagNameOrder = Collections.unmodifiableMap(mutableTagCategoryTagNameOrder);
+
+        // Gather and index the track tag and tag category information.
+        final Map<Long,Set<Long>> mutableTagTrackIndex = new HashMap<>();
+        final Map<Long, Set<Long>> mutableTrackTagIndex = new HashMap<>();
+        databaseUtil.indexRows(RekordboxPdb.PageTypeExt.TAG_TRACKS, row -> {
+            RekordboxPdb.TagTrackRow tagTrackRow = (RekordboxPdb.TagTrackRow)row;
+            mutableTagTrackIndex.computeIfAbsent(tagTrackRow.tagId(), k -> new HashSet<>()).add(tagTrackRow.trackId());
+            mutableTrackTagIndex.computeIfAbsent(tagTrackRow.trackId(), k -> new HashSet<>()).add(tagTrackRow.tagId());
+        });
+
+        mutableTagTrackIndex.replaceAll((k, v) -> Collections.unmodifiableSet(mutableTagTrackIndex.get(k)));
+        tagTrackIndex = Collections.unmodifiableMap(mutableTagTrackIndex);
+
+        mutableTrackTagIndex.replaceAll((k, v) -> Collections.unmodifiableSet(mutableTrackTagIndex.get(k)));
+        trackTagIndex = Collections.unmodifiableMap(mutableTrackTagIndex);
+
+        logger.info("Indexed {} tags on {} tagged tracks.", tagTrackIndex.size(), trackTagIndex.size());
     }
 
     /**
-     * A map from tag ID to the actual tag object.
+     * A map from tag ID to the actual tag object (does not include rows that are categories).
      */
     @API(status = API.Status.EXPERIMENTAL)
     public final Map<Long, RekordboxPdb.TagRow> tagIndex;
 
     /**
-     * A sorted map from tag names to the IDs of tags with that name.
+     * A map from tag ID to the actual category object (includes only rows that are categories).
+     */
+    @API(status = API.Status.EXPERIMENTAL)
+    public final Map<Long, RekordboxPdb.TagRow> tagCategoryIndex;
+
+    /**
+     * A sorted map from tag names to the IDs of tags with that name (does not include categories).
      */
     @API(status = API.Status.EXPERIMENTAL)
     public final SortedMap<String, SortedSet<Long>> tagNameIndex;
+
+    /**
+     * A sorted map from category names to the IDs of tag categories with that name (only includes categories).
+     */
+    @API(status = API.Status.EXPERIMENTAL)
+    public final SortedMap<String, SortedSet<Long>> tagCategoryNameIndex;
+
+    /**
+     * The list of category names in the order that they are supposed to be presented to the user.
+     */
+    @API(status = API.Status.EXPERIMENTAL)
+    public final List<String> tagCategoryNameOrder;
+
+    /**
+     * A map from category ID to the list of tag names that belong to that category,
+     * in the order that they are supposed to be presented to the user.
+     */
+    @API(status = API.Status.EXPERIMENTAL)
+    public final Map<Long,List<String>> tagCategoryTagNameOrder;
+
+    /**
+     * A map from tag ID to the IDs of all tracks that have been assigned that tag.
+     */
+    @API(status = API.Status.EXPERIMENTAL)
+    final Map<Long,Set<Long>> tagTrackIndex;
+
+    /**
+     * A map from track ID to the IDs of all tags that have been assigned to that track.
+     */
+    @API(status = API.Status.EXPERIMENTAL)
+    final Map<Long, Set<Long>> trackTagIndex;
 
 
     /**
