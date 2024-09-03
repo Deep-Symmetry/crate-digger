@@ -70,27 +70,28 @@ public class DatabaseExt implements Closeable {
         tagCategoryNameIndex = databaseUtil.freezeSecondaryIndex(mutableCategoryNameIndex);
 
         // Build the list of category names in the order in which they should be displayed.
-        String[] mutableTagCategoryNameOrder = new String[tagCategoryIndex.size()];
+        Long[] mutableTagCategoryOrder = new Long[tagCategoryIndex.size()];
         for (RekordboxPdb.TagRow row : tagCategoryIndex.values()) {
-            mutableTagCategoryNameOrder[(int) row.categoryPos()] = Database.getText(row.name());
+            mutableTagCategoryOrder[(int) row.categoryPos()] = row.id();
         }
-        tagCategoryNameOrder = List.of(mutableTagCategoryNameOrder);
+        tagCategoryOrder = List.of(mutableTagCategoryOrder);
 
         // For each category build the list of tag names in that category, in the order they should be displayed.
         final Map<Long,ArrayList<RekordboxPdb.TagRow>> mutableCategoryContents = new HashMap<>();
         for (RekordboxPdb.TagRow row : tagIndex.values()) {
             mutableCategoryContents.computeIfAbsent(row.category(), k -> new ArrayList<>()).add(row);
         }
-        final Map<Long,List<String>> mutableTagCategoryTagNameOrder = new HashMap<>();
+
+        final Map<Long,List<Long>> mutableTagCategoryTagOrder = new HashMap<>();
         for (Long categoryId : mutableCategoryContents.keySet()) {
             final List<RekordboxPdb.TagRow> category = mutableCategoryContents.get(categoryId);
-            final String[] mutableNames = new String[category.size()];
+            final Long[] mutableTagIds = new Long[category.size()];
             for (RekordboxPdb.TagRow row : category) {
-                mutableNames[(int) row.categoryPos()] = Database.getText(row.name());
+                mutableTagIds[(int) row.categoryPos()] = row.id();
             }
-            mutableTagCategoryTagNameOrder.put(categoryId, List.of(mutableNames));
+            mutableTagCategoryTagOrder.put(categoryId, List.of(mutableTagIds));
         }
-        tagCategoryTagNameOrder = Collections.unmodifiableMap(mutableTagCategoryTagNameOrder);
+        tagCategoryTagOrder = Collections.unmodifiableMap(mutableTagCategoryTagOrder);
 
         // Gather and index the track tag and tag category information.
         final Map<Long,Set<Long>> mutableTagTrackIndex = new HashMap<>();
@@ -135,17 +136,17 @@ public class DatabaseExt implements Closeable {
     public final SortedMap<String, SortedSet<Long>> tagCategoryNameIndex;
 
     /**
-     * The list of category names in the order that they are supposed to be presented to the user.
+     * The list of category IDs in the order that they are supposed to be presented to the user.
      */
     @API(status = API.Status.EXPERIMENTAL)
-    public final List<String> tagCategoryNameOrder;
+    public final List<Long> tagCategoryOrder;
 
     /**
-     * A map from category ID to the list of tag names that belong to that category,
+     * A map from category ID to the list of tag IDs that belong to that category,
      * in the order that they are supposed to be presented to the user.
      */
     @API(status = API.Status.EXPERIMENTAL)
-    public final Map<Long,List<String>> tagCategoryTagNameOrder;
+    public final Map<Long,List<Long>> tagCategoryTagOrder;
 
     /**
      * A map from tag ID to the IDs of all tracks that have been assigned that tag.
