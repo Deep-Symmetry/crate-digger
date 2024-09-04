@@ -975,7 +975,7 @@ types:
           The ID of the tag that has been assigned to a track.
       - type: u4
         doc: |
-          Seems to always be 0x03.
+          Seems to always be 0x03 0x00 0x00 0x00.
 
   device_sql_string:
     doc: |

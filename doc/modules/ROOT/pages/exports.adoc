@@ -663,12 +663,12 @@ The rows have the following structure:
 Playlist entry rows list the tracks that belong to a particular
 playlist, and also establish the order in which they should be played.
 They have a very simple structure, shown below, containing only three
-values. The __entry_index__ at bytes{nbsp}``00``-`03` specifies the
+values. The __entry_index__ at bytes{nbsp}``00``--`03` specifies the
 position within the playlist at which this entry belongs. The
-__track_id__ at bytes{nbsp}``04``-`07` identifies the track to be
+__track_id__ at bytes{nbsp}``04``--`07` identifies the track to be
 played at this position in the playlist, by corresponding to the _id_
 of a row in the <<track-rows,Track table>>, and the __playlist_id__ at
-bytes{nbsp}``08``-`0b` identifies the playlist to which it belongs, by
+bytes{nbsp}``08``--`0b` identifies the playlist to which it belongs, by
 corresponding to the __id__ of a row in the
 <<playlist-tree-rows,Playlist Tree>>.
 
@@ -688,21 +688,74 @@ corresponding to the __id__ of a row in the
 
 NOTE: These are present in `exportExt.pdb` files, _not_ the main `export.pdb` database.
 
-Tags provide a flexible way for DJs to group tracks. Tags have names, and can be assigned to any number of tracks.
+Tags provide a flexible way for DJs to categorize tracks, supported by the “My Tags” tab within rekordbox.
+Tags have names, and can be assigned to any number of tracks.
 Tags themselves can be grouped into categories, which are stored in the same table.
 
-TODO: Diagram and document structure.
+The rows have the following structure:
+
+.Tag row.
+[bytefield]
+----
+(draw-column-headers)
+(draw-related-boxes [0x80 0x06])
+(draw-box (text "tag_index" :math) {:span 2})
+(draw-related-boxes (repeat 8 0))
+(draw-box (text "category" :math) {:span 4})
+(draw-box (text "category_pos" :math) {:span 4})
+(draw-box (text "id" :math) {:span 4})
+(draw-box (text "raw_is_category" :math) {:span 4})
+(draw-related-boxes [0x03 0x1f])
+(draw-box (text "flags" :math))
+(draw-gap (text "name" :math))
+(draw-box 3)
+(draw-bottom)
+----
+
+The first two bytes serve an unknown purpose but their values always seem to be the same.
+They are followed by __tag_index__ at bytes{nbsp}``02``--``03`` which seems to increment by `20` for each row.
+This is followed by another eight bytes of unknown purpose that always seem to be zero.
+
+The __category__ at bytes{nbsp}``0c``–``0f`` holds the ID of the category to which the tag belongs; if this row is itself a category, this field has the value 0.
+The __category_pos__ at bytes{nbsp}``10``–``13`` specifies zero-based position at which this tag should be displayed within its category.
+If the row represents a category rather than a tag, then this is the zero-based position of the category itself within the category list.
+
+The __id__ at  bytes{nbsp}``14``–``17`` is how the tag or category is referenced in <<#tag-track-rows,Tag Track Rows>> or the __category__ field.
+Tags seem to have very large _id_ values, while the four categories have fixed `id` values in the range 1--4.
+
+The value of __raw_is_category__ at bytes{nbsp}``18``–``1b`` is non-zero when this row stores a tag category instead of a tag.
+It is followed by two bytes of unknown purpose that always seem to have the same values, and a byte that may hold some sort of flags that have not yet been understood.
+
+A variable number of bytes starting at byte{nbsp}``1f`` is a <<devicesql-strings,DeviceSQL string>> holding the _name_ of the tag or category. Finally, this is followed by a byte with an unknown purpose, whose value always seems to be 3.
 
 [[tag-track-rows]]
 === Tag Track Rows
 
 NOTE: These are present in `exportExt.pdb` files, _not_ the main `export.pdb` database.
+
+These rows establish the relationship between <<#tag-rows,Tags>> and <<#track-rows,Tracks>>.
+
+The rows have the following structure:
+
+.Tag Track row.
+[bytefield]
+----
+(draw-column-headers)
+(draw-related-boxes (repeat 4 0))
+(draw-box (text "track_id" :math) {:span 4})
+(draw-box (text "tag_id" :math) {:span 4})
+(draw-related-boxes [3 0 0 0])
+(draw-bottom)
+----
+
+The first four bytes have no known purpose and always seem to be zero.
+
+The __track_id__ at bytes{nbsp}``04``--``07`` identifies the  <<#track-rows,Track>> to which a tag has been assigned.
+The __tag_id__ at bytes{nbsp}``08``--``0c`` identifies a <<#tag-rows,Tag>> the DJ has assigned to this track.
+
+The final four bytes in the row seem to always have the values shown, and have no known purpose.
+
 [[track-rows]]
-
-These rows establish the relationship between tags and tracks.
-
-TODO: Diagram and document structure.
-
 === Track Rows
 
 Track rows describe audio tracks that can be played from the media
