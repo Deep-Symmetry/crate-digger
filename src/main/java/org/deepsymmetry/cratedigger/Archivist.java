@@ -65,7 +65,7 @@ public class Archivist {
 
     /**
      * Creates an archive file containing all the metadata found in the rekordbox media export containing the
-     * supplied database export that needed to enable full Beat Link features when that media is being used in
+     * supplied database export that is needed to enable full Beat Link features when that media is being used in
      * an Opus Quad, which is unable to serve the metadata itself.
      *
      * @param database the parsed database found within the media export for which an archive is desired
@@ -104,6 +104,12 @@ public class Archivist {
 
             // Copy the database export itself.
             Files.copy(database.sourceFile.toPath(), fileSystem.getPath("/export.pdb"));
+
+            // If there is a Device Library Plus export, copy it as well.
+            final File plusFile = new File(database.sourceFile.getParentFile(), "exportLibrary.db");
+            if (plusFile.exists() && plusFile.canRead()) {
+                Files.copy(plusFile.toPath(), fileSystem.getPath("/exportLibrary.db"));
+            }
 
             // Copy each track's analysis and artwork files.
             final Iterator<Map.Entry<Long, RekordboxPdb.TrackRow>> iterator = database.trackIndex.entrySet().iterator();
