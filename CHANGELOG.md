@@ -10,6 +10,7 @@ This change log follows the conventions of
 
 - Thanks to [Dominik Stolz (@voidc)](https://github.com/voidc), we can now
   parse `exportExt.pdb` files for the tag information they contain.
+- Metadata archives can be created for USB drives containing device libraries, to enable Beat Link to offer metadata when that drive is used in an Opus Quad.
 
 ### Fixed
 
