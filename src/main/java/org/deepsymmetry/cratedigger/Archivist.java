@@ -1,17 +1,16 @@
 package org.deepsymmetry.cratedigger;
 
 import org.apiguardian.api.API;
-import org.deepsymmetry.cratedigger.pdb.RekordboxPdb;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.nio.file.*;
-import java.util.Iterator;
+import java.nio.file.attribute.BasicFileAttributes;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicLong;
 
 /**
  * Supports the creation of archives of all the metadata needed from rekordbox media exports to enable full Beat Link
@@ -20,8 +19,6 @@ import java.util.Map;
 @API(status = API.Status.EXPERIMENTAL)
 public class Archivist {
 
-    private static final Logger logger = LoggerFactory.getLogger(Archivist.class);
-    
     /**
      * Holds the singleton instance of this class.
      */
@@ -52,15 +49,27 @@ public class Archivist {
     public interface ArchiveListener {
 
         /**
-         * Called once we determine how many tracks need to be archived, and as each one is completed, so that
-         * progress can be displayed; the process can be canceled by returning {@code false}.
+         * Called as each analysis or artwork file is archived, so that progress can be displayed;
+         * the process can be canceled by returning {@code false}.
          *
-         * @param tracksCompleted how many tracks have been added to the archive
-         * @param tracksTotal how many tracks are present in the media export being archived
+         * @param bytesCopied how many bytes of analysis and artwork files have been added to the archive
+         * @param bytesTotal how many bytes of analysis and artwork files are present in the media export being archived
          *
          * @return {@code true} to continue archiving tracks, or {@code false} to cancel the process and delete the archive.
          */
-        boolean continueCreating(int tracksCompleted, int tracksTotal);
+        boolean continueCreating(long bytesCopied, long bytesTotal);
+    }
+
+    /**
+     * Allows our recursive file copy operations to exclude files that we do not want in the archive.
+     */
+    private interface PathFilter {
+        /**
+         * Check whether something belongs in the archive
+         * @param path the file that will potentially be copied
+         * @return {@code true} to actually copy the file.
+         */
+        boolean include(Path path);
     }
 
     /**
@@ -79,6 +88,87 @@ public class Archivist {
     }
 
     /**
+     * Helper method to recursively count the number of file bytes that will be copied if we copy a folder.
+     *
+     * @param source the folder to be copied
+     * @param filter if present, allows files to be selectively excluded from being counted
+     *
+     * @return the new total number of bytes that need to be copied.
+     *
+     * @throws IOException if there is a problem scanning the folder
+     */
+    private long sizeFolder(Path source, PathFilter filter)
+            throws IOException {
+
+        final AtomicLong totalBytes = new AtomicLong(0);
+
+        Files.walkFileTree(source, new SimpleFileVisitor<>() {
+
+            public FileVisitResult visitFile(Path file, BasicFileAttributes attrs)
+                    throws IOException {
+                if (filter == null || filter.include(file)) {
+                    totalBytes.addAndGet(Files.size(file));
+                }
+                return FileVisitResult.CONTINUE;
+            }
+        });
+
+        return totalBytes.get();
+    }
+
+    /**
+     * Helper method to recursively copy a folder.
+     *
+     * @param source the folder to be copied
+     * @param target where the folder should be copied
+     * @param filter if present, allows files to be selectively excluded from being counted
+     * @param listener if not {@code null} will be called after copying each file to support progress reports and
+     *                 allow cancellation
+     * @param bytesCopied the number of bytes that have already been copied, for use in updating the listener
+     * @param totalBytes the total number of bytes that are going to be copied, for use in updating the listener
+     * @param options the copy options (see {@link Files#copy(Path, Path, CopyOption...)})
+     *
+     * @return the new total number of bytes copied, or -1 if the listener requested that the copy be canceled.
+     *
+     * @throws IOException if there is a problem copying the folder
+     */
+    private long copyFolder(Path source, Path target, PathFilter filter, ArchiveListener listener, long bytesCopied, long totalBytes, CopyOption... options)
+            throws IOException {
+
+        final AtomicLong nowCopied = new AtomicLong(bytesCopied);
+        final AtomicBoolean canceled = new AtomicBoolean(false);
+
+        Files.walkFileTree(source, new SimpleFileVisitor<>() {
+
+            public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs)
+                    throws IOException {
+                Files.createDirectories(target.resolve(source.relativize(dir).toString()));
+                return FileVisitResult.CONTINUE;
+            }
+
+            public FileVisitResult visitFile(Path file, BasicFileAttributes attrs)
+                    throws IOException {
+                if (filter == null || filter.include(file)) {
+                    Files.copy(file, target.resolve(source.relativize(file).toString()), options);
+                    nowCopied.addAndGet(Files.size(file));
+                    if (listener == null || listener.continueCreating(nowCopied.get(), totalBytes)) {
+                        return FileVisitResult.CONTINUE;
+                    } else {
+                        canceled.set(true);
+                        return FileVisitResult.TERMINATE;
+                    }
+                }
+                return FileVisitResult.CONTINUE;
+            }
+        });
+
+        if (canceled.get()) {
+            return -1;
+        }
+        return nowCopied.get();
+    }
+
+    /**
      * Creates an archive file containing all the metadata found in the rekordbox media export containing the
      * supplied database export that needed to enable full Beat Link features when that media is being used in
      * an Opus Quad, which is unable to serve the metadata itself.
@@ -93,10 +183,10 @@ public class Archivist {
     @API(status = API.Status.EXPERIMENTAL)
     public void createArchive(Database database, File archiveFile, ArchiveListener listener) throws IOException {
         final Path archivePath = archiveFile.toPath();
-        final Path mediaPath = database.sourceFile.getParentFile().getParentFile().getParentFile().toPath();
         Files.deleteIfExists(archivePath);
         final URI fileUri = archivePath.toUri();
-        final int totalTracks = database.trackIndex.size();
+        // We want to exclude .2EX files since we can’t use them, and they bloat the archive.
+        final PathFilter analysisFilter = path -> !path.toString().endsWith(".2EX");
         boolean failed = false;
 
         try (FileSystem fileSystem = FileSystems.newFileSystem(new URI("jar:" + fileUri.getScheme(), fileUri.getPath(), null),
@@ -111,37 +201,24 @@ public class Archivist {
                 Files.copy(plusFile.toPath(), fileSystem.getPath("/exportLibrary.db"));
             }
 
-            // Copy each track's analysis and artwork files.
-            final Iterator<Map.Entry<Long, RekordboxPdb.TrackRow>> iterator = database.trackIndex.entrySet().iterator();
-            int completed = 0;
-            while ((listener == null || listener.continueCreating(completed, totalTracks)) && iterator.hasNext()) {
-                final Map.Entry<Long, RekordboxPdb.TrackRow> entry = iterator.next();
-                final RekordboxPdb.TrackRow track = entry.getValue();
-
-                // First the original analysis file.
-                final String anlzPathString = Database.getText(track.analyzePath());
-                archiveMediaItem(mediaPath, anlzPathString, fileSystem, "analysis file", true);
-
-                // Then the extended analysis file, if it exists.
-                final String extPathString = anlzPathString.substring(0, anlzPathString.length() - 3) + "EXT";
-                archiveMediaItem(mediaPath, extPathString, fileSystem, "extended analysis file", false);
-
-                // Finally, the album art.
-                final RekordboxPdb.ArtworkRow artwork = database.artworkIndex.get(track.artworkId());
-                if (artwork != null) {
-                    final String artPathString = Database.getText(artwork.path());
-                    archiveMediaItem(mediaPath, artPathString, fileSystem, "artwork file", true);
-
-                    // Then, copy the high resolution album art, if it exists
-                    final String highResArtPathString = artPathString.replaceFirst("(\\.\\w+$)", "_m$1");
-                    archiveMediaItem(mediaPath, highResArtPathString, fileSystem, "high-resolution artwork file", false);
+            // Copy the track analysis and artwork files.
+            final Path pioneerFolder = plusFile.toPath().getParent().getParent();
+            final Path artFolder = pioneerFolder.resolve("Artwork");
+            //noinspection SpellCheckingInspection
+            final Path analysisFolder = pioneerFolder.resolve("USBANLZ");
+            final long totalBytes = sizeFolder(artFolder, null) + sizeFolder(analysisFolder, analysisFilter);
+            long bytesCopied = copyFolder(artFolder, fileSystem.getPath("PIONEER", "Artwork"), null, listener,
+                    0, totalBytes, StandardCopyOption.REPLACE_EXISTING);
+            if (bytesCopied < 0) {
+                // Listener asked us to cancel.
+                failed = true;
+            } else {
+                //noinspection SpellCheckingInspection
+                bytesCopied = copyFolder(analysisFolder, fileSystem.getPath("PIONEER", "USBANLZ"), analysisFilter, listener,
+                        bytesCopied, totalBytes, StandardCopyOption.REPLACE_EXISTING);
+                if (bytesCopied < 0) {
+                    failed = true;
                 }
-
-                ++completed;  // For use in providing progress feedback if there is a listener.
-            }
-
-            if (iterator.hasNext()) {
-                failed = true;  // We were canceled.
             }
         } catch (URISyntaxException e) {
             failed = true;
@@ -157,29 +234,4 @@ public class Archivist {
         }
     }
 
-    /**
-     * Helper method to archive a single media export file when creating a metadata archive.
-     *
-     * @param mediaPath the path to the file to be archived
-     * @param pathString the string which holds the absolute path to the media item
-     * @param archive the ZIP filesystem in which the metadata archive is being created
-     * @param description the text identifying the type of file being archived, in case we need to log a warning
-     * @param expected indicates whether a file is always supposed to be there, so we should warn about its absence
-     *
-     * @throws IOException if there is an unexpected problem adding the media item to the archive
-     */
-    private static void archiveMediaItem(Path mediaPath, String pathString, FileSystem archive, String description, boolean expected) throws IOException {
-        final Path sourcePath = mediaPath.resolve(pathString.substring(1));
-        if (sourcePath.toFile().canRead()) {
-            final Path destinationPath = archive.getPath(pathString);
-            Files.createDirectories(destinationPath.getParent());
-            try {
-                Files.copy(sourcePath, destinationPath);
-            } catch (FileAlreadyExistsException e) {
-                logger.warn("Skipping copy of {} {} because it has already been archived." , description, destinationPath);
-            }
-        } else if (expected) {
-            logger.warn("Could not find expected {} {}, omitting from archive.", description, sourcePath);
-        }
-    }
 }
