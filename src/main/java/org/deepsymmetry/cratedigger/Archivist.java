@@ -203,18 +203,19 @@ public class Archivist {
 
             // Copy the track analysis and artwork files.
             final Path pioneerFolder = plusFile.toPath().getParent().getParent();
+            final String pioneerFolderName = pioneerFolder.getFileName().toString();
             final Path artFolder = pioneerFolder.resolve("Artwork");
             //noinspection SpellCheckingInspection
             final Path analysisFolder = pioneerFolder.resolve("USBANLZ");
             final long totalBytes = sizeFolder(artFolder, null) + sizeFolder(analysisFolder, analysisFilter);
-            long bytesCopied = copyFolder(artFolder, fileSystem.getPath("PIONEER", "Artwork"), null, listener,
+            long bytesCopied = copyFolder(artFolder, fileSystem.getPath(pioneerFolderName, "Artwork"), null, listener,
                     0, totalBytes, StandardCopyOption.REPLACE_EXISTING);
             if (bytesCopied < 0) {
                 // Listener asked us to cancel.
                 failed = true;
             } else {
                 //noinspection SpellCheckingInspection
-                bytesCopied = copyFolder(analysisFolder, fileSystem.getPath("PIONEER", "USBANLZ"), analysisFilter, listener,
+                bytesCopied = copyFolder(analysisFolder, fileSystem.getPath(pioneerFolderName, "USBANLZ"), analysisFilter, listener,
                         bytesCopied, totalBytes, StandardCopyOption.REPLACE_EXISTING);
                 if (bytesCopied < 0) {
                     failed = true;
