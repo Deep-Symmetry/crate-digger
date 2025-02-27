@@ -26,7 +26,7 @@ public class DatabaseExt implements Closeable {
 
     /**
      * <p>Construct a database access instance from the specified recordbox export file.
-     * The file can obtained either from the SD or USB media, or directly from a player
+     * The file can be obtained either from the SD or USB media, or directly from a player
      * using {@link FileFetcher#fetch(InetAddress, String, String, File)}.</p>
      *
      * <p>Be sure to call {@link #close()} when you are done using the parsed database
