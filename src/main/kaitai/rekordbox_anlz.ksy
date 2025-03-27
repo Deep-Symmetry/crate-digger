@@ -80,6 +80,8 @@ types:
             'section_tags::wave_scroll': wave_scroll_tag                # PWV3, seen in .EXT
             'section_tags::wave_color_preview': wave_color_preview_tag  # PWV4, in .EXT
             'section_tags::wave_color_scroll': wave_color_scroll_tag    # PWV5, in .EXT
+            'section_tags::wave_3band_preview': wave_3band_preview_tag  # P@V6, in .2EX
+            'section_tags::wave_3band_scroll': wave_3band_scroll_tag    # PWV7, in .2EX
             'section_tags::song_structure': song_structure_tag          # PSSI, in .EXT
             _: unknown_tag
     -webide-representation: '{fourcc}'
@@ -398,6 +400,41 @@ types:
       - id: entries
         size: len_entries * len_entry_bytes
 
+  wave_3band_preview_tag:
+    doc: |
+      The minimalist CDJ-3000 waveform preview image suitable for display
+      above the touch strip for jumping to a track position.
+    seq:
+      - id: len_entry_bytes
+        type: u4
+        doc: |
+          The size of each entry, in bytes. Seems to always be 3.
+      - id: len_entries
+        type: u4
+        doc: |
+          The number of waveform data points, each of which takes one
+          byte for each of six channels of information.
+      - id: entries
+        size: len_entries * len_entry_bytes
+
+  wave_3band_scroll_tag:
+    doc: |
+      The minimalist CDJ-3000 waveform image suitable for scrolling along
+      as a track plays on newer high-resolution hardware.
+    seq:
+      - id: len_entry_bytes
+        type: u4
+        doc: |
+          The size of each entry, in bytes. Seems to always be 3.
+      - id: len_entries
+        type: u4
+        doc: |
+          The number of columns of waveform data (this matches the
+          non-color waveform length.
+      - type: u4
+      - id: entries
+        size: len_entries * len_entry_bytes
+
   song_structure_tag:
     doc: |
       Stores the song structure, also known as phrases (intro, verse,
@@ -565,6 +602,8 @@ enums:
     0x50575634: wave_color_preview  # PWV4 (seen in .EXT)
     0x50575635: wave_color_scroll   # PWV5 (seen in .EXT)
     0x50535349: song_structure      # PSSI (seen in .EXT)
+    0x50575636: wave_3band_preview  # PWV6 (seen in .2EX)
+    0x50575637: wave_3band_scroll   # PWV7 (seen in .2EX)
 
   cue_list_type:
     0: memory_cues
