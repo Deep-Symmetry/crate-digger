@@ -32,7 +32,7 @@ names used in the byte field diagrams match the IDs assigned to them
 in the
 https://github.com/Deep-Symmetry/crate-digger/blob/master/src/main/kaitai/rekordbox_anlz.ksy[Kaitai
 Struct specification], unless that is too long to fit, in which case a
-subscripted abbreviation is used, and the text will mention the actual
+subscript abbreviation is used, and the text will mention the actual
 struct field name.
 
 The file itself starts with the four-character code `PMAI` that
@@ -55,7 +55,7 @@ specifies the length of the whole file in bytes:
 ----
 
 The header seems to usually be `1c` bytes long, though we do not yet
-know the purpose of any of the header values that come after
+know the purpose of the header values that come after
 __len_file__. After the header, the file consists of a series of
 tagged sections, each with their own four-character code identifying
 the section type, followed by a header and the section content. This
@@ -93,7 +93,7 @@ next tag.
 
 There is not much value to __len_header__. If you study the structure
 of each type of tagged section, you can see some sense of where the
-“header-like stuff ” ends, and “content-like stuff” begins, and this
+“header-like stuff” ends, and “content-like stuff” begins, and this
 seems to line up with the value of __len_header__. But because there
 are important values in each tag’s header, and those always start
 immediately after __len_tag__, it is simply easier to ignore the value
@@ -499,7 +499,7 @@ rendition of the track waveform, which scrolls along while the track
 plays, giving a detailed glimpse of the neighborhood of the current
 playback position. Since this is potentially much larger than other
 analysis elements, and is not supported by older players, it is stored
-in the extended analyis file (with extension `.EXT`). It is identified
+in the extended analysis file (with extension `.EXT`). It is identified
 by the four-character code `PWV3` and has the structure shown below.
 __len_header__ is `18`.
 
@@ -534,7 +534,7 @@ This kind of section holds a fixed-width color preview of the track
 waveform, displayed above the touch strip on nexus 2 players,
 providing a birds-eye view of the current playback position, and
 supporting direct needle jump to specific track sections. It is also
-used in rekordbox itself. This is stored in the extended analyis file
+used in rekordbox itself. This is stored in the extended analysis file
 (with extension `.EXT`). It is identified by the four-character code
 `PWV4` and has the structure shown below. __len_header__ is `18`.
 
@@ -570,7 +570,7 @@ This kind of section holds a variable-width and much larger color
 rendition of the track waveform, introduced with the nexus 2 line (and
 also used in rekordbox), which scrolls along while the track plays,
 giving a detailed glimpse of the neighborhood of the current playback
-position. This is stored in the extended analyis file (with extension
+position. This is stored in the extended analysis file (with extension
 `.EXT`). It is identified by the four-character code `PWV5` and has
 the structure shown below. __len_header__ is `18`.
 
@@ -617,6 +617,68 @@ used. This is shown below:
 (draw-box (text "height" :math) {:span 5})
 (draw-related-boxes [0 0])
 ----
+
+[[three-band-preview]]
+=== Waveform 3-Band Preview Tag
+
+This kind of section holds a fixed-width three-band preview of the track
+waveform, first displayed at the bottom of the display on CDJ-3000 players,
+providing a birds-eye view of the current playback position, and
+supporting direct needle jump to specific track sections. It is also
+used in rekordbox itself. This is stored in a second extended analysis file
+(with extension `.2EX`). It is identified by the four-character code
+`PWV6` and has the structure shown below. __len_header__ is `14`.
+
+.Waveform 3-Band Preview tag.
+[bytefield]
+----
+include::example$tag_shared.edn[]
+(draw-tag-header "PWV6")
+(draw-box (text "len_entry_bytes" :math) [:bg-yellow {:span 4}])
+(draw-box (text "len_entries" :math) [:bg-yellow {:span 4}])
+(draw-gap (text "entries" :math))
+(draw-bottom)
+----
+
+__len_entry_bytes__ identifies how many bytes each waveform preview entry takes up; for this kind of tag it always has the value 3.
+__len_entries__ specifies how many entries are present in the tag.
+The three-band waveform preview data begins at byte{nbsp}``14`` and is 3,600 (decimal) bytes long, representing 1,200 columns of waveform preview information.
+
+The three-band waveform preview entries are one-byte height values representing the mid-range, high, and low frequencies, in that order.
+There is some scaling involved, and they seem to be drawn stacked on top of each other, with the lows in dark blue, the mid-range in amber, and the highs in white.
+
+[[three-band-detail]]
+=== Waveform 3-Band Detail Tag
+
+This kind of section holds a variable-width and much larger three-band rendition of the track waveform, introduced with the CDJ-3000 (and also used in rekordbox), which scrolls along while the track plays, giving a detailed glimpse of the neighborhood of the current playback position.
+This is stored in the second extended analysis file (with extension `.EXT`).
+It is identified by the four-character code `PWV5` and has the structure shown below. __len_header__ is `18`.
+
+.Waveform 3-Band Detail tag.
+[bytefield]
+----
+include::example$tag_shared.edn[]
+(draw-tag-header "PWV5")
+(draw-box (text "len_entry_bytes" :math) [:bg-yellow {:span 4}])
+(draw-box (text "len_entries" :math) [:bg-yellow {:span 4}])
+(draw-box (text "unknown" :math) [:bg-yellow {:span 4}])
+(draw-gap (text "entries" :math))
+(draw-bottom)
+----
+
+__len_entry_bytes__ identifies how many bytes each waveform detail entry takes up; for this kind of tag it always has the value 3.
+__len_entries__ specifies how many entries are present in the tag.
+Each entry represents one <<djl-analysis:ROOT:track_metadata.adoc#frames,half-frame>> of audio data, and there are 75 frames per second, so for each second of track audio there are 150 waveform detail entries.
+The purpose of the header bytes{nbsp}``14``-`17` is unknown; they may always have the value `00960000`.
+The three-band waveform detail entries begin at byte{nbsp}``18``.
+
+Three-band detail entries have the same structure preview entries, one-byte height values representing the mid-range, high, and low frequencies, in that order.
+There is a different kind of scaling involved in drawing these, and it seems to be non-linear.
+We have not yet found an approach that matches what we see in rekordbox.
+The colors for low, mid-range, and high frequencies are the same as in the preview, but they are drawn on the same axis rather than being stacked.
+The area where low and mid-range frequencies overlap is drawn in brown, and their pure colors are seen where there is no overlap.
+The white high frequency is drawn last so it obscures any low or mid-range information underneath it.
+Recordbox actually seems to do some light blending, but it is so dim that we have not bothered to reproduce it so far.
 
 [[song-structure-tag]]
 === Song Structure Tag
@@ -670,7 +732,7 @@ on its analysis of the audio.
 The value 1 is a “high” mood where the phrase types consist of
 “Intro”, “Up”, “Down”, “Chorus”, and “Outro”. Other values in each
 phrase entry cause the intro, chorus, and outro phrases to have their
-labels subdivided into styes “1” or “2” (for example, “Intro 1”), and
+labels subdivided into styles “1” or “2” (for example, “Intro 1”), and
 “up” is subdivided into style “Up 1”, “Up 2”, or “Up 3”. See the
 <<phrase-labels,table below>> for an expanded version of this
 description.
