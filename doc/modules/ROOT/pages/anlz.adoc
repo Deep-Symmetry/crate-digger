@@ -652,13 +652,13 @@ There is some scaling involved, and they seem to be drawn stacked on top of each
 
 This kind of section holds a variable-width and much larger three-band rendition of the track waveform, introduced with the CDJ-3000 (and also used in rekordbox), which scrolls along while the track plays, giving a detailed glimpse of the neighborhood of the current playback position.
 This is stored in the second extended analysis file (with extension `.EXT`).
-It is identified by the four-character code `PWV5` and has the structure shown below. __len_header__ is `18`.
+It is identified by the four-character code `PWV7` and has the structure shown below. __len_header__ is `18`.
 
 .Waveform 3-Band Detail tag.
 [bytefield]
 ----
 include::example$tag_shared.edn[]
-(draw-tag-header "PWV5")
+(draw-tag-header "PWV7")
 (draw-box (text "len_entry_bytes" :math) [:bg-yellow {:span 4}])
 (draw-box (text "len_entries" :math) [:bg-yellow {:span 4}])
 (draw-box (text "unknown" :math) [:bg-yellow {:span 4}])
