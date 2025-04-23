@@ -61,18 +61,6 @@ public class Archivist {
     }
 
     /**
-     * Allows our recursive file copy operations to exclude files that we do not want in the archive.
-     */
-    private interface PathFilter {
-        /**
-         * Check whether something belongs in the archive
-         * @param path the file that will potentially be copied
-         * @return {@code true} to actually copy the file.
-         */
-        boolean include(Path path);
-    }
-
-    /**
      * Creates an archive file containing all the metadata found in the rekordbox media export containing the
      * supplied database export that is needed to enable full Beat Link features when that media is being used in
      * an Opus Quad, which is unable to serve the metadata itself.
@@ -83,7 +71,7 @@ public class Archivist {
      * @throws IOException if there is a problem creating the archive
      */
     @API(status = API.Status.EXPERIMENTAL)
-    public void createArchive(Database database, File file) throws IOException {
+    public void createArchive(final Database database, final File file) throws IOException {
         createArchive(database, file, null);
     }
 
@@ -91,13 +79,12 @@ public class Archivist {
      * Helper method to recursively count the number of file bytes that will be copied if we copy a folder.
      *
      * @param source the folder to be copied
-     * @param filter if present, allows files to be selectively excluded from being counted
      *
      * @return the new total number of bytes that need to be copied.
      *
      * @throws IOException if there is a problem scanning the folder
      */
-    private long sizeFolder(Path source, PathFilter filter)
+    private long sizeFolder(final Path source)
             throws IOException {
 
         final AtomicLong totalBytes = new AtomicLong(0);
@@ -106,9 +93,7 @@ public class Archivist {
 
             public FileVisitResult visitFile(Path file, BasicFileAttributes attrs)
                     throws IOException {
-                if (filter == null || filter.include(file)) {
-                    totalBytes.addAndGet(Files.size(file));
-                }
+                totalBytes.addAndGet(Files.size(file));
                 return FileVisitResult.CONTINUE;
             }
         });
@@ -119,20 +104,19 @@ public class Archivist {
     /**
      * Helper method to recursively copy a folder.
      *
-     * @param source the folder to be copied
-     * @param target where the folder should be copied
-     * @param filter if present, allows files to be selectively excluded from being counted
-     * @param listener if not {@code null} will be called after copying each file to support progress reports and
-     *                 allow cancellation
+     * @param source      the folder to be copied
+     * @param target      where the folder should be copied
+     * @param listener    if not {@code null} will be called after copying each file to support progress reports and
+     *                    allow cancellation
      * @param bytesCopied the number of bytes that have already been copied, for use in updating the listener
-     * @param totalBytes the total number of bytes that are going to be copied, for use in updating the listener
-     * @param options the copy options (see {@link Files#copy(Path, Path, CopyOption...)})
+     * @param totalBytes  the total number of bytes that are going to be copied, for use in updating the listener
+     * @param options     the copy options (see {@link Files#copy(Path, Path, CopyOption...)})
      *
      * @return the new total number of bytes copied, or -1 if the listener requested that the copy be canceled.
      *
      * @throws IOException if there is a problem copying the folder
      */
-    private long copyFolder(Path source, Path target, PathFilter filter, ArchiveListener listener, long bytesCopied, long totalBytes, CopyOption... options)
+    private long copyFolder(final Path source, final Path target, final ArchiveListener listener, final long bytesCopied, final long totalBytes, final CopyOption... options)
             throws IOException {
 
         final AtomicLong nowCopied = new AtomicLong(bytesCopied);
@@ -148,17 +132,14 @@ public class Archivist {
 
             public FileVisitResult visitFile(Path file, BasicFileAttributes attrs)
                     throws IOException {
-                if (filter == null || filter.include(file)) {
-                    Files.copy(file, target.resolve(source.relativize(file).toString()), options);
-                    nowCopied.addAndGet(Files.size(file));
-                    if (listener == null || listener.continueCreating(nowCopied.get(), totalBytes)) {
-                        return FileVisitResult.CONTINUE;
-                    } else {
-                        canceled.set(true);
-                        return FileVisitResult.TERMINATE;
-                    }
+                Files.copy(file, target.resolve(source.relativize(file).toString()), options);
+                nowCopied.addAndGet(Files.size(file));
+                if (listener == null || listener.continueCreating(nowCopied.get(), totalBytes)) {
+                    return FileVisitResult.CONTINUE;
+                } else {
+                    canceled.set(true);
+                    return FileVisitResult.TERMINATE;
                 }
-                return FileVisitResult.CONTINUE;
             }
         });
 
@@ -181,12 +162,10 @@ public class Archivist {
      * @throws IOException if there is a problem creating the archive
      */
     @API(status = API.Status.EXPERIMENTAL)
-    public void createArchive(Database database, File archiveFile, ArchiveListener listener) throws IOException {
+    public void createArchive(final Database database, final File archiveFile, final ArchiveListener listener) throws IOException {
         final Path archivePath = archiveFile.toPath();
         Files.deleteIfExists(archivePath);
         final URI fileUri = archivePath.toUri();
-        // We want to exclude .2EX files since we can’t use them, and they bloat the archive.
-        final PathFilter analysisFilter = path -> !path.toString().endsWith(".2EX");
         boolean failed = false;
 
         try (FileSystem fileSystem = FileSystems.newFileSystem(new URI("jar:" + fileUri.getScheme(), fileUri.getPath(), null),
@@ -207,15 +186,15 @@ public class Archivist {
             final Path artFolder = pioneerFolder.resolve("Artwork");
             //noinspection SpellCheckingInspection
             final Path analysisFolder = pioneerFolder.resolve("USBANLZ");
-            final long totalBytes = sizeFolder(artFolder, null) + sizeFolder(analysisFolder, analysisFilter);
-            long bytesCopied = copyFolder(artFolder, fileSystem.getPath(pioneerFolderName, "Artwork"), null, listener,
+            final long totalBytes = sizeFolder(artFolder) + sizeFolder(analysisFolder);
+            long bytesCopied = copyFolder(artFolder, fileSystem.getPath(pioneerFolderName, "Artwork"), listener,
                     0, totalBytes, StandardCopyOption.REPLACE_EXISTING);
             if (bytesCopied < 0) {
                 // Listener asked us to cancel.
                 failed = true;
             } else {
                 //noinspection SpellCheckingInspection
-                bytesCopied = copyFolder(analysisFolder, fileSystem.getPath(pioneerFolderName, "USBANLZ"), analysisFilter, listener,
+                bytesCopied = copyFolder(analysisFolder, fileSystem.getPath(pioneerFolderName, "USBANLZ"), listener,
                         bytesCopied, totalBytes, StandardCopyOption.REPLACE_EXISTING);
                 if (bytesCopied < 0) {
                     failed = true;
