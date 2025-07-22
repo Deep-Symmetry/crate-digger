@@ -6,15 +6,20 @@ This change log follows the conventions of
 
 ## [Unreleased][unreleased]
 
+Nothing so far.
+
+
+## [0.2.1] - 2025-07-21
+
 ### Added
 
-- Thanks to [Dominik Stolz (@voidc)](https://github.com/voidc), we can now
-  parse `exportExt.pdb` files for the tag information they contain.
+- Thanks to [Dominik Stolz (@voidc)](https://github.com/voidc), we can now parse `exportExt.pdb` files for the tag information they contain.
 - Metadata archives can be created for USB drives containing device libraries, to enable Beat Link to offer metadata when that drive is used in an Opus Quad.
 
 ### Fixed
 
 - An error in interpreting a value in the database export file format could lead to some rows that were actually present in tables not being found. Thanks to [@IvanOnishchenko](https://github.com/IvanOnishchenko) for [pointing this out](https://github.com/Deep-Symmetry/crate-digger/issues/32), and [Jan Holthuis (@Holzhaus)](https://github.com/Holzhaus) for identifying a flaw in the first attempt at correcting it.
+
 
 ## [0.2.0] - 2024-05-04
 
@@ -164,7 +169,8 @@ May the Fourth be with you.
 - Initial release.
 
 
-[unreleased]: https://github.com/Deep-Symmetry/crate-digger/compare/v0.2.0...HEAD
+[unreleased]: https://github.com/Deep-Symmetry/crate-digger/compare/v0.2.1...HEAD
+[0.2.1]: https://github.com/Deep-Symmetry/crate-digger/compare/v0.2.0...v0.2.1
 [0.2.0]: https://github.com/Deep-Symmetry/crate-digger/compare/v0.1.6...v0.2.0
 [0.1.6]: https://github.com/Deep-Symmetry/crate-digger/compare/v0.1.5...v0.1.6
 [0.1.5]: https://github.com/Deep-Symmetry/crate-digger/compare/v0.1.4...v0.1.5

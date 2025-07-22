@@ -294,7 +294,7 @@ link:CONTRIBUTING.md[guidelines] and get in touch!
 
 +++<a href="http://deepsymmetry.org"><img src="doc/assets/DS-logo-github.png"
       align="right" alt="Deep Symmetry logo" width="250" height="150"></a>+++
-Copyright © 2018–2024 http://deepsymmetry.org[Deep Symmetry, LLC]
+Copyright © 2018–2025 http://deepsymmetry.org[Deep Symmetry, LLC]
 
 Distributed under the
 https://opensource.org/licenses/EPL-2.0[Eclipse Public License
