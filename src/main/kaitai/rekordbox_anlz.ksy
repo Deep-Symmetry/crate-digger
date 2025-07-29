@@ -494,16 +494,23 @@ types:
           continue after the last phrase ends. If this is the case, it will
           mostly be silence.
       - size: 2
-      - id: bank
+      - id: raw_bank
         type: u1
-        enum: track_bank
         doc: |
-          The stylistic bank which can be assigned to the track in rekordbox Lighting mode.
+          Number identifying a stylistic bank which can be assigned to the track in rekordbox Lighting mode.
       - size: 1
       - id: entries
         type: song_structure_entry
         repeat: expr
         repeat-expr: _parent.len_entries
+    instances:
+      bank:
+        value: raw_bank
+        enum: track_bank
+        doc: |
+          The stylistic bank which can be assigned to the track in rekordbox Lighting mode, if raw_bank has a legal value.
+        if: 'raw_bank < 9'
+
 
   song_structure_entry:
     doc: |

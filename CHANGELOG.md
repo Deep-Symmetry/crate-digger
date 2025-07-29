@@ -6,7 +6,11 @@ This change log follows the conventions of
 
 ## [Unreleased][unreleased]
 
-Nothing so far.
+### Changed
+
+- Updated the Kaitai Struct definition to cope with the fact that rekordbox sometimes puts truly bizarre values (we have seen `f3` and `f9`) in the track bank byte of song structure tags.
+  Previously this cause construction of the entire tag object to fail because no matching enumeration value could be found.
+  Now we have a separate `raw_bank` field that holds the numeric value, and `bank` is a value instance that can be `null` when `raw_bank` is not recognizable.
 
 
 ## [0.2.1] - 2025-07-21

@@ -566,9 +566,9 @@ The track may continue beyond this, but will mostly be silence from then on.
 The purpose of the header bytes{nbsp}``1c``-`1d` is also unknown.
 
 _bank_ at byte{nbsp}``1e`` identifies the stylistic bank which has been assigned to the track by the user in Lighting mode.
-The value zero means the user has made no assignment, and this is treated the
-same as if “Cool” has been chosen.
+The value zero means the user has made no assignment, and this is treated the same as if “Cool” has been chosen.
 The values and their meanings are listed in the <<track-banks,table below>>.
+We have recently seen unexpected values here, such as `f6` and `f9`, so the Kaitai Struct mapping has split the modeling of this byte to a `raw_bank` integer, which will always have a value, and the `bank` enum has become a value instance that can be `null` for unrecognized values, but will not prevent the overall tag from being parsed and constructed.
 
 The final byte of the header also has an unknown purpose.
 
