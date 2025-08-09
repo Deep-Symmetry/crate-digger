@@ -3,90 +3,58 @@ James Elliott <james@deepsymmetry.org>
 
 == Background
 
-The files written to external media by rekordbox for use in player
-hardware contain a wealth of information that can be used in place of
-queries to the `remotedb` server on the players, which is important
-because they can be obtained from the players’ NFS servers, even if
-there are four players in use sharing the same media. Under those
-circumstances, `remotedb` queries are impossible. This document shares
-what has been learned so far about the files, and how to interpret
-them.
+The files written to external media by rekordbox for use in player hardware contain a wealth of information that can be used in place of queries to the `remotedb` server on the players, which is important because they can be obtained from the players’ NFS servers, even if there are four players in use sharing the same media.
+Under those circumstances, `remotedb` queries are impossible.
+This document shares what has been learned so far about the files, and how to interpret them.
 
 == Database Exports
 
-The starting point for finding track metadata from a player is the
-database export file, which can be found within rekordbox media at the
-following path:
+The starting point for finding track metadata from a player is the database export file, which can be found within rekordbox media at the following path:
 
 ----
 /PIONEER/rekordbox/export.pdb
 ----
 
 (If you are using the
-https://deepsymmetry.org/cratedigger/apidocs/org/deepsymmetry/cratedigger/FileFetcher.html#fetch(java.net.InetAddress,java.lang.String,java.lang.String,java.io.File)[Crate
-Digger `FileFetcher`] to request this file, use that path as the
-`filePath` argument, and use a `mountPath` value of `/B/` if you want
-to read it from the SD slot, or `/C/` to obtain it from the USB slot).
+https://deepsymmetry.org/cratedigger/apidocs/org/deepsymmetry/cratedigger/FileFetcher.html#fetch(java.net.InetAddress,java.lang.String,java.lang.String,java.io.File)[Crate Digger `FileFetcher`] to request this file, use that path as the `filePath` argument, and use a `mountPath` value of `/B/` if you want to read it from the SD slot, or `/C/` to obtain it from the USB slot).
 
 NOTE: Newer players also support an additional database with the filename `exportExt.pdb` in the same location, which holds a different and smaller set of table types in it.
 
-The file is a relational database format designed to be efficiently
-used by very low power devices (there were deployments on 16 bit
-devices with 32K of RAM). Today you are most likely to encounter it
-within the Pioneer Professional DJ ecosystem, because it is the format
-that their rekordbox software uses to write USB and SD media which can
-be mounted in DJ controllers and used to play and mix music.
+The file is a relational database format designed to be efficiently used by very low power devices (there were deployments on 16 bit devices with 32K of RAM).
+Today you are most likely to encounter it within the Pioneer Professional DJ ecosystem, because it is the format that their rekordbox software uses to write USB and SD media which can be mounted in DJ controllers and used to play and mix music.
 
-The file consists of a series of fixed size pages. The first page
-contains a file header which defines the page size and the locations
-of database tables of different types, by the index of their first
-page. The rest of the pages consist of the data pages for all the
-tables identified in the header.
+The file consists of a series of fixed size pages.
+The first page contains a file header which defines the page size and the locations of database tables of different types, by the index of their first page.
+The rest of the pages consist of the data pages for all the tables identified in the header.
 
-Each table is made up of a series of rows which may be spread across
-any number of pages. The pages start with a header describing the page
-and linking to the next page. The rest of the page is used as a heap:
-rows are scattered around it, and located using an index structure
-that builds backwards from the end of the page. Each row of a given
-type has a fixed size structure which links to any variable-sized
-strings by their offsets within the page.
+Each table is made up of a series of rows which may be spread across any number of pages.
+The pages start with a header describing the page and linking to the next page.
+The rest of the page is used as a heap: rows are scattered around it, and located using an index structure that builds backwards from the end of the page.
+Each row of a given type has a fixed size structure which links to any variable-sized strings by their offsets within the page.
 
-As changes are made to the table, some records may become unused, and
-there may be gaps within the heap that are too small to be used by
-other data. There is a bit map in the row index that identifies which
-rows are actually present. Rows that are not present must be ignored:
-they do not contain valid (or even necessarily well-formed) data.
+As changes are made to the table, some records may become unused, and there may be gaps within the heap that are too small to be used by other data.
+There is a bit map in the row index that identifies which rows are actually present.
+Rows that are not present must be ignored: they do not contain valid (or even necessarily well-formed) data.
 
 The majority of the work in reverse-engineering this format was performed by https://github.com/henrybetts/Rekordbox-Decoding[Henry Betts] and https://github.com/flesniak/python-prodj-link[Fabian Lesniak], to whom I am hugely grateful.
-More recently, https://github.com/voidc[Dominik Stolz (@voidc)] figured out what was in
- `exportExt.pdb` files.
+More recently, https://github.com/voidc[Dominik Stolz (@voidc)] figured out what was in `exportExt.pdb` files.
 
-[[file-header]]
+[#file-header]
 === File Header
 
-Unless otherwise stated, all multibyte numbers in the file are stored
-in little-endian byte order. Field names used in the byte field
-diagrams match the IDs assigned to them in the
-https://github.com/Deep-Symmetry/crate-digger/blob/master/src/main/kaitai/rekordbox_pdb.ksy[Kaitai
-Struct specification],footnote:[http://kaitai.io] unless that is too
-long to fit, in which case a subscripted abbreviation is used, and the
-text will mention the actual struct field name.
+Unless otherwise stated, all multibyte numbers in the file are stored in little-endian byte order.
+Field names used in the byte field diagrams match the IDs assigned to them in the https://github.com/Deep-Symmetry/crate-digger/blob/master/src/main/kaitai/rekordbox_pdb.ksy[Kaitai Struct specification],footnote:[http://kaitai.io] unless that is too long to fit, in which case a subscript abbreviation is used, and the text will mention the actual struct field name.
 
 .Numbers in this document
 ****
-Values within packets, packet lengths, and byte offsets are all shown
-in hexadecimal in `code` font. Other numbers are in normal body text
-font and are decimal.
+Values within packets, packet lengths, and byte offsets are all shown in hexadecimal in `code` font.
+Other numbers are in normal body text font and are decimal.
 ****
 
-The first page begins with the file header, shown below. The header
-starts with four zero bytes, followed by a four-byte integer,
-__len_page__ at byte `04`, that establishes the size of each page
-(including this first one), in bytes. This is followed by another
-four-byte integer, __num_tables__ at byte `08`, which reports the
-number of different tables that are present in the file. Each table
-will have a table pointer entry in the “Table pointers” section of the
-file header, described below, that identifies and locates the table.
+The first page begins with the file header, shown below.
+The header starts with four zero bytes, followed by a four-byte integer, __len_page__ at byte `04`, that establishes the size of each page (including this first one), in bytes.
+This is followed by another four-byte integer, __num_tables__ at byte `08`, which reports the number of different tables that are present in the file.
+Each table will have a table pointer entry in the “Table pointers” section of the file header, described below, that identifies and locates the table.
 
 .File header.
 [bytefield]
@@ -103,18 +71,10 @@ file header, described below, that identifies and locates the table.
 (draw-bottom)
 ----
 
-The four-byte integer _next~u~_ at byte `0c` has an unknown purpose,
-but Mr. Lesniak named it `next_unused_page` and said “Not used as any
-`empty_candidate`, points past the end of the file.” The four-byte
-integer _sequence_, at byte `14`, was described “Always incremented by
-at least one, sometimes by two or three.” and I assume this means it
-reflects a version number that rekordbox updates when synchronizing
-to the exported media.
+The four-byte integer _next~u~_ at byte `0c` has an unknown purpose, but Mr. Lesniak named it `next_unused_page` and said “Not used as any `empty_candidate`, points past the end of the file.”
+The four-byte integer _sequence_, at byte `14`, was described “Always incremented by at least one, sometimes by two or three.” and I assume this means it reflects a version number that rekordbox updates when synchronizing to the exported media.
 
-Finally, there is another series of four zero bytes, and then the
-header ends with the list of table pointers which begins at byte `1c`.
-There are as many of these as specified by __num_tables__, and each has
-the following structure:
+Finally, there is another series of four zero bytes, and then the header ends with the list of table pointers which begins at byte `1c`. There are as many of these as specified by __num_tables__, and each has the following structure:
 
 .Table pointer.
 [bytefield]
@@ -127,14 +87,12 @@ the following structure:
 (draw-box (text "last_page" :math) {:span 4})
 ----
 
-Each Table Pointer is a series of four four-byte integers. The first,
-_type_, identifies the type of table being defined. The known table
-types are shown in below. The second value, at byte `04` of the table
-pointer, was called __empty_candidate__ by Mr. Lesniak. It may link to
-a chain of empty pages if the database is ever garbage collected, but
-this is speculation on my part.
+Each Table Pointer is a series of four four-byte integers. The first, _type_, identifies the type of table being defined.
+The known table types are shown below.
+The second value, at byte `04` of the table pointer, was called __empty_candidate__ by Mr. Lesniak.
+It may link to a chain of empty pages if the database is ever garbage collected, but this is speculation on my part.
 
-[[table-types]]
+[#table-types]
 .Table types present in `export.pdb` files.
 [cols=">1m,<2,<8"]
 |===
@@ -156,7 +114,7 @@ this is speculation on my part.
 |13 |history |Data used by rekordbox to synchronize history playlists (not yet studied).
 |===
 
-[[ext-table-types]]
+[#ext-table-types]
 .Table types present in `exportExt.pdb` files.
 [cols=">1m,<2,<8"]
 |===
@@ -166,30 +124,22 @@ this is speculation on my part.
 |04 |tag_tracks |<<tag-track-rows,Tag Tracks>>: holds the associations between tag ids and track ids.
 |===
 
-Other than the type, the two important values are __first_page__ at
-byte `08` and __last_page__ at byte `0c`. These tell us how to find
-the table. They are page indices, where the page containing the file
-header has index 0, the page with index 1 begins at byte __len_page__,
-and so on. In other words, the first page of the table identified by
-the current table pointer can be found within the file starting at the
-byte __len_page__ × __first_page__.
+Other than the type, the two important values are __first_page__ at byte `08` and __last_page__ at byte `0c`.
+These tell us how to find the table.
+They are page indices, where the page containing the file header has index 0, the page with index 1 begins at byte __len_page__, and so on.
+In other words, the first page of the table identified by the current table pointer can be found within the file starting at the byte __len_page__ × __first_page__.
 
-The table is a linked list of pages: each page contains the index of
-the next page after it. However, you need to keep track of the
-__last_page__ value for the table, because it tells you not to try to
-follow the next page link once you reach the page with that index. (If
-you do keep going, you will start reading pages of some different
-table.) The structure of the table pages themselves are described in
-the next section.
+The table is a linked list of pages: each page contains the index of the next page after it.
+However, you need to keep track of the __last_page__ value for the table, because it tells you not to try to follow the next page link once you reach the page with that index.
+(If you do keep going, you will start reading pages of some different table.)
+The structure of the table pages themselves are described in the next section.
 
-As far as we know, the remainder of the first page after the table
-pointers is unused.
+As far as we know, the remainder of the first page after the table pointers is unused.
 
 === Table Pages
 
-The table header is followed by the table pages themselves. These each
-have the size specified by __len_page__ in the above diagram, and the
-following structure:
+The table header is followed by the table pages themselves.
+These each have the size specified by __len_page__ in the above diagram, and the following structure:
 
 .Table page.
 [bytefield]
@@ -229,131 +179,77 @@ following structure:
 (draw-box (text "pad" :math [:sub "0"]) {:span 2})
 ----
 
-Data pages all seem to have the header structure described here, but
-not all of them actually store data. Some of them are “strange” and we
-have not yet figured out why. The discussion below describes how to
-recognize a strange page, and avoid trying to read it as a data page.
+Data pages all seem to have the header structure described here, but not all of them actually store data.
+Some of them are “strange” and we have not yet figured out why.
+The discussion below describes how to recognize a strange page, and avoid trying to read it as a data page.
 
-The first four bytes of a table page always seem to be zero. This is
-followed by a four-byte value _page_index_ which identifies the index of
-this page within the list of table pages (the header has index 0, the
-first actual data page the index 1, and so on). This value seems to be
-redundant, because it can be calculated by dividing the offset of the
-start of the page by _len_page_, but perhaps it serves as a sanity
-check.
+The first four bytes of a table page always seem to be zero.
+This is followed by a four-byte value _page_index_ which identifies the index of this page within the list of table pages (the header has index 0, the first actual data page the index 1, and so on).
+This value seems to be redundant, because it can be calculated by dividing the offset of the
+start of the page by _len_page_, but perhaps it serves as a sanity check.
 
-This is followed by another four-byte value, _type_, which identifies
-the type of the page, using the values shown in the
-<<table-types,preceding table>>. This again seems redundant because
-the table header which was followed to reach this page also identified
-the table type, but perhaps it is another sanity check, or an
-alternate way to tell, when following page links, that you have
-reached the end of the table you are interested in. Speaking of which,
-the next four-byte value, __next_page__, is that link: it identifies
-the index at which the next page of this table can be found, as long
-as we have not already reached the final page of the table, as
-described in <<file-header>>.
+This is followed by another four-byte value, _type_, which identifies the type of the page, using the values shown in the <<table-types,preceding table>>.
+This again seems redundant because the table header which was followed to reach this page also identified the table type, but perhaps it is another sanity check, or an alternate way to tell, when following page links, that you have reached the end of the table you are interested in.
+Speaking of which, the next four-byte value, __next_page__, is that link: it identifies the index at which the next page of this table can be found, as long as we have not already reached the final page of the table, as described in <<file-header>>.
 
-The exact meaning of _unknown~1~_ is unclear. Mr. Flesinak said
-“sequence number (0→1: 8→13, 1→2: 22, 2→3: 27)” but I don’t know how
-to interpret that. Even less is known about _unknown~2~_ . But
-__num_rows_small__ at byte `18` within the page (abbreviated _n~rs~_ in
-the byte field diagram above) holds the number of rows that are
-present in the page, unless __num_rows_large__ (below) holds a value
-that is larger than it (but not equal to `1fff`). This seems like a
-strange mechanism for dealing with the fact that some tables (like
-playlist entries) have a lot of very small rows, too many to count
-with a single byte. But then why not just always use
-__num_rows_large__?
+The exact meaning of _unknown~1~_ is unclear. Mr. Lesinak said “sequence number (0→1: 8→13, 1→2: 22, 2→3: 27)” but I don’t know how to interpret that.
+Even less is known about _unknown~2~_.
+But __num_rows_small__ at byte `18` within the page (abbreviated _n~rs~_ in the byte field diagram above) holds the number of rows that are present in the page, unless __num_rows_large__ (below) holds a value that is larger than it (but not equal to `1fff`).
+This seems like a strange mechanism for dealing with the fact that some tables (like playlist entries) have a lot of very small rows, too many to count with a single byte.
+But then why not just always use __num_rows_large__?
 
-NOTE: The row counter entries represent the number of rows that have ever been allocated in the page, but some will no longer be valid due to deletion or updates. To find the actual rows, you need to scan all 16 entries of each of the row groups present in the page, ignoring any whose <<#row-presence-bits,row presence bit>> is zero.
+NOTE: The row counter entries represent the number of rows that have ever been allocated in the page, but some will no longer be valid due to deletion or updates.
+To find the actual rows, you need to scan all 16 entries of each of the row groups present in the page, ignoring any whose <<#row-presence-bits,row presence bit>> is zero.
 
-The purpose of the next two bytes are is also unclear. Of _u~3~_ Mr.
-Flesniak said “a bitmask (first track: 32)”, and he described _u~4~_
-as “often 0, sometimes larger, especially for pages with a high number
-of rows (e.g. 12 for 101 rows)”.
+The purpose of the next two bytes are is also unclear.
+Of _u~3~_ Mr. Lesniak said “a bitmask (first track: 32)”, and he described _u~4~_ as “often 0, sometimes larger, especially for pages with a high number of rows (e.g. 12 for 101 rows)”.
 
-Byte{nbsp}``1b`` is called __page_flags__ (abbreviated _p~f~_ in the
-diagram). According to Mr. Flesniak, “strange” (non-data) pages will
-have the value `44` or `64`, and other pages have had the values `24`
-or `34`. Crate Digger considers a page to be a data page if
-__page_flags__&``40``{nbsp}={nbsp}`0`.
+Byte{nbsp}``1b`` is called __page_flags__ (abbreviated _p~f~_ in the diagram).
+According to Mr. Lesniak, “strange” (non-data) pages will have the value `44` or `64`, and other pages have had the values `24` or `34`.
+Crate Digger considers a page to be a data page if __page_flags__&``40``{nbsp}={nbsp}`0`.
 
-Bytes{nbsp}``1c``-`1d` are called __free_size__ (abbreviated _free~s~_
-in the diagram), and store the amount of unused space in the page heap
-(excluding the row index which is built backwards from the end of the
-page); __used_size__ at bytes{nbsp}``1c``-`1d` (abbreviated _used~s~_)
-stores the number of bytes that are in use in the page heap.
+Bytes{nbsp}``1c``-`1d` are called __free_size__ (abbreviated _free~s~_ in the diagram), and store the amount of unused space in the page heap (excluding the row index which is built backwards from the end of the page); __used_size__ at bytes{nbsp}``1c``-`1d` (abbreviated _used~s~_) stores the number of bytes that are in use in the page heap.
 
-Bytes{nbsp}``20``-`21`, _u~5~_ , are of unclear purpose. Mr. Flesniak
-labeled them “(0→1: 2).”
+Bytes{nbsp}``20``-`21`, _u~5~_ , are of unclear purpose. Mr. Lesniak labeled them “(0→1: 2).”
 
-Bytes{nbsp}``22``-`23`, __num_rows_large__ (abbreviated _num~rl~_ in
-the diagram) hold the number of entries in the row index at the end of
-the page when that value is too large to fit into __num_rows_small__
-(as mentioned above), and that situation seems to be indicated when
-this value is larger than __num_rows_small__, but not equal to `1fff`.
+Bytes{nbsp}``22``-`23`, __num_rows_large__ (abbreviated _num~rl~_ in the diagram) hold the number of entries in the row index at the end of the page when that value is too large to fit into __num_rows_small__ (as mentioned above), and that situation seems to be indicated when this value is larger than __num_rows_small__, but not equal to `1fff`.
 
-_u~6~_ at bytes{nbsp}``24``-`25` seems to have the value `1004` for
-strange pages, and `0000` for data pages. And Mr. Flesniak describes
-_u~7~_ at bytes{nbsp}``26``-`27` as “always 0 except 1 for history
-pages, num entries for strange pages?”
+_u~6~_ at bytes{nbsp}``24``-`25` seems to have the value `1004` for strange pages, and `0000` for data pages.
+And Mr. Lesniak describes _u~7~_ at bytes{nbsp}``26``-`27` as “always 0 except 1 for history pages, num entries for strange pages?”
 
-After these header fields comes the page heap. Rows are allocated
-within this heap starting at byte `28`. Since rows can be different
-sizes, there needs to be a way to locate them. This takes the form of
-a row index, which is built from the end of the page backwards, in
-groups of up to sixteen row pointers along with a bitmask saying which
-of those rows are still part of the table (they might have been
-deleted). The number of row index entries is determined, as described
-above, by the value of either __num_rows_small__ or
-__num_rows_large__.
+After these header fields comes the page heap.
+Rows are allocated within this heap starting at byte `28`.
+Since rows can be different sizes, there needs to be a way to locate them.
+This takes the form of a row index, which is built from the end of the page backwards, in groups of up to sixteen row pointers along with a bitmask saying which of those rows are still part of the table (they might have been deleted).
+The number of row index entries is determined, as described above, by the value of either __num_rows_small__ or __num_rows_large__.
 
 [#row-presence-bits]
-The bit mask for the first group of up to sixteen rows, labeled
-_row~pf0~_ in the diagram (meaning “row presence flags group 0”), is
-found near the end of the page. The last two bytes after each row
-bitmask (for example _pad~0~_ after _row~pf0~_) have an unknown
-purpose and may always be zero, and the _row~pf0~_ bitmask takes up
-the two bytes that precede them. The low-order bit of this value will
-be set if row 0 is really present, the next bit if row 1 is really
-present, and so on. The two bytes before these flags, labeled
-_ofs~0~_, store the offset of the first row in the page. This offset
-is the number of bytes past the end of the page header at which the
-row itself can be found. So if row 0 begins at the very beginning of
-the heap, at byte `28` in the page, _ofs~0~_ would have the value
-`0000`.
+The bit mask for the first group of up to sixteen rows, labeled _row~pf0~_ in the diagram (meaning “row presence flags group 0”), is found near the end of the page.
+The last two bytes after each row bitmask (for example _pad~0~_ after _row~pf0~_) have an unknown purpose and may always be zero, and the _row~pf0~_ bitmask takes up the two bytes that precede them.
+The low-order bit of this value will be set if row 0 is really present, the next bit if row 1 is really present, and so on.
+The two bytes before these flags, labeled _ofs~0~_, store the offset of the first row in the page.
+This offset is the number of bytes past the end of the page header at which the row itself can be found.
+So if row 0 begins at the very beginning of the heap, at byte `28` in the page, _ofs~0~_ would have the value `0000`.
 
-As more rows are added to the page, space is allocated for them in the
-heap, and additional index entries are added at the end of the heap,
-growing backwards. Once there have been sixteen rows added, all the
-bits in _row~pf0~_ are accounted for, and when another row is added,
-before its offset entry _ofs~16~_ can be added, another row bit-mask
-entry _row~pf1~_ needs to be allocated, followed by its corresponding
-_pad~1~_. And so the row index grows backwards towards the rows that
-are being added forwards, and once they are too close for a new row to
-fit, the page is full, and another page gets allocated to the table.
+As more rows are added to the page, space is allocated for them in the heap, and additional index entries are added at the end of the heap, growing backwards.
+Once there have been sixteen rows added, all the bits in _row~pf0~_ are accounted for, and when another row is added, before its offset entry _ofs~16~_ can be added, another row bit-mask entry _row~pf1~_ needs to be allocated, followed by its corresponding _pad~1~_.
+And so the row index grows backwards towards the rows that are being added forwards, and once they are too close for a new row to fit, the page is full, and another page gets allocated to the table.
 
 == Table Rows
 
 The structure of the rows themselves is determined by the _type_ of the table, using the values shown in <<table-types,Table types>>.
 Unless otherwise noted, these table types and rows appear in `export.pdb` files.
 
-[[album-rows]]
+[#album-rows]
 === Album Rows
 
-Album rows hold an album name and ID along with an artist association,
-with the structure shown below. The unknown value at
-bytes{nbsp}``00``-`01` seems to usually have the values `80 00`. It is
-followed by a two-byte value Mr. Flesniak called __index_shift__,
-although I don’t know what that means, and another four bytes of
-unknown purpose. But at bytes{nbsp}``08``-`0b` we finally find a value
-we have a use for: __artist_id__ holds the ID of an artist row
-associated with this track row. This is followed by __id__, the ID of
-this track row itself, at bytes{nbsp}``0c``-`0f`. We assume that there
-are index tables somewhere that would let us locate the page and row
-index of a record given its table type and ID, but we have not yet
-found and figured them out.
+Album rows hold an album name and ID along with an artist association, with the structure shown below.
+The unknown value at bytes{nbsp}``00``-`01` seems to usually contain `80 00`.
+It is
+followed by a two-byte value Mr. Lesniak called __index_shift__, although I don’t know what that means, and another four bytes of unknown purpose.
+But at bytes{nbsp}``08``-`0b` we finally find a value we have a use for: __artist_id__ holds the ID of an artist row associated with this track row.
+This is followed by __id__, the ID of this track row itself, at bytes{nbsp}``0c``-`0f`.
+We assume that there are index tables somewhere that would let us locate the page and row index of a record given its table type and ID, but we have not yet found and figured them out.
 
 .Album row.
 [bytefield]
@@ -369,28 +265,22 @@ found and figured them out.
 (draw-box (text "o" :math [:sub "n"]))
 ----
 
-This is followed by five more bytes with unknown meaning, and the
-final byte in the row, __ofs_name__ is a pointer to the track name
-(labeled _o~n~_ in the byte field diagram). To find the location of
-the name, add __ofs_name__ bytes to the address of the start of the
-track row itself. The name itself is encoded in a surprisingly baroque
-way, explained in <<devicesql-strings>>.
+This is followed by five more bytes with unknown meaning, and the final byte in the row, __ofs_name__ is a pointer to the track name (labeled _o~n~_ in the byte field diagram).
+To find the location of the name, add __ofs_name__ bytes to the address of the start of the
+track row.
+The name itself is encoded in a surprisingly baroque way, explained in <<devicesql-strings>>.
 
-[[artist-rows]]
+[#artist-rows]
 === Artist Rows
 
-Artist rows hold an Artist name and ID, with the structure shown in
-<<artist-row-near,Artist row with nearby name>> or
-<<artist-row-far,Artist row with far name>>. The _subtype_ value at
-bytes{nbsp}``00``-`01` determines which variant is used. If the artist
-name was allocated close enough to the row to be reached by a single
-byte offset, offset, _subtype_ has the value `0060`, and the row has
-the structure in <<artist-row-near,Artist row with nearby name>>. If
-the name is too far away for that, _subtype_ has the value `0064` and
-the row has the structure in <<artist-row-far,Artist row with far
-name>>.
+Artist rows hold an Artist name and ID, with the structure shown in <<artist-row-near>> or
+<<artist-row-far>>.
+The _subtype_ value at bytes{nbsp}``00``-`01` determines which variant is used.
+If the artist name was allocated close enough to the row to be reached by a single
+byte offset, offset, _subtype_ has the value `0060`, and the row has the structure in <<artist-row-near>>
+If the name is too far away for that, _subtype_ has the value `0064` and the row has the structure in <<artist-row-far>>
 
-[[artist-row-near]]
+[#artist-row-near]
 .Artist row with nearby name.
 [bytefield]
 ----
@@ -404,7 +294,7 @@ name>>.
 (draw-box (text "o" :math [:sub "n"]))
 ----
 
-[[artist-row-far]]
+[#artist-row-far]
 .Artist row with far name.
 [bytefield]
 ----
@@ -419,32 +309,19 @@ name>>.
 (draw-box (text "o" :math [:sub "far"]) {:span 2})
 ----
 
-In either case, _subtype_ is followed by the unexplained two-byte
-value found in many row types that Mr. Flesniak called
-__index_shift__, and then by _id_, the ID of this artist row itself,
-at bytes{nbsp}``04``-`07`, an unknown value at byte{nbsp}``08``, and
-__ofs_name_near__ at byte{nbsp}``09`` (labeled _o~n~_), the one-byte
-name offset used only in the first variant.
+In either case, _subtype_ is followed by the unexplained two-byte value found in many row types that Mr. Lesniak called __index_shift__, and then by _id_, the ID of this artist row itself, at bytes{nbsp}``04``-`07`, an unknown value at byte{nbsp}``08``, and __ofs_name_near__ at byte{nbsp}``09`` (labeled _o~n~_), the one-byte name offset used only in the first variant.
 
-If _subtype_ is `0064`, the value of __ofs_name_near__ is ignored, and
-instead the two-byte value __ofs_name_far__ (labeled _o~far~_) is
-used.
+If _subtype_ is `0064`, the value of __ofs_name_near__ is ignored, and instead the two-byte value __ofs_name_far__ (labeled _o~far~_) is used.
 
-Whichever name offset is used, it is a pointer to the artist name. To
-find the location of the name, add the value of the offset to the
-address of the start of the artist row itself. This gives the address
-of a DeviceSQL string holding the name, with the structure explained
-in <<devicesql-strings>>.
+Whichever name offset is used, it is a pointer to the artist name.
+To find the location of the name, add the value of the offset to the address of the start of the artist row itself.
+This gives the address of a DeviceSQL string holding the name, with the structure explained in <<devicesql-strings>>.
 
-[[artwork-rows]]
+[#artwork-rows]
 === Artwork Rows
 
-Artwork rows hold an _id_ (which tracks refer to) and the path at
-which the corresponding album art image file can be found, with the
-structure shown below. Note that in this case, the DeviceSQL string
-_path_ is embedded directly into the row itself, rather than being
-located elsewhere in the heap through an offset. The structure of the
-string itself is still as described in <<devicesql-strings>>.
+Artwork rows hold an _id_ (which tracks refer to) and the path at which the corresponding album art image file can be found, with the structure shown below.
+Note that in this case, the DeviceSQL string _path_ is embedded directly into the row itself, rather than being located elsewhere in the heap through an offset. The structure of the string itself is still as described in <<devicesql-strings>>.
 
 .Artwork row.
 [bytefield]
@@ -455,24 +332,17 @@ string itself is still as described in <<devicesql-strings>>.
 (draw-bottom)
 ----
 
-TIP: The art file pointed to by this path will be the original
-resolution 80x80 pixel image. Recent versions of rekordbox will also
-add a higher resolution image, at 240x240 pixels. Its path can be
-found by adding the string `_m` right before the file extension. So
-for example if the original resolution path is `/a/b/foo.jpg`, the
-high resolution file can be found at `/a/b/foo_m.jpg`.
+TIP: The art file pointed to by this path will be the original resolution 80x80 pixel image.
+Recent versions of rekordbox will also add a higher resolution image, at 240x240 pixels. Its path can be found by adding the string `_m` right before the file extension.
+So for example if the original resolution path is `/a/b/foo.jpg`, the high resolution file can be found at `/a/b/foo_m.jpg`.
 
 
-[[color-rows]]
+[#color-rows]
 === Color Rows
 
-Color rows hold a numeric color _id_ (which controls the actual color
-displayed on the player interface) at bytes{nbsp}``05``-`06` and a
-text label or __name__ starting at byte{nbsp}``08`` which is a
-<<devicesql-strings,DeviceSQL string>> shown in the information panel
-for tracks that are assigned the color. The rows have the structure
-shown below. There are several bytes in the row that are not yet known
-to have any meaning.
+Color rows hold a numeric color _id_ (which controls the actual color displayed on the player interface) at bytes{nbsp}``05``-`06` and a text label or __name__ starting at byte{nbsp}``08`` which is a <<devicesql-strings,DeviceSQL string>> shown in the information panel for tracks that are assigned the color.
+The rows have the structure shown below.
+There are several bytes in the row that are not yet known to have any meaning.
 
 .Color row.
 [bytefield]
@@ -486,9 +356,7 @@ to have any meaning.
 (draw-bottom)
 ----
 
-Regardless of the names assigned to the colors by the user, the
-row _id_ values map to the following colors in the user interface
-of rekordbox and on CDJs:
+Regardless of the names assigned to the colors by the user, the row _id_ values map to the following colors in the user interface of rekordbox and on CDJs:
 
 .Colors displayed.
 [cols=">1m,<8"]
@@ -506,15 +374,13 @@ of rekordbox and on CDJs:
 |8 |Purple
 |===
 
-[[genre-rows]]
+[#genre-rows]
 === Genre Rows
 
-Genre rows hold a numeric genre _id_ (which tracks can be assigned) at
-bytes{nbsp}``00``-`03` and a text _name_ starting at byte{nbsp}``04``
-which is a <<devicesql-strings,DeviceSQL string>>. The rows
-have the structure shown below:
+Genre rows hold a numeric genre _id_ (which tracks can be assigned) at bytes{nbsp}``00``-`03` and a text _name_ starting at byte{nbsp}``04`` which is a <<devicesql-strings,DeviceSQL string>>.
+The rows have the structure shown below:
 
-[[genre-label-row]]
+[#genre-label-row]
 .Genre or Label row.
 [bytefield]
 ----
@@ -525,21 +391,15 @@ have the structure shown below:
 ----
 
 
-[[history-playlist-rows]]
+[#history-playlist-rows]
 === History Playlist Rows
 
-The History menu automatically records playlists of the tracks
-performed off a particular USB or SD card in a new, numbered playlist
-each time the media is mounted in a player. These playlists have names
-like "HISTORY 001". This table lists all the history playlists which
-have been created for the current database, tying their name to an ID
-which is used to match the <<history-entry-rows>> that make up the
-playlist for the corresponding performance.
+The History menu automatically records playlists of the tracks performed off a particular USB or SD card in a new, numbered playlist each time the media is mounted in a player.
+These playlists have names like "HISTORY 001".
+This table lists all the history playlists which have been created for the current database, tying their name to an ID which is used to match the <<history-entry-rows>> that make up the playlist for the corresponding performance.
 
-The rows are much simpler than the general-purpose hierarchical
-playlists described <<playlist-tree-rows,below>>. They hold only a
-numeric _id_ at bytes{nbsp}``00``-`03` and a text _name_ starting at
-byte{nbsp}``04`` which is a <<devicesql-strings,DeviceSQL string>>.
+The rows are much simpler than the general-purpose hierarchical playlists described <<playlist-tree-rows,below>>.
+They hold only a numeric _id_ at bytes{nbsp}``00``-`03` and a text _name_ starting at byte{nbsp}``04`` which is a <<devicesql-strings,DeviceSQL string>>.
 
 .History Playlist row.
 [bytefield]
@@ -550,20 +410,14 @@ byte{nbsp}``04`` which is a <<devicesql-strings,DeviceSQL string>>.
 (draw-bottom)
 ----
 
-[[history-entry-rows]]
+[#history-entry-rows]
 === History Entry Rows
 
-History entry rows list the tracks that belong to a particular history
-playlist, and also establish the order in which they were played. They
-have a very simple structure, shown below, containing only three
-values. The __track_id__ at bytes{nbsp}``00``-`03` identifies the
-track that was played at this position in the playlist, by
-corresponding to the _id_ of a row in the <<track-rows,Track table>>.
-The __playlist_id__ at bytes{nbsp}``04``-`07` identifies the history
-playlist to which it belongs, by corresponding to the __id__ of a row
-in the <<history-playlist-rows,History Playlist list>>. The
-__entry_index__ at bytes{nbsp}``08``-`0b` specifies the position
-within the playlist at which this entry belongs.
+History entry rows list the tracks that belong to a particular history playlist, and also establish the order in which they were played.
+They have a very simple structure, shown below, containing only three values.
+The __track_id__ at bytes{nbsp}``00``-`03` identifies the track that was played at this position in the playlist, by corresponding to the _id_ of a row in the <<track-rows,Track table>>.
+The __playlist_id__ at bytes{nbsp}``04``-`07` identifies the history playlist to which it belongs, by corresponding to the __id__ of a row in the <<history-playlist-rows,History Playlist table>>.
+The __entry_index__ at bytes{nbsp}``08``-`0b` specifies the position within the playlist at which this entry belongs.
 
 
 .History Entry row.
@@ -578,16 +432,15 @@ within the playlist at which this entry belongs.
 ----
 
 
-[[key-rows]]
+[#key-rows]
 === Key Rows
 
-Key rows represent musial keys. They hold a numeric _id_ (which tracks
-can be assigned) at bytes{nbsp}``00``-`03` and a text _name_ starting
-at byte{nbsp}``08`` which is a <<devicesql-strings,DeviceSQL string>>.
+Key rows represent musial keys.
+They hold a numeric _id_ (which tracks can be assigned) at bytes{nbsp}``00``-`03` and a text _name_ starting at byte{nbsp}``08`` which is a <<devicesql-strings,DeviceSQL string>>.
 (There seems to be a second copy of the ID at bytes{nbsp}``04``-`07`.)
 The rows have the structure shown below:
 
-[[key-row]]
+[#key-row]
 .Key row.
 [bytefield]
 ----
@@ -598,49 +451,27 @@ The rows have the structure shown below:
 (draw-bottom)
 ----
 
-[[label-rows]]
+[#label-rows]
 === Label Rows
 
-Label rows represent record labels. They hold a numeric genre _id_
-(which tracks can be assigned) at bytes{nbsp}``00``-`03` and a text
-_name_ starting at byte{nbsp}``04`` which is a
-<<devicesql-strings,DeviceSQL string>>. The rows have the structure
-shown in <<genre-label-row,Genre or Label row>>, above.
+Label rows represent record labels.
+They hold a numeric genre _id_ (which tracks can be assigned) at bytes{nbsp}``00``-`03` and a text_name_ starting at byte{nbsp}``04`` which is a <<devicesql-strings,DeviceSQL string>>.
+The rows have the structure shown in <<genre-label-row,Genre or Label row>>, above.
 
-[[playlist-tree-rows]]
+[#playlist-tree-rows]
 === Playlist Tree Rows
 
-Playlist tree rows are used to organize the hierarchical structure of
-the playlist menu. There is probably an index somewhere that makes it
-possible to find the right rows directly when loading a playlist, but
-we have not yet figured out how indices work in DeviceSQL databases,
-so Crate Digger simply reads all the rows and builds its own in-memory
-index of the tree.
+Playlist tree rows are used to organize the hierarchical structure of the playlist menu.
+There is probably an index somewhere that makes it possible to find the right rows directly when loading a playlist, but we have not yet figured out how indices work in DeviceSQL databases, so Crate Digger simply reads all the rows and builds its own in-memory index of the tree.
 
-Playlist tree rows can either represent a playlist “folder” which
-contains other folders and playlists, or a regular playlist which
-holds only tracks. The rows are identified by an _id_ at
-bytes{nbsp}``0c``-`0f`, and also contain a __parent_id__ at
-bytes{nbsp}``00``-`03` which is how the hierarchical structure is
-represented: the contents of a folder are the other rows in this table
-whose __parent_id__ folder is equal to the _id_ of the folder.
+Playlist tree rows can either represent a playlist “folder” which contains other folders and playlists, or a regular playlist which holds only tracks.
+The rows are identified by an _id_ at bytes{nbsp}``0c``-`0f`, and also contain a __parent_id__ at bytes{nbsp}``00``-`03` which is how the hierarchical structure is represented: the contents of a folder are the other rows in this table whose __parent_id__ folder is equal to the _id_ of the folder.
 
-Similarly, the tracks that make up a regular playlist are the
-<<playlist-entry-rows>> whose __playlist_id__ is equal to this row’s
-_id_.
+Similarly, the tracks that make up a regular playlist are the <<playlist-entry-rows>> whose __playlist_id__ is equal to this row’s _id_.
 
-Each playlist tree row also has a text _name_ starting at
-byte{nbsp}``14`` which is a <<devicesql-strings,DeviceSQL string>>
-displayed when navigating the hierarchy, a __sort_order__ indicator at
-bytes{nbsp}``08``-`0b` (this may be the same value used to select sort
-orders when requesting menus using the dbserver protocol, shown in the
-<<djl-analysis:ROOT:track_metadata.adoc#alternate-track-sort-orders,packet
-analysis>>, but this has not yet been confirmed), and a value that
-specifies whether the row defines a folder or a playlist. In the
-Kaitai Struct, this value is called __raw_is_folder__, is found at
-bytes{nbsp}``10``-`13`, and has a non-zero value for folders. For
-convenience, the struct also defines a derived value, __is_folder__,
-which is a boolean.
+Each playlist tree row also has a text _name_ starting at byte{nbsp}``14`` which is a <<devicesql-strings,DeviceSQL string>> displayed when navigating the hierarchy, a __sort_order__ indicator at bytes{nbsp}``08``-`0b` (this may be the same value used to select sort orders when requesting menus using the dbserver protocol, shown in the xref:djl-analysis:ROOT:track_metadata.adoc#alternate-track-sort-orders[packet analysis], but this has not yet been confirmed), and a value that specifies whether the row defines a folder or a playlist.
+In the Kaitai Struct definition, this value is called __raw_is_folder__, is found at bytes{nbsp}``10``-`13`, and has a non-zero value for folders.
+For convenience, the struct also defines a derived value, __is_folder__, which is a boolean.
 
 The rows have the following structure:
 
@@ -657,20 +488,13 @@ The rows have the following structure:
 (draw-bottom)
 ----
 
-[[playlist-entry-rows]]
+[#playlist-entry-rows]
 === Playlist Entry Rows
 
-Playlist entry rows list the tracks that belong to a particular
-playlist, and also establish the order in which they should be played.
-They have a very simple structure, shown below, containing only three
-values. The __entry_index__ at bytes{nbsp}``00``--`03` specifies the
-position within the playlist at which this entry belongs. The
-__track_id__ at bytes{nbsp}``04``--`07` identifies the track to be
-played at this position in the playlist, by corresponding to the _id_
-of a row in the <<track-rows,Track table>>, and the __playlist_id__ at
-bytes{nbsp}``08``--`0b` identifies the playlist to which it belongs, by
-corresponding to the __id__ of a row in the
-<<playlist-tree-rows,Playlist Tree>>.
+Playlist entry rows list the tracks that belong to a particular playlist, and also establish the order in which they should be played.
+They have a very simple structure, shown below, containing only three values.
+The __entry_index__ at bytes{nbsp}``00``--`03` specifies the position within the playlist at which this entry belongs.
+The __track_id__ at bytes{nbsp}``04``--`07` identifies the track to be played at this position in the playlist, by corresponding to the _id_ of a row in the <<track-rows,Track table>>, and the __playlist_id__ at bytes{nbsp}``08``--`0b` identifies the playlist to which it belongs, by corresponding to the __id__ of a row in the <<playlist-tree-rows,Playlist Tree>>.
 
 .Playlist Entry row.
 [bytefield]
@@ -683,7 +507,7 @@ corresponding to the __id__ of a row in the
 (draw-box (text "playlist_id" :math) {:span 4})
 ----
 
-[[tag-rows]]
+[#tag-rows]
 === Tag Rows
 
 NOTE: These are present in `exportExt.pdb` files, _not_ the main `export.pdb` database.
@@ -720,7 +544,7 @@ The __category__ at bytes{nbsp}``0c``–``0f`` holds the ID of the category to w
 The __category_pos__ at bytes{nbsp}``10``–``13`` specifies zero-based position at which this tag should be displayed within its category.
 If the row represents a category rather than a tag, then this is the zero-based position of the category itself within the category list.
 
-The __id__ at  bytes{nbsp}``14``–``17`` is how the tag or category is referenced in <<#tag-track-rows,Tag Track Rows>> or the __category__ field.
+The __id__ at  bytes{nbsp}``14``–``17`` is how the tag or category is referenced in <<tag-track-rows>> or the __category__ field.
 Tags seem to have very large _id_ values, while the four categories have fixed `id` values in the range 1--4.
 
 The value of __raw_is_category__ at bytes{nbsp}``18``–``1b`` is non-zero when this row stores a tag category instead of a tag.
@@ -728,12 +552,12 @@ It is followed by two bytes of unknown purpose that always seem to have the same
 
 A variable number of bytes starting at byte{nbsp}``1f`` is a <<devicesql-strings,DeviceSQL string>> holding the _name_ of the tag or category. Finally, this is followed by a byte with an unknown purpose, whose value always seems to be 3.
 
-[[tag-track-rows]]
+[#tag-track-rows]
 === Tag Track Rows
 
 NOTE: These are present in `exportExt.pdb` files, _not_ the main `export.pdb` database.
 
-These rows establish the relationship between <<#tag-rows,Tags>> and <<#track-rows,Tracks>>.
+These rows establish the relationship between <<tag-rows,Tags>> and <<track-rows,Tracks>>.
 
 The rows have the following structure:
 
@@ -750,18 +574,16 @@ The rows have the following structure:
 
 The first four bytes have no known purpose and always seem to be zero.
 
-The __track_id__ at bytes{nbsp}``04``--``07`` identifies the  <<#track-rows,Track>> to which a tag has been assigned.
-The __tag_id__ at bytes{nbsp}``08``--``0c`` identifies a <<#tag-rows,Tag>> the DJ has assigned to this track.
+The __track_id__ at bytes{nbsp}``04``--``07`` identifies the  <<track-rows,Track>> to which a tag has been assigned.
+The __tag_id__ at bytes{nbsp}``08``--``0c`` identifies a <<tag-rows,Tag>> the DJ has assigned to this track.
 
 The final four bytes in the row seem to always have the values shown, and have no known purpose.
 
-[[track-rows]]
+[#track-rows]
 === Track Rows
 
-Track rows describe audio tracks that can be played from the media
-export, and provide many details about the music including links to
-other tables like artists, albums, keys, and others. They have the
-structure shown below:
+Track rows describe audio tracks that can be played from the media export, and provide many details about the music including links to other tables like artists, albums, keys, and others.
+They have the structure shown below:
 
 .Track row.
 [bytefield]
@@ -769,84 +591,46 @@ structure shown below:
 include::example$track_row.edn[]
 ----
 
-The first two bytes, labeled _u~1~_, have an unknown purpose; they
-usually are `24` followed by `00`. They are followed by the
-unexplained two-byte value found in many row types that Mr. Flesniak
-called __index_shift__, and a four-byte value he called _bitmask_,
-although we do not know what the bits mean. The value at
-bytes{nbsp}``08``-`0b`, __sample_rate__, is the first one we have a
-solid understanding of: it holds the playback sample rate of the audio
-file, in samples per second (this will be 0 if it is unknown or
-variable).
+The first two bytes, labeled _u~1~_, have an unknown purpose; they usually are `24` followed by `00`.
+They are followed by the unexplained two-byte value found in many row types that Mr. Lesniak
+called __index_shift__, and a four-byte value he called _bitmask_, although we do not know what the bits mean.
+The value at bytes{nbsp}``08``-`0b`, __sample_rate__, is the first one we have a solid understanding of: it holds the playback sample rate of the audio file, in samples per second (this will be 0 if it is unknown or variable).
 
-Bytes{nbsp}``0c``-`0f` hold the value __composer_id__ which identifies
-the composer of the track, if known, as a non-zero _id_ value of an
-<<artist-rows,Artist row>>. The size of the audio file, in bytes, is
-found in __file_size__ at bytes{nbsp}``10``-`13`. This is followed by
-an unknown four-byte value, _u~2~_, which may be another ID, and two
-unknown two-byte values, _u~3~_ (about which Mr. Flesniak says “always
-19048?”) and _u~4~_ (“always 30967?”).
+Bytes{nbsp}``0c``-`0f` hold the value __composer_id__ which identifies the composer of the track, if known, as a non-zero _id_ value of an <<artist-rows,Artist row>>.
+The size of the audio file, in bytes, is found in __file_size__ at bytes{nbsp}``10``-`13`.
+This is followed by an unknown four-byte value, _u~2~_, which may be another ID, and two unknown two-byte values, _u~3~_ (about which Mr. Lesniak says “always 19048?”) and _u~4~_ (“always 30967?”).
 
-If there is cover art for the track, there will be a non-zero value in
-__artwork_id__ (bytes{nbsp}``1c``-`1f`), identifying the _id_ of an
-<<artwork-rows,Artwork row>>.
+If there is cover art for the track, there will be a non-zero value in __artwork_id__ (bytes{nbsp}``1c``-`1f`), identifying the _id_ of an <<artwork-rows,Artwork row>>.
 
-If a dominant musical key was identified for the track there will be a
-non-zero value in __key_id__ (bytes{nbsp}``20``-`23`), which
-represents the _id_ of a <<key-rows,Key row>>. If the track is known
-to be a remake, the non-zero <<artist-rows,Artist row>> _id_ of the
-original performer will be found at bytes{nbsp}``24``-`27` in
-__original_artist_id__. If there is a known record label for the
-track, the non-zero value in __label_id__ (bytes{nbsp}``28``-`2b`)
-will link to the __id__ of a <<label-rows,Label row>> _id_. Similarly,
-if there is a known remixer, there will be a non-zero value in
-__remixer_id__ (bytes{nbsp}``2c``-`2f`) linking to the _id_ of an
-<<artist-rows,Artist row>>.
+If a dominant musical key was identified for the track there will be a non-zero value in __key_id__ (bytes{nbsp}``20``-`23`), which represents the _id_ of a <<key-rows,Key row>>.
+If the track is known to be a remake, the non-zero <<artist-rows,Artist row>> _id_ of the original performer will be found at bytes{nbsp}``24``-`27` in __original_artist_id__.
+If there is a known record label for the track, the non-zero value in __label_id__ (bytes{nbsp}``28``-`2b`) will link to the __id__ of a <<label-rows,Label row>> _id_.
+Similarly, if there is a known remixer, there will be a non-zero value in __remixer_id__ (bytes{nbsp}``2c``-`2f`) linking to the _id_ of an <<artist-rows,Artist row>>.
 
-The field _bitrate_ at bytes{nbsp}``30``-`33` stores the playback bit
-rate of the track, and __track_number__ at bytes{nbsp}``34``-`37`
-holds the position of the track within its album. __tempo__ at
-bytes{nbsp}``38``-`3b` holds the playback tempo of the start of the
-track in beats per minute, multiplied by 100 (in order to support a
-precision of stem:[\frac{1}{100}] BPM). If there is a known genre for
-the track, there will be a non-zero value in __genre_id__ at
-bytes{nbsp}``3c``-`3f`, representing the _id_ of a <<genre-rows,Genre
-row>>.
+The field _bitrate_ at bytes{nbsp}``30``-`33` stores the playback bit rate of the track, and __track_number__ at bytes{nbsp}``34``-`37` holds the position of the track within its album.
+__tempo__ at bytes{nbsp}``38``-`3b` holds the playback tempo of the start of the track in beats per minute, multiplied by 100 (in order to support a precision of stem:[\frac{1}{100}] BPM).
+If there is a known genre for the track, there will be a non-zero value in __genre_id__ at bytes{nbsp}``3c``-`3f`, representing the _id_ of a <<genre-rows,Genre row>>.
 
-If the track is part of an album, there will be a non-zero value in
-__album_id__ at bytes{nbsp}``40``-`43`, and this will be the _id_ of
-an <<album-rows,Album row>>. The <<artist-rows,Artist row>> _id_ of
-the primary performer associated with the track is found in
-__artist_id__ at bytes{nbsp}``44``-`47`. And the _id_ of the track
-itself is found in _id_ at bytes{nbsp}``48``-`4b`. If the album is
-known to consist of multiple discs, the disc number on which this
-track is found will be in __disc_number__ at bytes{nbsp}``4c``-`4d`.
-And the number of times the track has been played is found in
-__play_count__ (bytes{nbsp}``4e``-`4f`).
+If the track is part of an album, there will be a non-zero value in __album_id__ at bytes{nbsp}``40``-`43`, and this will be the _id_ of an <<album-rows,Album row>>.
+The <<artist-rows,Artist row>> _id_ of the primary performer associated with the track is found in __artist_id__ at bytes{nbsp}``44``-`47`.
+And the _id_ of the track itself is found in _id_ at bytes{nbsp}``48``-`4b`.
+If the album is known to consist of multiple discs, the disc number on which this track is found will be in __disc_number__ at bytes{nbsp}``4c``-`4d`.
+And the number of times the track has been played is found in __play_count__ (bytes{nbsp}``4e``-`4f`).
 
-The year in which the track was recorded, if known, is in _year_ at
-bytes{nbsp}``50``-`51`. The sample depth of the track audio file (bits
-per sample) is in __sample_depth__ at bytes{nbsp}``52``-`53`. The
-playback time of the track (in seconds, at normal speed) is in
-_duration_ at bytes{nbsp}``54``-`55`. The purpose of the next two
-bytes, labeled _u~5~_, is unknown; they seem to always hold the value
-`29`.
+The year in which the track was recorded, if known, is in _year_ at bytes{nbsp}``50``-`51`.
+The sample depth of the track audio file (bits per sample) is in __sample_depth__ at bytes{nbsp}``52``-`53`.
+The playback time of the track (in seconds, at normal speed) is in _duration_ at bytes{nbsp}``54``-`55`.
+The purpose of the next two bytes, labeled _u~5~_, is unknown; they seem to always hold the value `29`.
 
-Byte{nbsp}``58``, __color_id__ (labeled _c~id~_ in the diagram), holds
-the color assigned to the track in rekordbox, as the __id__ of a
-<<color-rows,Color row>>, or zero if no color has been assigned.
-Byte{nbsp}``59``, _rating_ (labeled _r_ in the diagram) holds the
-rating (0 to 5 stars) assigned the track. The next two bytes, labeled
-_u~6~_, have an unknown purpose, and seem to always have the value 1.
-The two bytes after them, labeled _u~7~_, are also unknown; Mr.
-Flesniak said “alternating 2 and 3”.
+Byte{nbsp}``58``, __color_id__ (labeled _c~id~_ in the diagram), holds the color assigned to the track in rekordbox, as the __id__ of a <<color-rows,Color row>>, or zero if no color has been assigned.
+Byte{nbsp}``59``, _rating_ (labeled _r_ in the diagram) holds the rating (0 to 5 stars) assigned the track.
+The next two bytes, labeled _u~6~_, have an unknown purpose, and seem to always have the value 1.
+The two bytes after them, labeled _u~7~_, are also unknown; Mr. Lesniak said “alternating 2 and 3”.
 
-The rest of the track row is an array of 21 two-byte offsets that
-point to <<devicesql-strings,DeviceSQL strings>>. To find the start of
-the string, add the address of the start of the track row to the
-offset. The purpose of each string is described in the following
-table. For convenience, the strings can be accessed as Kaitai Struct
-instance values with the names shown in the table:
+The rest of the track row is an array of 21 two-byte offsets that point to <<devicesql-strings,DeviceSQL strings>>.
+To find the start of the string, add the address of the start of the track row to the offset.
+The purpose of each string is described in the following table.
+For convenience, the strings can be accessed as Kaitai Struct instance values with the names shown in the table:
 
 .Track offset strings.
 [cols=">1,<3,<8"]
@@ -860,15 +644,14 @@ instance values with the names shown in the table:
 |4 |__unknown_string_4__|Unknown, “strange things” (as above).
 |5 |_message_| Unknown, named by https://github.com/flesniak/python-prodj-link[@flesniak].
 |6 |__kuvo_public__|Empty or `"ON"`.footnote:[Apparently used rather than a simple bit flag to control whether the track information is visible on Kuvo.]
-|7 |__autoload_hotcues__|Empty or `"ON"`.footnote:[Apparently used rather than a simple bit flag to control whether hot cues are automatically loaded for
-the track.]
+|7 |__autoload_hotcues__|Empty or `"ON"`.footnote:[Apparently used rather than a simple bit flag to control whether hot cues are automatically loaded for the track.]
 |8 |__unknown_string_5__|Unknown.
 |9 |__unknown_string_6__|Unknown, usually empty.
 |10|__date_added__|When the track was added to the rekordbox collection.
 |11|__release_date__|When the track was released.
 |12|__mix_name__|Name of the track remix, if any.
 |13|__unknown_string_7__|Unknown, usually empty.
-|14|__analyze_path__|File path of the <<anlz.adoc#,track analysis>>.
+|14|__analyze_path__|File path of the xref:anlz.adoc[track analysis].
 |15|__analyze_date__|When track analysis was performed.
 |16|_comment_|Track comment assigned by the DJ.
 |17|_title_|Track title.
@@ -877,23 +660,17 @@ the track.]
 |20|__file_path__|File path of track audio.
 |===
 
-[[devicesql-strings]]
+[#devicesql-strings]
 == DeviceSQL Strings
 
-Many row types store string values, sometimes by directly embedding
-them, but more often by storing an offset to a location elsewhere in
-the heap. In either case the string itself uses the structure
-described in this section. Strings can be stored in a variety of
-formats. The first byte of the structure seems to be a bunch of flags
-from which the format can be determined. We are not certain of the
-details because not all formats are present in the export files we
-have seen, so this represents our best guess so far.footnote:[Improved
-thanks to research by https://github.com/Swiftb0y[@Swiftboy], including
-finding
-https://bufferpool.quora.com/What-does-a-db-engine-string-look-like[this
-article] by the creator of DeviceSQL.]
+Many row types store string values, sometimes by directly embedding them, but more often by storing an offset to a location elsewhere in the heap.
+In either case the string itself uses the structure described in this section.
+Strings can be stored in a variety of formats.
+The first byte of the structure seems to be a bunch of flags from which the format can be determined.
+We are not certain of the details because not all formats are present in the export files we
+have seen, so this represents our best guess so far.footnote:[Improved thanks to research by https://github.com/Swiftb0y[@Swiftboy], including finding https://bufferpool.quora.com/What-does-a-db-engine-string-look-like[this article] by the creator of DeviceSQL.]
 
-[[long-string-interpretation]]
+[#long-string-interpretation]
 .String format flags for long or wide strings
 [bytefield]
 ----
@@ -916,26 +693,16 @@ Our best guess as to the interpretation of these bits follows:
 
 |7 |_E_ (endianness) |If set, the string seems to be little-endian
 |6 |_A_ (ASCII)      |The string following is encoded in ASCII, endianness does not apply
-|5 |_N_ (narrow)     |The contained string is encoded in UTF-8, endianness does not apply
-                      (not yet seen in practice though DeviceSQL claims to support
-                      encoding in ASCII, UTF-8, and UTF-16)
+|5 |_N_ (narrow)     |The contained string is encoded in UTF-8, endianness does not apply (not yet seen in practice though DeviceSQL claims to support encoding in ASCII, UTF-8, and UTF-16)
 |4 |_W_ (wide)       |The contained string is encoded in UTF-16, endianness is determined by _E_
-|0 |_S_ (short)      |If this bit is set, then the string is a <<short-string-interpretation,Short ASCII>>
-                      string, and the other "flag" bits in this byte actually store its length (see below)
+|0 |_S_ (short)      |If this bit is set, then the string is a <<short-string-interpretation,Short ASCII>> string, and the other "flag" bits in this byte actually store its length (see below)
 |===
 
-The details of this analysis are somewhat speculative because the only
-bit patterns we have seen in practice when S is zero are `0b01000000`
-for long-form ascii strings and `0b10010000` for long-form utf16le
-strings (rekordbox probably just does not use the other supported
-string formats).
+The details of this analysis are somewhat speculative because the only bit patterns we have seen in practice when S is zero are `0b01000000` for long-form ASCII strings and `0b10010000` for long-form `utf16le` strings (rekordbox probably just does not use the other supported string formats).
 
-As described above, when S is `1`, we are dealing with a short ASCII
-string, and other flags are replaced by the seven-bit length field for
-the string field (including this type-and-length byte, so the string
-itself can be up to 126 characters long).
+As described above, when S is `1`, we are dealing with a short ASCII string, and other flags are replaced by the seven-bit length field for the string field (including this type-and-length byte, so the string itself can be up to 126 characters long).
 
-[[short-string-interpretation]]
+[#short-string-interpretation]
 .Format flag and length for short ASCII strings
 [bytefield]
 ----
@@ -945,16 +712,14 @@ include::example$bitfield.edn[]
 (draw-box (hex-text 1 1))
 ----
 
-[[short-ascii]]
+[#short-ascii]
 === Short ASCII Strings
 
-The flag byte described above is labeled _l~k~_ (_lengthAndKind_)
-below. If _S_ (the low-order bit of _l~k~_) is set, it means the
-string field holds a short ASCII string. The length of such a field
-can be extracted by right-shifting _l~k~_ once (or, equivalently,
-dividing it by two). This length is for the entire string field,
-including _l~k~_ itself, so the maximum length of actual string data
-is 126 bytes.
+The flag byte described above is labeled _l~k~_ (_lengthAndKind_) below.
+If _S_ (the low-order bit of _l~k~_) is set, it means the string field holds a short ASCII string.
+The length of such a field can be extracted by right-shifting _l~k~_ once (or, equivalently,
+dividing it by two).
+This length is for the entire string field, including _l~k~_ itself, so the maximum length of actual string data is 126 bytes.
 
 .Short ASCII DeviceSQL string.
 [bytefield]
@@ -965,20 +730,14 @@ is 126 bytes.
 (draw-bottom)
 ----
 
-NOTE: DeviceSQL strings do not have terminator bytes, so attempting to
-read more bytes than present can lead to garbage characters being
-present or crashing the parser for the more complex Unicode strings.
+NOTE: DeviceSQL strings do not have terminator bytes, so attempting to read more bytes than present can lead to garbage characters being present or crashing the parser for the more complex Unicode strings.
 <<isrc-strings, ISRC Strings>> are the only exception.
 
-[[long-strings]]
+[#long-strings]
 === Long Strings
 
-Again the flag byte described above is labeled _l~k~_
-(_lengthAndKind_) below. If _S_ (the low-order bit of _l~k~_) is zero,
-it means the string field holds a long or wide string, whose format is
-specified by the other flag bits described
-<<long-string-interpretation,above>>, and whose length is determined
-by a two-byte _length_ field which follows the flag byte:
+Again the flag byte described above is labeled _l~k~_ (_lengthAndKind_) below.
+If _S_ (the low-order bit of _l~k~_) is zero, it means the string field holds a long or wide string, whose format is specified by the other flag bits described <<long-string-interpretation,above>>, and whose length is determined by a two-byte _length_ field which follows the flag byte:
 
 .Long DeviceSQL string.
 [bytefield]
@@ -991,19 +750,14 @@ by a two-byte _length_ field which follows the flag byte:
 (draw-bottom)
 ----
 
-As always, _length_ represents the length of the entire field
-including the header bytes, so the length of the actual string data is
-latexmath:[length - 4]. We have only ever seen zero values for the pad
-byte. The encoding of the string data is determined by the flag bits
-in l~k~_ as described <<long-string-interpretation,above>>.
+As always, _length_ represents the length of the entire field including the header bytes, so the length of the actual string data is latexmath:[length - 4].
+We have only ever seen zero values for the pad byte.
+The encoding of the string data is determined by the flag bits in _l~k~_ as described <<long-string-interpretation,above>>.
 
 
-[[isrc-strings]]
+[#isrc-strings]
 === ISRC Strings
 
-When an International Standard Recording Code is present as the
-first string pointer in a track row, it is marked with kind `90` but
-does not actually hold a UTF-16-LE string. Instead, the first byte
-after the `pad` value following the length is the value `03` and then there are
-latexmath:[length - 7] bytes of ASCII, followed by a null byte. Crate
-Digger does not yet attempt to cope with this.
+When an International Standard Recording Code is present as the first string pointer in a track row, it is marked with kind `90` but does not actually hold a UTF-16-LE string.
+Instead, the first byte after the `pad` value following the length is the value `03` and then there are latexmath:[length - 7] bytes of ASCII, followed by a null byte.
+Crate Digger does not yet attempt to cope with this.

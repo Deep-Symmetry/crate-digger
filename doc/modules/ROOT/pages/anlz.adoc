@@ -4,7 +4,7 @@ James Elliott <james@deepsymmetry.org>
 
 When rekordbox analyzes tracks there is some data that is too big to fit in the database itself.
 We have already seen some of that (the album art images, and of course the track audio is left in the filesystem as well).
-The other analysis data is organized into “anlz” files, whose path can be found in the DeviceSQL string pointed to by index 14 in the string offsets found at the end of the corresponding xref:exports.adoc#track-rows[track row].
+The other analysis data is organized into “ANLZ” files, whose path can be found in the DeviceSQL string pointed to by index 14 in the string offsets found at the end of the corresponding xref:exports.adoc#track-rows[track row].
 These files have names like `ANLZ0001.DAT` and their structure is described in this section.
 
 The files are “tagged type” files, where there is an overall file header section, and then each entry in the file has its own header which identifies the type and length of that section.
@@ -618,7 +618,7 @@ The manual says:
 > [Fill in] is a section that provides improvisational changes at the end of phrase.
 > [Fill in] is detected at the end of Intro, Up, and Chorus (up to 4 beats).
 
-[[phrase-labels]]
+[#phrase-labels]
 .Phrase labels in each mood.
 [%autowidth,cols=">1,<2,<2,<2"]
 |===
@@ -636,7 +636,7 @@ The manual says:
 |10 |Outro |Outro |
 |===
 
-[[high-phrase-variants]]
+[#high-phrase-variants]
 .High mood phrase variants.
 [%autowidth,cols=">1,>1,>1,>1,<2"]
 |===
@@ -655,7 +655,7 @@ The manual says:
 |===
 
 
-[[track-banks]]
+[#track-banks]
 .Track banks.
 [%autowidth,cols=">1,<4"]
 |===

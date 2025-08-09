@@ -1,16 +1,8 @@
 = Crate Digger
 James Elliott <james@deepsymmetry.org>
 
-You can find a Java library that can parse the structures described in
-this research, and that can retrieve them from players’ NFS servers,
-at https://github.com/Deep-Symmetry/crate-digger
+You can find a Java library that can parse the structures described in this research, and that can retrieve them from players’ NFS servers, at https://github.com/Deep-Symmetry/crate-digger
 
-The project also contains Kaitai Struct specifications for the file
-structures, which were used to automatically generate Java classes to
-parse them, and which can be used to generate equivalent code for a
-variety of other programming languages.
+The project also contains Kaitai Struct specifications for the file structures, which were used to automatically generate Java classes to parse them, and which can be used to generate equivalent code for a variety of other programming languages.
 
-There are also ONC RPC specification files which were similarly used
-to generate Java classes to communicate with the NFSv2 servers in the
-players, and which can likely be used to generate structures for other
-languages as well.
+There are also ONC RPC specification files which were similarly used to generate Java classes to communicate with the NFSv2 servers in the players, and which can likely be used to generate structures for other languages as well.
