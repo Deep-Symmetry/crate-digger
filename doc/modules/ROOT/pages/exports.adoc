@@ -282,7 +282,7 @@ The __num_entries__ field at bytes `24-25` (abbreviated _num~e~_) indicates how 
 Each entry is a four-byte value. As we have said above, an index entry of `1ffffff8` indicates an empty slot.
 Otherwise, the entry is a bitfield that contains a page index and some flags.
 
-Bits `13-32` of an index entry (one that is not empty, i.e. which does not have value `1ffffff8`) are always `0`. Bit `12` is some kind of flag, whose purpose is currently unknown. Bits `3-11` are a page index, i.e. the page that is pointed to by this index entry. Bits `0-2` are also flags with unknown purpose, and their most common value is `000`.
+Bits `31-3` are a page index (i.e. the page that is pointed to by this index entry) but without the 3 most significative bits. Bits `0-2` (called `index_flags`) have unknown purpose, and their most common value is `000`.
 
 == Table Rows
 
