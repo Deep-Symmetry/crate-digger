@@ -279,6 +279,24 @@ The two following 32-bit fields contain another magic value `03ffffff` and zeros
 
 The __num_entries__ field at bytes `24-25` (abbreviated _num~e~_) indicates how many index entries are present in the page. Field __first_empty__ at bytes `26-27` (abbreviated _first~e~_) points to the first empty index entry, and is `1fff` if there are none. An empty index entry just contains `1ffffff8`.
 
+.Index Entry
+[bytefield]
+----
+(def box-width 30)
+(def boxes-per-row 32)
+(def left-margin 1)
+
+;; Create a list of 32 labels, from "31" down to "0"
+(def bit-labels (mapv str (reverse (range 32))))
+
+;; Use your custom labels for the headers
+(draw-column-headers {:labels bit-labels})
+
+;; Example of drawing 32 empty boxes
+(draw-box (text "page_index" :math [:sub "28-0"]) {:span 29})
+(draw-box (text "index_flags" :math) {:span 3})
+----
+
 Each entry is a four-byte value. As we have said above, an index entry of `1ffffff8` indicates an empty slot.
 Otherwise, the entry is a bitfield that contains a page index and some flags.
 
