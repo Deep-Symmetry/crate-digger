@@ -251,12 +251,12 @@ Index pages have a __page_flags__ value of `64`. They follow the common header w
 (draw-column-headers)
 (draw-box (text "u" :math [:sub "a"]) {:span 2})
 (draw-box (text "u" :math [:sub "b"]) {:span 2})
-(draw-box (text "u" :math [:sub "c"]) {:span 2})
+(draw-related-boxes [(text "ec" :hex) (text "03" :hex)] {:span 1})
 (draw-box (text "next" :math [:sub "o"]) {:span 2})
 (draw-box (text "page_index" :math) {:span 4})
 (draw-box (text "next_page" :math) {:span 4})
-(draw-box (text "u" :math [:sub "d"]) {:span 4})
-(draw-box (text "u" :math [:sub "e"]) {:span 4})
+(draw-related-boxes [(text "ff" :hex) (text "ff" :hex) (text "ff" :hex) (text "03" :hex)] {:span 1})
+(draw-related-boxes [(text "00" :hex) (text "00" :hex) (text "00" :hex) (text "00" :hex)] {:span 1})
 (draw-box (text "num" :math [:sub "e"]) {:span 2})
 (draw-box (text "first" :math [:sub "e"]) {:span 2})
 (draw-gap "Index Entries")
@@ -269,13 +269,13 @@ The first two bytes are called _unknown~a~_ and they are usually `1fff` or `0001
 
 After that, bytes `2-3` are called _unkown~b~_ and they're usually `1fff` or `0000`, although values like `00b3` have been observed on tables with a big number of rows.
 
-_unknown~c~_ (bytes `4-5`) is always `03ec`.
+Next comes a 2-byte magic value `03ec`. 
 
 __next_offset__ (bytes `6-7`, abbreviated _next~o~_) specifies the byte offset of where to insert the next index entry. Relative to the start of index entries, usually zero for empty pages. 
 
 Bytes `8-11` and `12-15` are _page_index_ and __next_page__, and they reflect the values with the same name that are found in the common page header.
 
-_unknown~d~_ (bytes `16-19`) is always `0x03ffffff`. _unknown~e~_ (bytes `20-23`) is always `0x00000000`.
+The two following 32-bit fields contain another magic value `03ffffff` and zeros `00000000`.
 
 The __num_entries__ field at bytes `24-25` (abbreviated _num~e~_) indicates how many index entries are present in the page. Field __first_empty__ at bytes `26-27` (abbreviated _first~e~_) points to the first empty index entry, and is `1fff` if there are none. An empty index entry just contains `1ffffff8`.
 
