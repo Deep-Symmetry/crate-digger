@@ -290,19 +290,26 @@ This gives the address of a DeviceSQL string holding the name, with the structur
 [#album-rows]
 === Album Rows
 
-Album rows hold an album name and ID along with an artist association, with the structure shown below.
-The unknown value at bytes{nbsp}``00``-`01` seems to usually contain `80 00`.
+Album rows hold an album name and ID along with an artist association, with the two structure variants shown below.
+The value at bytes bytes{nbsp}``00``-`01` are the subtype and differentiate the two variants (similar to the album rows). The value `80 00` is for the short version while `84 00` is for the long version.
 It is
 followed by a two-byte value Mr. Lesniak called __index_shift__, although I don’t know what that means, and another four bytes of unknown purpose.
 But at bytes{nbsp}``08``-`0b` we finally find a value we have a use for: __artist_id__ holds the ID of an artist row associated with this track row.
 This is followed by __id__, the ID of this track row itself, at bytes{nbsp}``0c``-`0f`.
 We assume that there are index tables somewhere that would let us locate the page and row index of a record given its table type and ID, but we have not yet found and figured them out.
 
-.Album row.
+
+This is followed by five more bytes with unknown meaning, and for subtype `80 00` the final byte in the row, __ofs_name_near__ is a pointer to the track name (labeled _o~n~_ in the byte field diagram).
+To find the location of the name, add __ofs_name_near__ bytes to the address of the start of the
+track row. If the subtype is `84 00`, the row is of the second form, with an additinal two byte offset __ofs_name_far__. In this case, the __ofs_name_near__ is ignored (though usually `00`).
+The name itself is encoded in a surprisingly baroque way, explained in <<devicesql-strings>>.
+
+[#album-row-near]
+.Album row with nearby name.
 [bytefield]
 ----
 (draw-column-headers)
-(draw-box (text "u" :math [:sub 1]) {:span 2})
+(draw-box 0x80 {:span 2})
 (draw-box (text "i" :math [:sub "shift"]) {:span 2})
 (draw-box (text "unknown" :math [:sub 2]) {:span 4})
 (draw-box (text "artist_id" :math) {:span 4})
@@ -312,10 +319,21 @@ We assume that there are index tables somewhere that would let us locate the pag
 (draw-box (text "o" :math [:sub "n"]))
 ----
 
-This is followed by five more bytes with unknown meaning, and the final byte in the row, __ofs_name__ is a pointer to the track name (labeled _o~n~_ in the byte field diagram).
-To find the location of the name, add __ofs_name__ bytes to the address of the start of the
-track row.
-The name itself is encoded in a surprisingly baroque way, explained in <<devicesql-strings>>.
+[#album-row-far]
+.Album row with far name.
+[bytefield]
+----
+(draw-column-headers)
+(draw-box 0x84 {:span 2})
+(draw-box (text "i" :math [:sub "shift"]) {:span 2})
+(draw-box (text "unknown" :math [:sub 2]) {:span 4})
+(draw-box (text "artist_id" :math) {:span 4})
+(draw-box (text "id" :math) {:span 4})
+(draw-box (text "unknown" :math [:sub 3]) {:span 4})
+(draw-box (text "u" :math [:sub 4]))
+(draw-box (text "o" :math [:sub "n"]))
+(draw-box (text "o" :math [:sub "far"]) {:span 2})
+----
 
 [#artwork-rows]
 === Artwork Rows
