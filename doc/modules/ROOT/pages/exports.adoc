@@ -240,36 +240,6 @@ And so the row index grows backwards towards the rows that are being added forwa
 The structure of the rows themselves is determined by the _type_ of the table, using the values shown in <<table-types,Table types>>.
 Unless otherwise noted, these table types and rows appear in `export.pdb` files.
 
-[#album-rows]
-=== Album Rows
-
-Album rows hold an album name and ID along with an artist association, with the structure shown below.
-The unknown value at bytes{nbsp}``00``-`01` seems to usually contain `80 00`.
-It is
-followed by a two-byte value Mr. Lesniak called __index_shift__, although I don’t know what that means, and another four bytes of unknown purpose.
-But at bytes{nbsp}``08``-`0b` we finally find a value we have a use for: __artist_id__ holds the ID of an artist row associated with this track row.
-This is followed by __id__, the ID of this track row itself, at bytes{nbsp}``0c``-`0f`.
-We assume that there are index tables somewhere that would let us locate the page and row index of a record given its table type and ID, but we have not yet found and figured them out.
-
-.Album row.
-[bytefield]
-----
-(draw-column-headers)
-(draw-box (text "u" :math [:sub 1]) {:span 2})
-(draw-box (text "i" :math [:sub "shift"]) {:span 2})
-(draw-box (text "unknown" :math [:sub 2]) {:span 4})
-(draw-box (text "artist_id" :math) {:span 4})
-(draw-box (text "id" :math) {:span 4})
-(draw-box (text "unknown" :math [:sub 3]) {:span 4})
-(draw-box (text "u" :math [:sub 4]))
-(draw-box (text "o" :math [:sub "n"]))
-----
-
-This is followed by five more bytes with unknown meaning, and the final byte in the row, __ofs_name__ is a pointer to the track name (labeled _o~n~_ in the byte field diagram).
-To find the location of the name, add __ofs_name__ bytes to the address of the start of the
-track row.
-The name itself is encoded in a surprisingly baroque way, explained in <<devicesql-strings>>.
-
 [#artist-rows]
 === Artist Rows
 
@@ -316,6 +286,36 @@ If _subtype_ is `0064`, the value of __ofs_name_near__ is ignored, and instead t
 Whichever name offset is used, it is a pointer to the artist name.
 To find the location of the name, add the value of the offset to the address of the start of the artist row itself.
 This gives the address of a DeviceSQL string holding the name, with the structure explained in <<devicesql-strings>>.
+
+[#album-rows]
+=== Album Rows
+
+Album rows hold an album name and ID along with an artist association, with the structure shown below.
+The unknown value at bytes{nbsp}``00``-`01` seems to usually contain `80 00`.
+It is
+followed by a two-byte value Mr. Lesniak called __index_shift__, although I don’t know what that means, and another four bytes of unknown purpose.
+But at bytes{nbsp}``08``-`0b` we finally find a value we have a use for: __artist_id__ holds the ID of an artist row associated with this track row.
+This is followed by __id__, the ID of this track row itself, at bytes{nbsp}``0c``-`0f`.
+We assume that there are index tables somewhere that would let us locate the page and row index of a record given its table type and ID, but we have not yet found and figured them out.
+
+.Album row.
+[bytefield]
+----
+(draw-column-headers)
+(draw-box (text "u" :math [:sub 1]) {:span 2})
+(draw-box (text "i" :math [:sub "shift"]) {:span 2})
+(draw-box (text "unknown" :math [:sub 2]) {:span 4})
+(draw-box (text "artist_id" :math) {:span 4})
+(draw-box (text "id" :math) {:span 4})
+(draw-box (text "unknown" :math [:sub 3]) {:span 4})
+(draw-box (text "u" :math [:sub 4]))
+(draw-box (text "o" :math [:sub "n"]))
+----
+
+This is followed by five more bytes with unknown meaning, and the final byte in the row, __ofs_name__ is a pointer to the track name (labeled _o~n~_ in the byte field diagram).
+To find the location of the name, add __ofs_name__ bytes to the address of the start of the
+track row.
+The name itself is encoded in a surprisingly baroque way, explained in <<devicesql-strings>>.
 
 [#artwork-rows]
 === Artwork Rows
