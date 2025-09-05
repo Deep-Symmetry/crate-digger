@@ -404,15 +404,23 @@ types:
       - type: u1
         doc: |
           @flesniak says: "always 0x03, maybe an unindexed empty string"
-      - id: ofs_name
+      - id: ofs_name_near
         type: u1
         doc: |
           The location of the variable-length name string, relative to
-          the start of this row.
+          the start of this row, unless subtype is 0x84.
     instances:
+      ofs_name_far:
+        pos: _parent.row_base + 0x16
+        type: u2
+        doc: |
+          For names that might be further than 0xff bytes from the
+          start of this row, this holds a two-byte offset, and is
+          signalled by the subtype value.
+        if: subtype == 0x84
       name:
+        pos: '_parent.row_base + (subtype == 0x84? ofs_name_far : ofs_name_near)'
         type: device_sql_string
-        pos: _parent.row_base + ofs_name
         doc: |
           The name of this album.
         -webide-parse-mode: eager
