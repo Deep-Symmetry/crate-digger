@@ -384,9 +384,11 @@ types:
     doc: |
       A row that holds an album name and ID.
     seq:
-      - type: u2
+      - id: subtype
+        type: u2
         doc: |
-          Some kind of magic word? Usually 0x80, 0x00.
+          Usually 0x80, but 0x84 means we have a long name offset
+          embedded in the row.
       - id: index_shift
         type: u2
         doc: TODO name from @flesniak, but what does it mean?
@@ -417,9 +419,9 @@ types:
           For names that might be further than 0xff bytes from the
           start of this row, this holds a two-byte offset, and is
           signalled by the subtype value.
-        if: subtype == 0x84
+        if: subtype & 0x04 == 0x04
       name:
-        pos: '_parent.row_base + (subtype == 0x84? ofs_name_far : ofs_name_near)'
+        pos: '_parent.row_base + (subtype & 0x04 == 0x04? ofs_name_far : ofs_name_near)'
         type: device_sql_string
         doc: |
           The name of this album.
@@ -458,9 +460,9 @@ types:
           For names that might be further than 0xff bytes from the
           start of this row, this holds a two-byte offset, and is
           signalled by the subtype value.
-        if: subtype == 0x64
+        if: subtype & 0x04 == 0x04
       name:
-        pos: '_parent.row_base + (subtype == 0x64? ofs_name_far : ofs_name_near)'
+        pos: '_parent.row_base + (subtype & 0x04 == 0x04? ofs_name_far : ofs_name_near)'
         type: device_sql_string
         doc: |
           The name of this artist.
