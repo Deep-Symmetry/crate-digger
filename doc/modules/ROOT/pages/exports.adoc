@@ -240,36 +240,6 @@ And so the row index grows backwards towards the rows that are being added forwa
 The structure of the rows themselves is determined by the _type_ of the table, using the values shown in <<table-types,Table types>>.
 Unless otherwise noted, these table types and rows appear in `export.pdb` files.
 
-[#album-rows]
-=== Album Rows
-
-Album rows hold an album name and ID along with an artist association, with the structure shown below.
-The unknown value at bytes{nbsp}``00``-`01` seems to usually contain `80 00`.
-It is
-followed by a two-byte value Mr. Lesniak called __index_shift__, although I don’t know what that means, and another four bytes of unknown purpose.
-But at bytes{nbsp}``08``-`0b` we finally find a value we have a use for: __artist_id__ holds the ID of an artist row associated with this track row.
-This is followed by __id__, the ID of this track row itself, at bytes{nbsp}``0c``-`0f`.
-We assume that there are index tables somewhere that would let us locate the page and row index of a record given its table type and ID, but we have not yet found and figured them out.
-
-.Album row.
-[bytefield]
-----
-(draw-column-headers)
-(draw-box (text "u" :math [:sub 1]) {:span 2})
-(draw-box (text "i" :math [:sub "shift"]) {:span 2})
-(draw-box (text "unknown" :math [:sub 2]) {:span 4})
-(draw-box (text "artist_id" :math) {:span 4})
-(draw-box (text "id" :math) {:span 4})
-(draw-box (text "unknown" :math [:sub 3]) {:span 4})
-(draw-box (text "u" :math [:sub 4]))
-(draw-box (text "o" :math [:sub "n"]))
-----
-
-This is followed by five more bytes with unknown meaning, and the final byte in the row, __ofs_name__ is a pointer to the track name (labeled _o~n~_ in the byte field diagram).
-To find the location of the name, add __ofs_name__ bytes to the address of the start of the
-track row.
-The name itself is encoded in a surprisingly baroque way, explained in <<devicesql-strings>>.
-
 [#artist-rows]
 === Artist Rows
 
@@ -278,7 +248,7 @@ Artist rows hold an Artist name and ID, with the structure shown in <<artist-row
 The _subtype_ value at bytes{nbsp}``00``-`01` determines which variant is used.
 If the artist name was allocated close enough to the row to be reached by a single
 byte offset, offset, _subtype_ has the value `0060`, and the row has the structure in <<artist-row-near>>
-If the name is too far away for that, _subtype_ has the value `0064` and the row has the structure in <<artist-row-far>>
+If the name is too far away for that, _subtype_ has the value `0064` and the row has the structure in <<artist-row-far>>.
 
 [#artist-row-near]
 .Artist row with nearby name.
@@ -311,11 +281,63 @@ If the name is too far away for that, _subtype_ has the value `0064` and the row
 
 In either case, _subtype_ is followed by the unexplained two-byte value found in many row types that Mr. Lesniak called __index_shift__, and then by _id_, the ID of this artist row itself, at bytes{nbsp}``04``-`07`, an unknown value at byte{nbsp}``08``, and __ofs_name_near__ at byte{nbsp}``09`` (labeled _o~n~_), the one-byte name offset used only in the first variant.
 
-If _subtype_ is `0064`, the value of __ofs_name_near__ is ignored, and instead the two-byte value __ofs_name_far__ (labeled _o~far~_) is used.
+If _subtype_ is `0064`, the value of __ofs_name_near__ is ignored, and instead the two-byte value __ofs_name_far__ (labeled _o~far~_) is used. Which of either
+variants occurs seems to also depend on the length of the name, so the `64 00` subtype may occur even if
+the string itself is placed directly following __ofs_name_far__.
 
 Whichever name offset is used, it is a pointer to the artist name.
 To find the location of the name, add the value of the offset to the address of the start of the artist row itself.
 This gives the address of a DeviceSQL string holding the name, with the structure explained in <<devicesql-strings>>.
+
+[#album-rows]
+=== Album Rows
+
+Album rows hold an album name and ID along with an artist association, with the two structure variants shown below.
+The value at bytes bytes{nbsp}``00``-`01` are the subtype and differentiate the two variants (similar to the album rows). The value `80 00` is for the short version while `84 00` is for the long version.
+It is
+followed by a two-byte value Mr. Lesniak called __index_shift__, although I don’t know what that means, and another four bytes of unknown purpose.
+But at bytes{nbsp}``08``-`0b` we finally find a value we have a use for: __artist_id__ holds the ID of an artist row associated with this track row.
+This is followed by __id__, the ID of this track row itself, at bytes{nbsp}``0c``-`0f`.
+We assume that there are index tables somewhere that would let us locate the page and row index of a record given its table type and ID, but we have not yet found and figured them out.
+
+
+This is followed by five more bytes with unknown meaning, and for subtype `80 00` the final byte in the row, __ofs_name_near__ is a pointer to the track name (labeled _o~n~_ in the byte field diagram).
+To find the location of the name, add __ofs_name_near__ bytes to the address of the start of the
+track row. If the subtype is `84 00`, the row is of the second form, with an additinal two byte offset __ofs_name_far__. In this case, the __ofs_name_near__ is ignored (though usually `00`). Which of either
+variants occurs seems to also depend on the length of the name, so the `84 00` subtype may occur even if
+the string itself is placed directly following __ofs_name_far__.
+The name itself is encoded in a surprisingly baroque way, explained in <<devicesql-strings>>.
+
+[#album-row-near]
+.Album row with nearby name.
+[bytefield]
+----
+(draw-column-headers)
+(draw-box 0x80 {:span 2})
+(draw-box (text "i" :math [:sub "shift"]) {:span 2})
+(draw-box (text "unknown" :math [:sub 2]) {:span 4})
+(draw-box (text "artist_id" :math) {:span 4})
+(draw-box (text "id" :math) {:span 4})
+(draw-box (text "unknown" :math [:sub 3]) {:span 4})
+(draw-box (text "u" :math [:sub 4]))
+(draw-box (text "o" :math [:sub "n"]))
+----
+
+[#album-row-far]
+.Album row with far name.
+[bytefield]
+----
+(draw-column-headers)
+(draw-box 0x84 {:span 2})
+(draw-box (text "i" :math [:sub "shift"]) {:span 2})
+(draw-box (text "unknown" :math [:sub 2]) {:span 4})
+(draw-box (text "artist_id" :math) {:span 4})
+(draw-box (text "id" :math) {:span 4})
+(draw-box (text "unknown" :math [:sub 3]) {:span 4})
+(draw-box (text "u" :math [:sub 4]))
+(draw-box (text "o" :math [:sub "n"]))
+(draw-box (text "o" :math [:sub "far"]) {:span 2})
+----
 
 [#artwork-rows]
 === Artwork Rows
