@@ -591,7 +591,9 @@ They have the structure shown below:
 include::example$track_row.edn[]
 ----
 
-The first two bytes, labeled _u~1~_, have an unknown purpose; they usually are `24` followed by `00`.
+The first two bytes, labeled _subtype_, seem to always have the value `0024`.
+As in the other tables which use offset strings, the fact that the `4` bit is set means that the offset size is sixteen bits.
+Track rows always have enough string content to need sixteen bit offsets.
 They are followed by the unexplained two-byte value found in many row types that Mr. Lesniak
 called __index_shift__, and a four-byte value he called _bitmask_, although we do not know what the bits mean.
 The value at bytes{nbsp}``08``-`0b`, __sample_rate__, is the first one we have a solid understanding of: it holds the playback sample rate of the audio file, in samples per second (this will be 0 if it is unknown or variable).
@@ -625,9 +627,11 @@ The purpose of the next two bytes, labeled _u~5~_, is unknown; they seem to alwa
 Byte{nbsp}``58``, __color_id__ (labeled _c~id~_ in the diagram), holds the color assigned to the track in rekordbox, as the __id__ of a <<color-rows,Color row>>, or zero if no color has been assigned.
 Byte{nbsp}``59``, _rating_ (labeled _r_ in the diagram) holds the rating (0 to 5 stars) assigned the track.
 The next two bytes, labeled _u~6~_, have an unknown purpose, and seem to always have the value 1.
-The two bytes after them, labeled _u~7~_, are also unknown; Mr. Lesniak said “alternating 2 and 3”.
+The two bytes after them, labeled _u~7~_, hold the mysterious `3` which always seems to come before string offsets.
+In this case, it takes up two bytes, since the track row uses sixteen bit offsets.
+We don’t know whether _u~6~_ would shrink to a single byte if it were possible to create a track row with eight-bit offsets, but we suspect not, even though we expect that _u~7~_ would.
 
-The rest of the track row is an array of 21 two-byte offsets that point to <<devicesql-strings,DeviceSQL strings>>.
+The rest of the track row is an array of 21 sixteen-bit offsets that point to <<devicesql-strings,DeviceSQL strings>>.
 To find the start of the string, add the address of the start of the track row to the offset.
 The purpose of each string is described in the following table.
 For convenience, the strings can be accessed as Kaitai Struct instance values with the names shown in the table:

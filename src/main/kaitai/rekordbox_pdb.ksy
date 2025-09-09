@@ -627,9 +627,11 @@ types:
       details about the music, and links to other tables like artists,
       albums, keys, etc.
     seq:
-      - type: u2
+      - id: subtype
+        type: u2
         doc: |
-          Some kind of magic word? Usually 0x24, 0x00.
+          Seems to always be 0x24, and bit 0x04 being set means it uses sixteen-bit offsets,
+          as it does in other tables. Track rows are always big enough to need that size offsets.
       - id: index_shift
         type: u2
         doc: TODO name from @flesniak, but what does it mean?

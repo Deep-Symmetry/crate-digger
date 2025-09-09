@@ -8,7 +8,9 @@ This change log follows the conventions of
 
 ### Changed
 
-- Updated the Kaitai Struct definition to cope with the fact that rekordbox sometimes puts truly bizarre values (we have seen `f3` and `f9`) in the track bank byte of song structure tags.
+- Reworked the database export Kaitai Struct definition to incorporate some important discoveries by the Mixxx and rekordcrate developers (thanks once again [@Swiftb0y](https://github.com/Swiftb0y)): all tables that use string offsets have subtypes which control whether those offsets are eight or sixteen bits.
+  We had previously only noted that for the Artists table, but the Album, Tag, and Tag Track tables behave this way as well, and in fact even the Track table follows this pattern, but its offsets always use the sixteen bit variant because the rows are so big.
+- Updated the analysis file Kaitai Struct definition to cope with the fact that rekordbox sometimes puts truly bizarre values (we have seen `f3` and `f9`) in the track bank byte of song structure tags.
   Previously this cause construction of the entire tag object to fail because no matching enumeration value could be found.
   Now we have a separate `raw_bank` field that holds the numeric value, and `bank` is a value instance that can be `null` when `raw_bank` is not recognizable.
 

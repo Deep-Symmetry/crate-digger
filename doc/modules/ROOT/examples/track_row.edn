@@ -1,5 +1,5 @@
 (draw-column-headers)
-(draw-box (text "u" :math [:sub 1]) {:span 2})
+(draw-box (text "subtype" :math) {:span 2})
 (draw-box (text "i" :math [:sub "shift"]) {:span 2})
 (draw-box (text "bitmask" :math) {:span 4})
 (draw-box (text "sample_rate" :math) {:span 4})
