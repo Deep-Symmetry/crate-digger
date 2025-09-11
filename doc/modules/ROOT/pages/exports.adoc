@@ -295,12 +295,13 @@ The name itself is encoded in a surprisingly baroque way, explained in <<devices
 [#artist-rows]
 === Artist Rows
 
-Artist rows hold an Artist name and ID, with the structure shown in <<artist-row-near>> or
-<<artist-row-far>>.
+Artist rows hold an Artist name and ID, with the structure shown in <<artist-row-near,Artist row with nearby name>> or
+<<artist-row-far,Artist row with far name>>.
 The _subtype_ value at bytes{nbsp}``00``-`01` determines which variant is used.footnote:subtype[]
+
 If the artist name is short enough and was allocated close enough to the row to be reached by a single
-byte offset, _subtype_ has the value `0060`, and the row has the structure in <<artist-row-near>>
-If the name is larger than about 200 bytes or is too far away for that, _subtype_ has the value `0064` and the row has the structure in <<artist-row-far>>
+byte offset, _subtype_ has the value `0060`, and the row has the structure in <<artist-row-near,Artist row with nearby name>>.
+If the name is larger than about 200 bytes or is too far away for that, _subtype_ has the value `0064` and the row has the structure in <<artist-row-far,Artist row with far name>>.
 
 [#artist-row-near]
 .Artist row with nearby name.
@@ -539,12 +540,13 @@ Tags provide a flexible way for DJs to categorize tracks, supported by the “My
 Tags have names, and can be assigned to any number of tracks.
 Tags themselves can be grouped into categories, which are stored in the same table.
 
-Tag rows have the structure shown in <<tag-row-near>> or
-<<tag-row-far>>.
+Tag rows have the structure shown in <<tag-row-near,Tag row with nearby name>> or
+<<tag-row-far,Tag row with far name>>.
 The _subtype_ value at bytes{nbsp}``00``-`01` determines which variant is used.footnote:subtype[]
+
 If the tag name is short enough and was allocated close enough to the row to be reached by a single
-byte offset, _subtype_ has the value `0680`, and the row has the structure in <<tag-row-near>>
-If the name is larger than about 200 bytes or is too far away for that, _subtype_ has the value `0684` and the row has the structure in <<tag-row-far>>
+byte offset, _subtype_ has the value `0680`, and the row has the structure in <<tag-row-near,Tag row with nearby name>>.
+If the name is larger than about 200 bytes or is too far away for that, _subtype_ has the value `0684` and the row has the structure in <<tag-row-far,Tag row with far name>>.
 
 [#tag-row-near]
 .Tag row with nearby name.
