@@ -240,72 +240,25 @@ And so the row index grows backwards towards the rows that are being added forwa
 The structure of the rows themselves is determined by the _type_ of the table, using the values shown in <<table-types,Table types>>.
 Unless otherwise noted, these table types and rows appear in `export.pdb` files.
 
-[#artist-rows]
-=== Artist Rows
-
-Artist rows hold an Artist name and ID, with the structure shown in <<artist-row-near>> or
-<<artist-row-far>>.
-The _subtype_ value at bytes{nbsp}``00``-`01` determines which variant is used.
-If the artist name was allocated close enough to the row to be reached by a single
-byte offset, offset, _subtype_ has the value `0060`, and the row has the structure in <<artist-row-near>>
-If the name is too far away for that, _subtype_ has the value `0064` and the row has the structure in <<artist-row-far>>.
-
-[#artist-row-near]
-.Artist row with nearby name.
-[bytefield]
-----
-(def boxes-per-row 0x0a)
-(def left-margin 1)
-(draw-column-headers)
-(draw-box 0x60 {:span 2})
-(draw-box (text "i" :math [:sub "shift"]) {:span 2})
-(draw-box (text "id" :math) {:span 4})
-(draw-box (text "u" :math [:sub 1]))
-(draw-box (text "o" :math [:sub "n"]))
-----
-
-[#artist-row-far]
-.Artist row with far name.
-[bytefield]
-----
-(def boxes-per-row 0x0c)
-(def left-margin 1)
-(draw-column-headers)
-(draw-box 0x64 {:span 2})
-(draw-box (text "i" :math [:sub "shift"]) {:span 2})
-(draw-box (text "id" :math) {:span 4})
-(draw-box (text "u" :math [:sub 1]))
-(draw-box (text "o" :math [:sub "n"]))
-(draw-box (text "o" :math [:sub "far"]) {:span 2})
-----
-
-In either case, _subtype_ is followed by the unexplained two-byte value found in many row types that Mr. Lesniak called __index_shift__, and then by _id_, the ID of this artist row itself, at bytes{nbsp}``04``-`07`, an unknown value at byte{nbsp}``08``, and __ofs_name_near__ at byte{nbsp}``09`` (labeled _o~n~_), the one-byte name offset used only in the first variant.
-
-If _subtype_ is `0064`, the value of __ofs_name_near__ is ignored, and instead the two-byte value __ofs_name_far__ (labeled _o~far~_) is used. Which of either
-variants occurs seems to also depend on the length of the name, so the `64 00` subtype may occur even if
-the string itself is placed directly following __ofs_name_far__.
-
-Whichever name offset is used, it is a pointer to the artist name.
-To find the location of the name, add the value of the offset to the address of the start of the artist row itself.
-This gives the address of a DeviceSQL string holding the name, with the structure explained in <<devicesql-strings>>.
-
 [#album-rows]
 === Album Rows
 
 Album rows hold an album name and ID along with an artist association, with the two structure variants shown below.
-The value at bytes bytes{nbsp}``00``-`01` are the subtype and differentiate the two variants (similar to the album rows). The value `80 00` is for the short version while `84 00` is for the long version.
-It is
-followed by a two-byte value Mr. Lesniak called __index_shift__, although I don’t know what that means, and another four bytes of unknown purpose.
+The value at bytes bytes{nbsp}``00``-`01` are the _subtype_ and differentiate the two variants.footnote:subtype[The Album, Artist, Tag, Tag Track, and Track tables all use subtypes to determine the size of string offsets, although Track rows seem to always be big enough to require the two-byte offset variant.]
+The value `80` is for the short version while `84` is for the long version.
+It is followed by a two-byte value Mr. Lesniak called __index_shift__, although I don’t know what that means, and another four bytes of unknown purpose.
 But at bytes{nbsp}``08``-`0b` we finally find a value we have a use for: __artist_id__ holds the ID of an artist row associated with this track row.
 This is followed by __id__, the ID of this track row itself, at bytes{nbsp}``0c``-`0f`.
 We assume that there are index tables somewhere that would let us locate the page and row index of a record given its table type and ID, but we have not yet found and figured them out.
 
+This is followed by four more bytes with unknown meaning, and then the two subtypes diverge, because the remaining values consume a different number of bytes in each variant:
 
-This is followed by five more bytes with unknown meaning, and for subtype `80 00` the final byte in the row, __ofs_name_near__ is a pointer to the track name (labeled _o~n~_ in the byte field diagram).
-To find the location of the name, add __ofs_name_near__ bytes to the address of the start of the
-track row. If the subtype is `84 00`, the row is of the second form, with an additinal two byte offset __ofs_name_far__. In this case, the __ofs_name_near__ is ignored (though usually `00`). Which of either
-variants occurs seems to also depend on the length of the name, so the `84 00` subtype may occur even if
-the string itself is placed directly following __ofs_name_far__.
+For subtype `80` there is a byte holding the value `03` followed by the final byte in the row, __ofs_name_near__ at byte{nbsp}``15``, a single byte pointer to the track name (labeled _o~n~_ in the <<album-row-near,byte field diagram>>). To find the location of the name, add __ofs_name_near__ bytes to the address of the start of the track row.
+
+If the subtype is `84`, the row is of the second form, so the value `0003` takes up two bytes, followed by a two byte offset, __ofs_name_far__, at bytes{nbsp}``16``–`17` (labeled _o~far~_ in the <<album-row-far,diagram>>).
+
+Which variant occurs seems to also depend on the length of the name (if the string takes more than about 200 bytes, the far name variant is used), so the `84` subtype may occur even if the string itself is placed directly following __ofs_name_far__.
+
 The name itself is encoded in a surprisingly baroque way, explained in <<devicesql-strings>>.
 
 [#album-row-near]
@@ -319,7 +272,7 @@ The name itself is encoded in a surprisingly baroque way, explained in <<devices
 (draw-box (text "artist_id" :math) {:span 4})
 (draw-box (text "id" :math) {:span 4})
 (draw-box (text "unknown" :math [:sub 3]) {:span 4})
-(draw-box (text "u" :math [:sub 4]))
+(draw-box 0x03)
 (draw-box (text "o" :math [:sub "n"]))
 ----
 
@@ -334,10 +287,58 @@ The name itself is encoded in a surprisingly baroque way, explained in <<devices
 (draw-box (text "artist_id" :math) {:span 4})
 (draw-box (text "id" :math) {:span 4})
 (draw-box (text "unknown" :math [:sub 3]) {:span 4})
-(draw-box (text "u" :math [:sub 4]))
-(draw-box (text "o" :math [:sub "n"]))
+(draw-box 0x03 {:span 2})
 (draw-box (text "o" :math [:sub "far"]) {:span 2})
 ----
+
+
+[#artist-rows]
+=== Artist Rows
+
+Artist rows hold an Artist name and ID, with the structure shown in <<artist-row-near>> or
+<<artist-row-far>>.
+The _subtype_ value at bytes{nbsp}``00``-`01` determines which variant is used.footnote:subtype[]
+If the artist name is short enough and was allocated close enough to the row to be reached by a single
+byte offset, _subtype_ has the value `0060`, and the row has the structure in <<artist-row-near>>
+If the name is larger than about 200 bytes or is too far away for that, _subtype_ has the value `0064` and the row has the structure in <<artist-row-far>>
+
+[#artist-row-near]
+.Artist row with nearby name.
+[bytefield]
+----
+(def boxes-per-row 0x0a)
+(def left-margin 1)
+(draw-column-headers)
+(draw-box 0x60 {:span 2})
+(draw-box (text "i" :math [:sub "shift"]) {:span 2})
+(draw-box (text "id" :math) {:span 4})
+(draw-box 0x03)
+(draw-box (text "o" :math [:sub "n"]))
+----
+
+[#artist-row-far]
+.Artist row with far name.
+[bytefield]
+----
+(def boxes-per-row 0x0c)
+(def left-margin 1)
+(draw-column-headers)
+(draw-box 0x64 {:span 2})
+(draw-box (text "i" :math [:sub "shift"]) {:span 2})
+(draw-box (text "id" :math) {:span 4})
+(draw-box 0x03 {:span 2})
+(draw-box (text "o" :math [:sub "far"]) {:span 2})
+----
+
+In either case, _subtype_ is followed by the unexplained two-byte value found in many row types that Mr. Lesniak called __index_shift__, and then by _id_, the ID of this artist row itself, at bytes{nbsp}``04``-`07`.
+After the id, the number 3 is always stored, followed by the offset to the name string.
+For subtype `0060`, each of these values take a single byte, and __ofs_name_near__ at byte{nbsp}``09`` (labeled _o~n~_), is the one-byte name offset.
+For subtype `0064`, each is stored in two bytes, and the two-byte name offset value __ofs_name_far__ (labeled _o~far~_) is found at bytes{nbsp}``0a``–`0b`.
+
+Whichever name offset is used, it is a pointer to the artist name.
+To find the location of the name, add the value of the offset to the address of the start of the artist row itself.
+This gives the address of a DeviceSQL string holding the name, with the structure explained in <<devicesql-strings>>.
+
 
 [#artwork-rows]
 === Artwork Rows
@@ -538,28 +539,50 @@ Tags provide a flexible way for DJs to categorize tracks, supported by the “My
 Tags have names, and can be assigned to any number of tracks.
 Tags themselves can be grouped into categories, which are stored in the same table.
 
-The rows have the following structure:
+Tag rows have the structure shown in <<tag-row-near>> or
+<<tag-row-far>>.
+The _subtype_ value at bytes{nbsp}``00``-`01` determines which variant is used.footnote:subtype[]
+If the tag name is short enough and was allocated close enough to the row to be reached by a single
+byte offset, _subtype_ has the value `0680`, and the row has the structure in <<tag-row-near>>
+If the name is larger than about 200 bytes or is too far away for that, _subtype_ has the value `0684` and the row has the structure in <<tag-row-far>>
 
-.Tag row.
+[#tag-row-near]
+.Tag row with nearby name.
 [bytefield]
 ----
 (draw-column-headers)
-(draw-related-boxes [0x80 0x06])
+(draw-box 0x680 {:span 2})
 (draw-box (text "tag_index" :math) {:span 2})
 (draw-related-boxes (repeat 8 0))
 (draw-box (text "category" :math) {:span 4})
 (draw-box (text "category_pos" :math) {:span 4})
 (draw-box (text "id" :math) {:span 4})
 (draw-box (text "raw_is_category" :math) {:span 4})
-(draw-related-boxes [0x03 0x1f])
-(draw-box (text "flags" :math))
-(draw-gap (text "name" :math))
-(draw-box 3)
+(draw-box 0x03)
+(draw-box (text "o" :math [:sub "n"]))
+(draw-box (text "o" :math [:sub "u"]))
 (draw-bottom)
 ----
 
-The first two bytes serve an unknown purpose but their values always seem to be the same.
-They are followed by __tag_index__ at bytes{nbsp}``02``--``03`` which seems to increment by `20` for each row.
+[#tag-row-far]
+.Tag row with far name.
+[bytefield]
+----
+(draw-column-headers)
+(draw-box 0x684 {:span 2})
+(draw-box (text "tag_index" :math) {:span 2})
+(draw-related-boxes (repeat 8 0))
+(draw-box (text "category" :math) {:span 4})
+(draw-box (text "category_pos" :math) {:span 4})
+(draw-box (text "id" :math) {:span 4})
+(draw-box (text "raw_is_category" :math) {:span 4})
+(draw-box 0x03 {:span 2})
+(draw-box (text "o" :math [:sub "far"]) {:span 2})
+(draw-box (text "o" :math [:sub "ufar"]) {:span 2})
+(draw-bottom)
+----
+
+__tag_index__ at bytes{nbsp}``02``–`03` seems to increment by `20` for each row.
 This is followed by another eight bytes of unknown purpose that always seem to be zero.
 
 The __category__ at bytes{nbsp}``0c``–``0f`` holds the ID of the category to which the tag belongs; if this row is itself a category, this field has the value 0.
@@ -572,7 +595,17 @@ Tags seem to have very large _id_ values, while the four categories have fixed `
 The value of __raw_is_category__ at bytes{nbsp}``18``–``1b`` is non-zero when this row stores a tag category instead of a tag.
 It is followed by two bytes of unknown purpose that always seem to have the same values, and a byte that may hold some sort of flags that have not yet been understood.
 
-A variable number of bytes starting at byte{nbsp}``1f`` is a <<devicesql-strings,DeviceSQL string>> holding the _name_ of the tag or category. Finally, this is followed by a byte with an unknown purpose, whose value always seems to be 3.
+After the __raw_is_category__, the number 3 is always stored, followed by the offset to the name string, and another string offset with unknown purpose.
+
+For subtype `0680`, each of these values take a single byte, and __ofs_name_near__ at byte{nbsp}``1d`` (labeled _o~n~_), is the one-byte name offset.
+__ofs_unknown_near__ at byte{nbsp}``1e`` (labeled _o~u~_), is a one-byte offset to what seems to always be an empty string.
+
+For subtype `0684`, each is stored in two bytes, and the two-byte name offset value __ofs_name_far__ (labeled _o~far~_) is found at bytes{nbsp}``1e``–`1f`.
+The offset to the unknown (but seemingly always empty) string (labeled _o~ufar~_) takes the final two bytes.
+
+Whichever name offset is used, it is a pointer to the tag name.
+To find the location of the name, add the value of the offset to the address of the start of the tag row itself.
+This gives the address of a DeviceSQL string holding the name, with the structure explained in <<devicesql-strings>>.
 
 [#tag-track-rows]
 === Tag Track Rows
