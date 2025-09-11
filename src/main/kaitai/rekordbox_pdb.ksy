@@ -920,9 +920,11 @@ types:
     doc: |
       A row that holds a tag name and its ID (found only in exportExt.pdb files).
     seq:
-      - type: u2
+      - id: subtype
+        type: u2
         doc: |
-          Seems to always be 0x80, 0x06.
+          Usually 0x0680, but 0x0684 means we have a long name offset
+          embedded in the row.
       - id: tag_index
         type: u2
         doc: |
@@ -949,25 +951,37 @@ types:
         type: u4
         doc: |
           Non-zero when this row stores a tag category instead of a tag.
-      - type: u2
-        doc: |
-          Seems to always be 0x03, 0x1f.
-      - id: flags
-        type: u1
-        doc: |
-          Maybe some kind of flags?
-      - id: name
-        type: device_sql_string
-        doc: |
-          The name of the tag or tag category.
       - type: u1
         doc: |
-          This seems to always be 0x03.
+          @flesniak says: "always 0x03, maybe an unindexed empty string"
+      - id: ofs_name_near
+        type: u1
+        doc: |
+          The location of the variable-length name string, relative to
+          the start of this row, unless subtype is 0x64.
+      - id: ofs_unknown_near
+        type: u1
+        doc: |
+          Offset to a string that seems always to be empty.
     instances:
       is_category:
         value: raw_is_category != 0
         doc: |
           Indicates whether this row stores a tag category instead of a tag.
+        -webide-parse-mode: eager
+      ofs_name_far:
+        pos: _parent.row_base + 0x1e
+        type: u2
+        doc: |
+          For names that might be further than 0xff bytes from the
+          start of this row, this holds a two-byte offset, and is
+          signalled by the subtype value.
+        if: subtype & 0x04 == 0x04
+      name:
+        pos: '_parent.row_base + (subtype & 0x04 == 0x04? ofs_name_far : ofs_name_near)'
+        type: device_sql_string
+        doc: |
+          The name of this tag or tag category.
         -webide-parse-mode: eager
 
   tag_track_row:
