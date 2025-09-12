@@ -244,7 +244,7 @@ Unless otherwise noted, these table types and rows appear in `export.pdb` files.
 === Album Rows
 
 Album rows hold an album name and ID along with an artist association, with the two structure variants shown below.
-The value at bytes bytes{nbsp}``00``-`01` are the _subtype_ and differentiate the two variants.footnote:subtype[The Album, Artist, Tag, Tag Track, and Track tables all use subtypes to determine the size of string offsets, although Track rows seem to always be big enough to require the two-byte offset variant.]
+The value at bytes bytes{nbsp}``00``-`01` are the _subtype_ and differentiate the two variants.footnote:subtype[The Album, Artist, Tag, and Track tables all use subtypes to determine the size of string offsets, although Track rows seem to always be big enough to require the two-byte offset variant.]
 The value `80` is for the short version while `84` is for the long version.
 It is followed by a two-byte value Mr. Lesniak called __index_shift__, although I don’t know what that means, and another four bytes of unknown purpose.
 But at bytes{nbsp}``08``-`0b` we finally find a value we have a use for: __artist_id__ holds the ID of an artist row associated with this track row.
@@ -649,7 +649,7 @@ include::example$track_row.edn[]
 ----
 
 The first two bytes, labeled _subtype_, seem to always have the value `0024`.
-As in the other tables which use offset strings, the fact that the `4` bit is set means that the offset size is sixteen bits.
+As in the other tables which use offset strings,footnote:subtype[] the fact that the `4` bit is set means that the offset size is sixteen bits.
 Track rows always have enough string content to need sixteen bit offsets.
 They are followed by the unexplained two-byte value found in many row types that Mr. Lesniak
 called __index_shift__, and a four-byte value he called _bitmask_, although we do not know what the bits mean.
