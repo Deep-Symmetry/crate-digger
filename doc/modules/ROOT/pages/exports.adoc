@@ -208,7 +208,7 @@ Byte{nbsp}``1b`` is called __page_flags__ (abbreviated _p~f~_ in the diagram).
 According to Mr. Lesniak, “strange” (non-data) pages will have the value `44` or `64`, and other pages have had the values `24` or `34`.
 Crate Digger considers a page to be a data page if __page_flags__&``40``{nbsp}={nbsp}`0`.
 
-Bytes{nbsp}``1c``-`1d` are called __free_size__ (abbreviated _free~s~_ in the diagram), and store the amount of unused space in the page heap (excluding the row index which is built backwards from the end of the page); __used_size__ at bytes{nbsp}``1c``-`1d` (abbreviated _used~s~_) stores the number of bytes that are in use in the page heap.
+Bytes{nbsp}``1c``-`1d` are called __free_size__ (abbreviated _free~s~_ in the diagram), and store the amount of unused space in the page heap (excluding the row index which is built backwards from the end of the page); __used_size__ at bytes{nbsp}``1e``-`1f` (abbreviated _used~s~_) stores the number of bytes that are in use in the page heap.
 
 Bytes{nbsp}``20``-`21`, _u~5~_ , are of unclear purpose. Mr. Lesniak labeled them “(0→1: 2).”
 
