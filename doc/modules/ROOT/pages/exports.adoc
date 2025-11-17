@@ -149,7 +149,7 @@ These each have the size specified by __len_page__ in the above diagram, and the
 (draw-box (text "page_index" :math) {:span 4})
 (draw-box (text "type" :math) {:span 4})
 (draw-box (text "next_page" :math) {:span 4})
-(draw-box (text "unknown" :math [:sub "1"]) {:span 4})
+(draw-box (text "version" :math) {:span 4})
 (draw-box (text "unknown" :math [:sub "2"]) {:span 4})
 (draw-box (text "n" :math [:sub "rs"]))
 (draw-box (text "u" :math [:sub "3"]))
@@ -192,17 +192,31 @@ This is followed by another four-byte value, _type_, which identifies the type o
 This again seems redundant because the table header which was followed to reach this page also identified the table type, but perhaps it is another sanity check, or an alternate way to tell, when following page links, that you have reached the end of the table you are interested in.
 Speaking of which, the next four-byte value, __next_page__, is that link: it identifies the index at which the next page of this table can be found, as long as we have not already reached the final page of the table, as described in <<file-header>>.
 
-The exact meaning of _unknown~1~_ is unclear. Mr. Lesinak said “sequence number (0→1: 8→13, 1→2: 22, 2→3: 27)” but I don’t know how to interpret that.
-Even less is known about _unknown~2~_.
-But __num_rows_small__ at byte `18` within the page (abbreviated _n~rs~_ in the byte field diagram above) holds the number of rows that are present in the page, unless __num_rows_large__ (below) holds a value that is larger than it (but not equal to `1fff`).
+This is followed by _version_ which is an incrementing integer updated to the global next value every time any page is edited. Versions of different pages can be used to determine which pages were touched in which order during an export. For example, if a track is exported with a new artist and genre, then Rekordbox may place the genre first (with version N), then the artist (with version N+1), then the track (with version N+3).
+This might be used by the history feature, or might be some kind of data integrity mechanism. It is unknown what happens when the 32-bit integer overflows.
+
+We don't know what _unknown~2~_ contains, though it is often/always zero. It may be an extension of _version_ to 64-bits?
+
+Next, __num_rows_small__ (abbreviated _n~rs~_ in the byte field diagram above) holds the number of rows that have ever been allocated in the page (including those that have been invalidated), unless __num_rows_large__ (below) holds a value that is larger than it (but not equal to `1fff`). To find the actual rows, you need to scan all 16 entries of each of the row groups present in the page, ignoring any whose <<#row-presence-bits,row presence bit>> is zero.
 This seems like a strange mechanism for dealing with the fact that some tables (like playlist entries) have a lot of very small rows, too many to count with a single byte.
 But then why not just always use __num_rows_large__?
 
-NOTE: The row counter entries represent the number of rows that have ever been allocated in the page, but some will no longer be valid due to deletion or updates.
-To find the actual rows, you need to scan all 16 entries of each of the row groups present in the page, ignoring any whose <<#row-presence-bits,row presence bit>> is zero.
+_u~3_ and _u~4_ are not as obvious, but seem to also be related to the number of rows. _u~3~ is sometimes the number of present rows multiplied by 32, but this doesn't hold as the page gets bigger. _u~4_ is often but not always zero for pages with fewer than 16 rows, and is usually/always 2 or greater for pages with at least 16 rows - _u~4_ appears to grow as the number of rows increases though the precise relationship between these values is unclear.
 
-The purpose of the next two bytes are is also unclear.
-Of _u~3~_ Mr. Lesniak said “a bitmask (first track: 32)”, and he described _u~4~_ as “often 0, sometimes larger, especially for pages with a high number of rows (e.g. 12 for 101 rows)”.
+.Example row counts
+[example]
+* Fresh page containing 1 track/artist/genre: _num_rows_small_=1, _num_rows_large_=0, _u~3_=32, _u~4_=0
+* Page containing 2 tracks/artists/genres: _num_rows_small_=2, _num_rows_large_=1, _u~3_=64, _u~4_=0
+* Page containing 2 tracks and 1 deleted row: _num_rows_small_=3, _num_rows_large_=1, _u~3_=64, _u~4_=0
+* Page containing 6 tracks and 2 deleted rows: _num_rows_small_=8, _num_rows_large_=6, _u~3_=192, _u~4_=0
+* Page containing 8 artists: _num_rows_small_=8, _num_rows_large_=7, _u~3_=0, _u~4_=1
+* Page containing 7 tracks and some deleted rows: _num_rows_small_=10, _num_rows_large_=0x1fff, _u~3_=224, _u~4_=0
+* Page containing 16 artists: _num_rows_small_=16, _num_rows_large_=15, _u~3_=0, _u~4_=2
+* Page containing 24 artists: _num_rows_small_=24, _num_rows_large_=23, _u~3_=0, _u~4_=3
+* Page containing 40 artists: _num_rows_small_=40, _num_rows_large_=39, _u~3_=0, _u~4_=5
+* Page containing 72 artists: _num_rows_small_=72, _num_rows_large_=71, _u~3_=0, _u~4_=9
+* Page containing 71 artists and 1 deleted row (above example with 1 deletion): _num_rows_small_=72, _num_rows_large_=71, _u~3_=224, _u~4_=8
+* Page containing 111 artists and some deleted rows: _num_rows_small_=112, _num_rows_large_=111, _u~3_=224, _u~4_=13
 
 Byte{nbsp}``1b`` is called __page_flags__ (abbreviated _p~f~_ in the diagram).
 According to Mr. Lesniak, “strange” (non-data) pages will have the value `44` or `64`, and other pages have had the values `24` or `34`.
@@ -683,10 +697,17 @@ The purpose of the next two bytes, labeled _u~5~_, is unknown; they seem to alwa
 
 Byte{nbsp}``58``, __color_id__ (labeled _c~id~_ in the diagram), holds the color assigned to the track in rekordbox, as the __id__ of a <<color-rows,Color row>>, or zero if no color has been assigned.
 Byte{nbsp}``59``, _rating_ (labeled _r_ in the diagram) holds the rating (0 to 5 stars) assigned the track.
-The next two bytes, labeled _u~6~_, have an unknown purpose, and seem to always have the value 1.
+
+Bytes{nbsp}``60-``-``61``, _file_type_ (labeled _ft_ in the diagram) holds the format of the audio file:
+* Unknown type: ``0x00``
+* MP3: ``0x01``
+* M4A: ``0x04``
+* FLAC: ``0x05``
+* WAV: ``0x0b``
+* AIFF: ``0x0c``
+
 The two bytes after them, labeled _u~7~_, hold the mysterious `3` which always seems to come before string offsets.
 In this case, it takes up two bytes, since the track row uses sixteen bit offsets.
-We don’t know whether _u~6~_ would shrink to a single byte if it were possible to create a track row with eight-bit offsets, but we suspect not, even though we expect that _u~7~_ would.
 
 The rest of the track row is an array of 21 sixteen-bit offsets that point to <<devicesql-strings,DeviceSQL strings>>.
 To find the start of the string, add the address of the start of the track row to the offset.
@@ -699,21 +720,21 @@ For convenience, the strings can be accessed as Kaitai Struct instance values wi
 |Index |Name |Content
 
 |0 |__isrc__|International Standard Recording Code, if known, in <<isrc-strings,mangled format>>.footnote:evilfred[Thanks to https://github.com/evilfred[@evilfred] for discovering the ISRC strings and leading `00` byte in DeviceSQL UTF strings; we previously believed they were big-endian.]
-|1 |_texter_| Unknown, named by https://github.com/flesniak/python-prodj-link[@flesniak].
-|2 |__unknown_string_2__|Unknown, “thought track number, wrong”.
-|3 |__unknown_string_3__|Unknown,  “strange things”.footnote:[Often zero length, sometimes low binary values, ASCII `01` or `02` as content.]
+|1 |_lyricist_|Lyricist of the track.
+|2 |__unknown_string_2__|Unknown, contains an ASCII number.footnote:[Seems to increment when the track is re-exported, maybe some sort of version number.]
+|3 |__unknown_string_3__|Unknown, contains an ASCII number or empty.
 |4 |__unknown_string_4__|Unknown, “strange things” (as above).
-|5 |_message_| Unknown, named by https://github.com/flesniak/python-prodj-link[@flesniak].
-|6 |__kuvo_public__|Empty or `"ON"`.footnote:[Apparently used rather than a simple bit flag to control whether the track information is visible on Kuvo.]
+|5 |_message_|Track message (a field in Rekordbox).
+|6 |_publish_track_info_|"Publish track information" in Rekordbox, value is either "ON" or empty string.footnote:[Appears related to the Stagehand product to control DJ equipment remotely.]
 |7 |__autoload_hotcues__|Empty or `"ON"`.footnote:[Apparently used rather than a simple bit flag to control whether hot cues are automatically loaded for the track.]
 |8 |__unknown_string_5__|Unknown.
 |9 |__unknown_string_6__|Unknown, usually empty.
-|10|__date_added__|When the track was added to the rekordbox collection.
-|11|__release_date__|When the track was released.
+|10|__date_added__|When the track was added to the rekordbox collection, YYYY-MM-DD.
+|11|__release_date__|When the track was released, YYYY-MM-DD.
 |12|__mix_name__|Name of the track remix, if any.
 |13|__unknown_string_7__|Unknown, usually empty.
 |14|__analyze_path__|File path of the xref:anlz.adoc[track analysis].
-|15|__analyze_date__|When track analysis was performed.
+|15|__analyze_date__|When track analysis was performed, YYYY-MM-DD.
 |16|_comment_|Track comment assigned by the DJ.
 |17|_title_|Track title.
 |18|__unknown_string_8__|Unknown, usually empty.
