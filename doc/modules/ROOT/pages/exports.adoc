@@ -152,8 +152,7 @@ These each have the size specified by __len_page__ in the above diagram, and the
 (draw-box (text "version" :math) {:span 4})
 (draw-box (text "unknown" :math [:sub "2"]) {:span 4})
 (draw-box (text "n" :math [:sub "rs"]))
-(draw-box (text "u" :math [:sub "3"]))
-(draw-box (text "u" :math [:sub "4"]))
+(draw-box (text "num" :math [:sub "rv"]) {:span 2})
 (draw-box (text "p" :math [:sub "f"]))
 (draw-box (text "free" :math [:sub "s"]) {:span 2})
 (draw-box (text "used" :math [:sub "s"]) {:span 2})
@@ -197,26 +196,20 @@ This might be used by the history feature, or might be some kind of data integri
 
 We don't know what _unknown~2~_ contains, though it is often/always zero. It may be an extension of _version_ to 64-bits?
 
-Next, __num_rows_small__ (abbreviated _n~rs~_ in the byte field diagram above) holds the number of rows that have ever been allocated in the page (including those that have been invalidated), unless __num_rows_large__ (below) holds a value that is larger than it (but not equal to `1fff`). To find the actual rows, you need to scan all 16 entries of each of the row groups present in the page, ignoring any whose <<#row-presence-bits,row presence bit>> is zero.
+Next, __num_rows_small__ (abbreviated _n~rs~_ in the byte field diagram above) holds the number of row offsets (valid or not) that are present in the page, unless __num_rows_large__ (below) holds a value that is larger than it (but not equal to `1fff`). To find the actual rows, you need to scan all 16 entries of each of the row groups present in the page, ignoring any whose <<#row-presence-bits,row presence bit>> is zero.
 This seems like a strange mechanism for dealing with the fact that some tables (like playlist entries) have a lot of very small rows, too many to count with a single byte.
 But then why not just always use __num_rows_large__?
 
-_u~3_ and _u~4_ are not as obvious, but seem to also be related to the number of rows. _u~3~ is sometimes the number of present rows multiplied by 32, but this doesn't hold as the page gets bigger. _u~4_ is often but not always zero for pages with fewer than 16 rows, and is usually/always 2 or greater for pages with at least 16 rows - _u~4_ appears to grow as the number of rows increases though the precise relationship between these values is unclear.
+__num_rows_valid__ (abbreviated _num~rv~_) holds the number of valid rows multiplied by 0x20 (i.e. the first 5 bits are not part of the counter). This count does reflect invalidated rows unlike __num_rows_small__.
 
 .Example row counts
 [example]
-* Fresh page containing 1 track/artist/genre: _num_rows_small_=1, _num_rows_large_=0, _u~3_=32, _u~4_=0
-* Page containing 2 tracks/artists/genres: _num_rows_small_=2, _num_rows_large_=1, _u~3_=64, _u~4_=0
-* Page containing 2 tracks and 1 deleted row: _num_rows_small_=3, _num_rows_large_=1, _u~3_=64, _u~4_=0
-* Page containing 6 tracks and 2 deleted rows: _num_rows_small_=8, _num_rows_large_=6, _u~3_=192, _u~4_=0
-* Page containing 8 artists: _num_rows_small_=8, _num_rows_large_=7, _u~3_=0, _u~4_=1
-* Page containing 7 tracks and some deleted rows: _num_rows_small_=10, _num_rows_large_=0x1fff, _u~3_=224, _u~4_=0
-* Page containing 16 artists: _num_rows_small_=16, _num_rows_large_=15, _u~3_=0, _u~4_=2
-* Page containing 24 artists: _num_rows_small_=24, _num_rows_large_=23, _u~3_=0, _u~4_=3
-* Page containing 40 artists: _num_rows_small_=40, _num_rows_large_=39, _u~3_=0, _u~4_=5
-* Page containing 72 artists: _num_rows_small_=72, _num_rows_large_=71, _u~3_=0, _u~4_=9
-* Page containing 71 artists and 1 deleted row (above example with 1 deletion): _num_rows_small_=72, _num_rows_large_=71, _u~3_=224, _u~4_=8
-* Page containing 111 artists and some deleted rows: _num_rows_small_=112, _num_rows_large_=111, _u~3_=224, _u~4_=13
+* Fresh page containing 1 row: _num_rows_small_=1, _num_rows_large_=0, _num_rows_valid_=32
+* Page containing 2 rows: _num_rows_small_=2, _num_rows_large_=1, _num_rows_valid_=64
+* Page containing 2 valid rows and 1 deleted row: _num_rows_small_=3, _num_rows_large_=1, _num_rows_valid_=64
+* Page containing 6 valid rows and 2 deleted rows: _num_rows_small_=8, _num_rows_large_=6, _num_rows_valid_=192
+* Page containing 8 valid rows: _num_rows_small_=8, _num_rows_large_=7, _num_rows_valid=256
+* Page containing 7 valid rows and some deleted rows: _num_rows_small_=10, _num_rows_large_=0x1fff, _num_rows_valid_=224
 
 Byte{nbsp}``1b`` is called __page_flags__ (abbreviated _p~f~_ in the diagram).
 According to Mr. Lesniak, “strange” (non-data) pages will have the value `44` or `64`, and other pages have had the values `24` or `34`.
