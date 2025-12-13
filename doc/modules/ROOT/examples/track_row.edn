@@ -33,7 +33,7 @@
 (draw-box (text "u" :math [:sub 5]) {:span 2})
 (draw-box (text "c" :math [:sub "id"]))
 (draw-box (text "r" :math))
-(draw-box (text "u" :math [:sub 6]) {:span 2})
+(draw-box (text "ft" :math) {:span 2})
 (draw-box (text "u" :math [:sub 7]) {:span 2})
 (doseq [n (range 21)]
   (draw-box (text "ofs" :math [:sub n]) {:span 2}))
