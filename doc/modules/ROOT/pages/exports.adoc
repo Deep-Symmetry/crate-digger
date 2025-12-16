@@ -151,14 +151,13 @@ These each have the size specified by __len_page__ in the above diagram, and the
 (draw-box (text "next_page" :math) {:span 4})
 (draw-box (text "version" :math) {:span 4})
 (draw-box (text "unknown" :math [:sub "2"]) {:span 4})
-(draw-box (text "n" :math [:sub "rs"]))
-(draw-box (text "num" :math [:sub "rv"]) {:span 2})
+(draw-box (text "row counts") {:span 3})
 (draw-box (text "p" :math [:sub "f"]))
 (draw-box (text "free" :math [:sub "s"]) {:span 2})
 (draw-box (text "used" :math [:sub "s"]) {:span 2})
 
 (draw-box (text "u" :math [:sub "5"]) {:span 2})
-(draw-box (text "num" :math [:sub "rl"]) {:span 2})
+(draw-box (text "unk" :math [:sub "rows"]) {:span 2})
 (draw-box (text "u" :math [:sub "6"]) {:span 2})
 (draw-box (text "u" :math [:sub "7"]) {:span 2})
 (draw-gap "heap")
@@ -196,20 +195,11 @@ This might be used by the history feature, or might be some kind of data integri
 
 We don't know what _unknown~2~_ contains, though it is often/always zero. It may be an extension of _version_ to 64-bits?
 
-Next, __num_rows_small__ (abbreviated _n~rs~_ in the byte field diagram above) holds the number of row offsets (valid or not) that are present in the page, unless __num_rows_large__ (below) holds a value that is larger than it (but not equal to `1fff`). To find the actual rows, you need to scan all 16 entries of each of the row groups present in the page, ignoring any whose <<#row-presence-bits,row presence bit>> is zero.
-This seems like a strange mechanism for dealing with the fact that some tables (like playlist entries) have a lot of very small rows, too many to count with a single byte.
-But then why not just always use __num_rows_large__?
-
-__num_rows_valid__ (abbreviated _num~rv~_) holds the number of valid rows multiplied by 0x20 (i.e. the first 5 bits are not part of the counter). This count does reflect invalidated rows unlike __num_rows_small__.
-
-.Example row counts
-[example]
-* Fresh page containing 1 row: _num_rows_small_=1, _num_rows_large_=0, _num_rows_valid_=32
-* Page containing 2 rows: _num_rows_small_=2, _num_rows_large_=1, _num_rows_valid_=64
-* Page containing 2 valid rows and 1 deleted row: _num_rows_small_=3, _num_rows_large_=1, _num_rows_valid_=64
-* Page containing 6 valid rows and 2 deleted rows: _num_rows_small_=8, _num_rows_large_=6, _num_rows_valid_=192
-* Page containing 8 valid rows: _num_rows_small_=8, _num_rows_large_=7, _num_rows_valid=256
-* Page containing 7 valid rows and some deleted rows: _num_rows_small_=10, _num_rows_large_=0x1fff, _num_rows_valid_=224
+The three bytes{nbsp}``8``–``a``, labeled “row counts”, actually contain two non-byte-aligned numbers.
+The first 13 bits, __num_row_offsets__ keeps track of how many row offsets have ever been allocated in the heap, even if some of them are no longer valid.
+This number only ever increases over time, and can be used to calculate how many row groups are present in the page.
+The final 11 bits, __num_rows__, report the number of valid rows that are currently present in the table.footnote:[It is unclear why these two values are packed into three bytes like this.
+ We did not understand this structure, and had to rely on clumsy workarounds, until https://github.com/RobinMcCorkell[Robin McCorkell] figured this out in December 2025.]
 
 Byte{nbsp}``1b`` is called __page_flags__ (abbreviated _p~f~_ in the diagram).
 According to Mr. Lesniak, “strange” (non-data) pages will have the value `44` or `64`, and other pages have had the values `24` or `34`.
@@ -219,7 +209,7 @@ Bytes{nbsp}``1c``-`1d` are called __free_size__ (abbreviated _free~s~_ in the di
 
 Bytes{nbsp}``20``-`21`, _u~5~_ , are of unclear purpose. Mr. Lesniak labeled them “(0→1: 2).”
 
-Bytes{nbsp}``22``-`23`, __num_rows_large__ (abbreviated _num~rl~_ in the diagram) hold the number of entries in the row index at the end of the page when that value is too large to fit into __num_rows_small__ (as mentioned above), and that situation seems to be indicated when this value is larger than __num_rows_small__, but not equal to `1fff`.
+Bytes{nbsp}``22``-`23`, labeled __unk~rows~__, hold a value that seems related to the number of rows in the table in an unclear way, but sometimes instead equals `1fff`.
 
 _u~6~_ at bytes{nbsp}``24``-`25` seems to have the value `1004` for strange pages, and `0000` for data pages.
 And Mr. Lesniak describes _u~7~_ at bytes{nbsp}``26``-`27` as “always 0 except 1 for history pages, num entries for strange pages?”

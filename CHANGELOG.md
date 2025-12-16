@@ -6,10 +6,15 @@ This change log follows the conventions of
 
 ## [Unreleased][unreleased]
 
+### Fixed
+
+- Reworked the database export Kaitai Struct definition to incorporate some important discoveries by the [Mixxx](https://mixxx.org) and [rekordcrate](https://github.com/Holzhaus/rekordcrate) developers (thanks once again [@Swiftb0y](https://github.com/Swiftb0y)): all tables that use string offsets have subtypes which control whether those offsets are eight or sixteen bits.
+  We had previously only noted that for the Artists table, but the Album, Tag, and Tag Track tables behave this way as well, and in fact even the Track table follows this pattern, but its offsets always use the sixteen bit variant because the rows are so big.
+- The understanding of row counts in DeviceSQL data pages has been broken since the very beginning (though we had some clumsy workarounds that were good enough for reading).
+  Thanks to [Robin McCorkell](https://github.com/RobinMcCorkell) we now can properly interpret these non-byte-aligned numbers. 
+
 ### Changed
 
-- Reworked the database export Kaitai Struct definition to incorporate some important discoveries by the Mixxx and rekordcrate developers (thanks once again [@Swiftb0y](https://github.com/Swiftb0y)): all tables that use string offsets have subtypes which control whether those offsets are eight or sixteen bits.
-  We had previously only noted that for the Artists table, but the Album, Tag, and Tag Track tables behave this way as well, and in fact even the Track table follows this pattern, but its offsets always use the sixteen bit variant because the rows are so big.
 - Updated the analysis file Kaitai Struct definition to cope with the fact that rekordbox sometimes puts truly bizarre values (we have seen `f3` and `f9`) in the track bank byte of song structure tags.
   Previously this cause construction of the entire tag object to fail because no matching enumeration value could be found.
   Now we have a separate `raw_bank` field that holds the numeric value, and `bank` is a value instance that can be `null` when `raw_bank` is not recognizable.
@@ -36,7 +41,7 @@ May the Fourth be with you.
 - Upgraded Kaitai Struct to version 0.10, which includes a number of
   fixes and adds linting of mapped values.
   > :wrench:  This is a backwards-incompatible change.
-- Since we are already backwards incompatible with pervious releases,
+- Since we are already backwards incompatible with previous releases,
   changed some mapped value names to correspond to
   the KSY style guide and fix linter errors reported by KSC 0.10:
   1. In `rekordbox_pdb.ksy` renamed `num_groups` to `num_row_groups`.

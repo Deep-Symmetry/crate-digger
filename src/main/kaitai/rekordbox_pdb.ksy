@@ -163,6 +163,8 @@ types:
       heap in which row data is found. At the end of the page there is
       an index which locates all rows present in the heap via their
       offsets past the end of the page header.
+    meta:
+      bit-endian: le
     seq:
       - id: gap
         contents: [0, 0, 0, 0]
@@ -194,22 +196,14 @@ types:
         doc: |
           @flesniak said: "sequence number (0->1: 8->13, 1->2: 22, 2->3: 27)"
       - size: 4
-      - id: num_rows_small
-        type: u1
+      - id: num_row_offsets
+        type: b13
         doc: |
-          Holds the value used for `num_rows` (see below) unless
-          `num_rows_large` is larger (but not equal to `0x1fff`). This
-          seems like some strange mechanism to deal with the fact that
-          lots of tiny entries, such as are found in the
-          `playlist_entries` table, are too big to count with a single
-          byte. But why not just always use `num_rows_large`, then?
-      - type: u1
-        doc: |
-          @flesniak said: "a bitmask (1st track: 32)"
-      - type: u1
-        doc: |
-          @flesniak said: "often 0, sometimes larger, esp. for pages
-          with high real_entry_count (e.g. 12 for 101 entries)"
+          Seems to hold the number of row offsets that have ever been
+          allocated, including those that are no longer valid.
+      - id: num_rows
+        type: b11
+        doc: The number of valid rows currently present in the page.
       - id: page_flags
         type: u1
         doc: |
@@ -226,17 +220,13 @@ types:
       - type: u2
         doc: |
           @flesniak said: "(0->1: 2)"
-      - id: num_rows_large
+      - id: unk_rows
         type: u2
         doc: |
-          Holds the value used for `num_rows` (as described above)
-          when that is too large to fit into `num_rows_small`, and
-          that situation seems to be indicated when this value is
-          larger than `num_rows_small`, but not equal to `0x1fff`.
-          This seems like some strange mechanism to deal with the fact
-          that lots of tiny entries, such as are found in the
-          `playlist_entries` table, are too big to count with a single
-          byte. But why not just always use this value, then?
+          This was previously believed to take the place of a one-byte `num_rows`
+          field, when that got too large to fit, but that was based on an incorrect
+          understanding of the `num_row_offsets` and `num_rows` bit fields. We do
+          not yet have a new explanation for the purpose of this value.
       - type: u2
         doc: |
           @flesniak said: "1004 for strange blocks, 0 otherwise"
@@ -246,24 +236,15 @@ types:
           entries for strange pages?"
       - id: heap
         size-eos: true
-        if: false  # never true, but stores pos
+        if: 'false'  # never true, but stores pos
     instances:
       is_data_page:
         value: page_flags & 0x40 == 0
         -webide-parse-mode: eager
       heap_pos:
         value: _io.pos
-      num_rows:
-        value: |
-          (num_rows_large > num_rows_small) and (num_rows_large != 0x1fff) ? num_rows_large : num_rows_small
-        doc: |
-          The number of rows that have ever been allocated on this
-          page (controls the number of row groups there are, but some
-          entries in each group may not be marked as present in the
-          table due to deletion or updates).
-        -webide-parse-mode: eager
       num_row_groups:
-        value: '(num_rows - 1) / 16 + 1'
+        value: '(num_row_offsets - 1) / 16 + 1'
         doc: |
           The number of row groups that are present in the index. Each
           group can hold up to sixteen rows, but `row_present_flags`
