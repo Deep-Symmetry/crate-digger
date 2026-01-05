@@ -191,7 +191,7 @@ This is followed by another four-byte value, _type_, which identifies the type o
 This again seems redundant because the table header which was followed to reach this page also identified the table type, but perhaps it is another sanity check, or an alternate way to tell, when following page links, that you have reached the end of the table you are interested in.
 Speaking of which, the next four-byte value, __next_page__, is that link: it identifies the index at which the next page of this table can be found, as long as we have not already reached the final page of the table, as described in <<file-header>>.
 
-This is followed by _seq~page~_ which is a sequence number updated to the global next value every time any page is edited (see also: _seq~db~_ in the databse header). When the page is edited, this value is set to the value of _seq~db~_ and then _seq~db~_ is incremented. Sequence numbers of different pages can be used to determine which pages were touched in which order during an export.
+This is followed by _seq~page~_ which is a sequence number updated to the global next value every time any page is edited (see also: _seq~db~_ in the database header). When the page is edited, this value is set to the value of _seq~db~_ and then _seq~db~_ is incremented. Sequence numbers of different pages can be used to determine which pages were touched in which order during an export.
 For example, if a track is exported with a new artist and genre, then Rekordbox may place the genre first (with sequence N), then the artist (with sequence N+1), then the track (with sequence N+3).
 We don't know what _unknown~2~_ contains, though it is often/always zero. It may be an extension of _seq~page~_ to 64-bits.
 
@@ -208,7 +208,7 @@ Crate Digger considers a page to be a data page if __page_flags__&``40``{nbsp}={
 Bytes{nbsp}``1c``-`1d` are called __free_size__ (abbreviated _free~s~_ in the diagram), and store the amount of unused space in the page heap (excluding the row index which is built backwards from the end of the page); __used_size__ at bytes{nbsp}``1c``-`1d` (abbreviated _used~s~_) stores the number of bytes that are in use in the page heap.
 
 Bytes{nbsp}``20``-`21` are called __transaction_row_count__ (abbreviated _tran~rc~_ in the diagram), and store the number of rows touched in the last transaction on this page.
-Bytes{nbsp}``22``-`23` are called __transaction_row_index__ (abbreviated _tran~ri~_ in the diagram), and store the index of the first row touched in the last transactionn on this page.
+Bytes{nbsp}``22``-`23` are called __transaction_row_index__ (abbreviated _tran~ri~_ in the diagram), and store the index of the first row touched in the last transaction on this page.
 Both of these values may be set to `0x1fff` if the last transaction failed, e.g. attempting to add a row when there is insufficient space.
 
 _u~6~_ at bytes{nbsp}``24``-`25` seems to have the value `1004` for strange pages, and `0000` for data pages.
