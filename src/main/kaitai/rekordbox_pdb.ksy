@@ -83,8 +83,7 @@ seq:
   - id: sequence
     type: u4
     doc: |
-      @flesniak said: "Always incremented by at least one,
-      sometimes by two or three."
+      Sequence number incremented during every edit of the database.
   - id: gap
     contents: [0, 0, 0, 0]
     doc: |
@@ -192,9 +191,13 @@ types:
           Index of the next page containing this type of rows. Points past
           the end of the file if there are no more.
         type: page_ref
-      - type: u4
+      - id: sequence
+        type: u4
         doc: |
-          @flesniak said: "sequence number (0->1: 8->13, 1->2: 22, 2->3: 27)"
+          Sequence number updated to the value of sequence from the database
+          header when this page is edited. The value is copied before the
+          value of sequence in the database header is incremented, i.e.
+          the one in the database header is the "next" page sequence number.
       - size: 4
       - id: num_row_offsets
         type: b13
@@ -217,16 +220,16 @@ types:
         type: u2
         doc: |
           The number of bytes that are in use in the page heap.
-      - type: u2
-        doc: |
-          @flesniak said: "(0->1: 2)"
-      - id: unk_rows
+      - id: transaction_row_count
         type: u2
         doc: |
-          This was previously believed to take the place of a one-byte `num_rows`
-          field, when that got too large to fit, but that was based on an incorrect
-          understanding of the `num_row_offsets` and `num_rows` bit fields. We do
-          not yet have a new explanation for the purpose of this value.
+          The number of rows touched in the last transaction on this page,
+          or 0x1fff if the last transaction failed.
+      - id: transaction_row_index
+        type: u2
+        doc: |
+          The index of the first row touched in the last transaction on this page,
+          or 0x1fff if the last transaction failed.
       - type: u2
         doc: |
           @flesniak said: "1004 for strange blocks, 0 otherwise"
@@ -286,6 +289,13 @@ types:
           second bit corresponds to the row whose offset precedes
           that, and so on.
         -webide-parse-mode: eager
+      transaction_row_flags:
+        pos: base
+        type: u2
+        doc: |
+          Each bit specifies whether a particular row was touched by
+          the last transaction on this row group, using the same
+          layout as row_present_flags.
       rows:
         type: row_ref(_index)
         repeat: expr
