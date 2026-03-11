@@ -142,7 +142,11 @@ As far as we know, the remainder of the first page after the table pointers is u
 The table header is followed by the table pages themselves.
 These each have the size specified by __len_page__ in the above diagram, and the following structure:
 
-.Table page.
+==== Table Page Header
+
+All pages, regardless of type, begin with a common header structure.
+
+.Table Page Header
 [bytefield]
 ----
 (draw-column-headers)
@@ -156,7 +160,41 @@ These each have the size specified by __len_page__ in the above diagram, and the
 (draw-box (text "p" :math [:sub "f"]))
 (draw-box (text "free" :math [:sub "s"]) {:span 2})
 (draw-box (text "used" :math [:sub "s"]) {:span 2})
+----
 
+The first four bytes of a table page always seem to be zero.
+This is followed by a four-byte value _page_index_ which identifies the index of this page within the list of table pages (the header has index 0, the first actual data page the index 1, and so on).
+This value seems to be redundant, because it can be calculated by dividing the offset of the
+start of the page by _len_page_, but perhaps it serves as a sanity check.
+
+This is followed by another four-byte value, _type_, which identifies the type of the page, using the values shown in the <<table-types,preceding table>>.
+This again seems redundant because the table header which was followed to reach this page also identified the table type, but perhaps it is another sanity check, or an alternate way to tell, when following page links, that you have reached the end of the table you are interested in.
+Speaking of which, the next four-byte value, __next_page__, is that link: it identifies the index at which the next page of this table can be found, as long as we have not already reached the final page of the table, as described in <<file-header>>.
+
+This is followed by _seq~page~_ which is a sequence number updated to the global next value every time any page is edited (see also: _seq~db~_ in the database header). When the page is edited, this value is set to the value of _seq~db~_ and then _seq~db~_ is incremented. Sequence numbers of different pages can be used to determine which pages were touched in which order during an export.
+For example, if a track is exported with a new artist and genre, then Rekordbox may place the genre first (with sequence N), then the artist (with sequence N+1), then the track (with sequence N+3).
+We don't know what _unknown~2~_ contains, though it is often/always zero. It may be an extension of _seq~page~_ to 64-bits.
+
+The three bytes{nbsp}``8``–``a``, labeled “row counts”, actually contain two non-byte-aligned numbers.
+The first 13 bits, __num_row_offsets__ keeps track of how many row offsets have ever been allocated in the heap, even if some of them are no longer valid.
+This number only ever increases over time, and can be used to calculate how many row groups are present in the page.
+The final 11 bits, __num_rows__, report the number of valid rows that are currently present in the table.footnote:[It is unclear why these two values are packed into three bytes like this.
+ We did not understand this structure, and had to rely on clumsy workarounds, until https://github.com/RobinMcCorkell[Robin McCorkell] figured this out in December 2025.]
+
+Byte{nbsp}``1b`` is called __page_flags__ (abbreviated _p~f~_ in the diagram), and it's used to distinguish pages of different types. 
+Index pages (which contain pointers to data pages with deleted rows) have a __page_flags__ value of `64`. Data pages which are pointed to by index entries have the value `34`, while data pages which aren't have the value `24`. The value `44` has been observed but its meaning is unknown.
+Crate Digger considers a page to be a data page if __page_flags__&``40``{nbsp}={nbsp}`0`.
+
+Bytes{nbsp}``1c``-`1d` are called __free_size__ (abbreviated _free~s~_ in the diagram), and store the amount of unused space in the page heap (excluding the row index which is built backwards from the end of the page); __used_size__ at bytes{nbsp}``1e``-`1f` (abbreviated _used~s~_) stores the number of bytes that are in use in the page heap.
+
+==== Data Pages
+
+Data pages follow the common header with a data-specific header and a heap for row data.
+
+.Data Page Details
+[bytefield]
+----
+(draw-column-headers)
 (draw-box (text "tran" :math [:sub "rc"]) {:span 2})
 (draw-box (text "tran" :math [:sub "ri"]) {:span 2})
 (draw-box (text "u" :math [:sub "6"]) {:span 2})
@@ -178,44 +216,15 @@ These each have the size specified by __len_page__ in the above diagram, and the
 (draw-box (text "tran" :math [:sub "rf0"]) {:span 2})
 ----
 
-Data pages all seem to have the header structure described here, but not all of them actually store data.
-Some of them are “strange” and we have not yet figured out why.
-The discussion below describes how to recognize a strange page, and avoid trying to read it as a data page.
-
-The first four bytes of a table page always seem to be zero.
-This is followed by a four-byte value _page_index_ which identifies the index of this page within the list of table pages (the header has index 0, the first actual data page the index 1, and so on).
-This value seems to be redundant, because it can be calculated by dividing the offset of the
-start of the page by _len_page_, but perhaps it serves as a sanity check.
-
-This is followed by another four-byte value, _type_, which identifies the type of the page, using the values shown in the <<table-types,preceding table>>.
-This again seems redundant because the table header which was followed to reach this page also identified the table type, but perhaps it is another sanity check, or an alternate way to tell, when following page links, that you have reached the end of the table you are interested in.
-Speaking of which, the next four-byte value, __next_page__, is that link: it identifies the index at which the next page of this table can be found, as long as we have not already reached the final page of the table, as described in <<file-header>>.
-
-This is followed by _seq~page~_ which is a sequence number updated to the global next value every time any page is edited (see also: _seq~db~_ in the database header). When the page is edited, this value is set to the value of _seq~db~_ and then _seq~db~_ is incremented. Sequence numbers of different pages can be used to determine which pages were touched in which order during an export.
-For example, if a track is exported with a new artist and genre, then Rekordbox may place the genre first (with sequence N), then the artist (with sequence N+1), then the track (with sequence N+3).
-We don't know what _unknown~2~_ contains, though it is often/always zero. It may be an extension of _seq~page~_ to 64-bits.
-
-The three bytes{nbsp}``8``–``a``, labeled “row counts”, actually contain two non-byte-aligned numbers.
-The first 13 bits, __num_row_offsets__ keeps track of how many row offsets have ever been allocated in the heap, even if some of them are no longer valid.
-This number only ever increases over time, and can be used to calculate how many row groups are present in the page.
-The final 11 bits, __num_rows__, report the number of valid rows that are currently present in the table.footnote:[It is unclear why these two values are packed into three bytes like this.
- We did not understand this structure, and had to rely on clumsy workarounds, until https://github.com/RobinMcCorkell[Robin McCorkell] figured this out in December 2025.]
-
-Byte{nbsp}``1b`` is called __page_flags__ (abbreviated _p~f~_ in the diagram).
-According to Mr. Lesniak, “strange” (non-data) pages will have the value `44` or `64`, and other pages have had the values `24` or `34`.
-Crate Digger considers a page to be a data page if __page_flags__&``40``{nbsp}={nbsp}`0`.
-
-Bytes{nbsp}``1c``-`1d` are called __free_size__ (abbreviated _free~s~_ in the diagram), and store the amount of unused space in the page heap (excluding the row index which is built backwards from the end of the page); __used_size__ at bytes{nbsp}``1e``-`1f` (abbreviated _used~s~_) stores the number of bytes that are in use in the page heap.
-
-Bytes{nbsp}``20``-`21` are called __transaction_row_count__ (abbreviated _tran~rc~_ in the diagram), and store the number of rows touched in the last transaction on this page.
-Bytes{nbsp}``22``-`23` are called __transaction_row_index__ (abbreviated _tran~ri~_ in the diagram), and store the index of the first row touched in the last transaction on this page.
+Bytes{nbsp}``0``-`1` are called __transaction_row_count__ (abbreviated _tran~rc~_ in the diagram), and store the number of rows touched in the last transaction on this page.
+Bytes{nbsp}``2``-`3` are called __transaction_row_index__ (abbreviated _tran~ri~_ in the diagram), and store the index of the first row touched in the last transaction on this page.
 Both of these values may be set to `0x1fff` if the last transaction failed, e.g. attempting to add a row when there is insufficient space.
 
-_u~6~_ at bytes{nbsp}``24``-`25` seems to have the value `1004` for strange pages, and `0000` for data pages.
-And Mr. Lesniak describes _u~7~_ at bytes{nbsp}``26``-`27` as “always 0 except 1 for history pages, num entries for strange pages?”
+_u~6~_ at bytes{nbsp}``4``-`5` seems to have the value `0000` for data pages.
+And Mr. Lesniak describes _u~7~_ at bytes{nbsp}``6``-`7` as “always 0 except 1 for history pages”.
 
 After these header fields comes the page heap.
-Rows are allocated within this heap starting at byte `28`.
+Rows are allocated within this heap starting at byte `8`.
 Since rows can be different sizes, there needs to be a way to locate them.
 This takes the form of a row index, which is built from the end of the page backwards, in groups of up to sixteen row pointers along with a bitmask saying which of those rows are still part of the table (they might have been deleted).
 The number of row index entries is determined, as described above, by the value of either __num_rows_small__ or __num_rows_large__.
@@ -231,8 +240,70 @@ The last two bytes after each row presence bitmask (for example _tran~rf0~_ afte
 These may be rows that were just added (and now present) or just deleted (and no longer present). If a transaction touched multiple offsets, this will have multiple set bits.
 
 As more rows are added to the page, space is allocated for them in the heap, and additional index entries are added at the end of the heap, growing backwards.
-Once there have been sixteen rows added, all the bits in _row~pf0~_ are accounted for, and when another row is added, before its offset entry _ofs~16~_ can be added, another row bit-mask entry _row~pf1~_ needs to be allocated, followed by its corresponding _pad~1~_.
+Once there have been sixteen rows added, all the bits in _row~pf0~_ are accounted for, and when another row is added, before its offset entry _ofs~16~_ can be added, another row bit-mask entry _row~pf1~_ needs to be allocated, followed by its corresponding _tran~rf1~_.
 And so the row index grows backwards towards the rows that are being added forwards, and once they are too close for a new row to fit, the page is full, and another page gets allocated to the table.
+
+==== Index Pages
+
+Index pages have a __page_flags__ value of `0x64`. They follow the common header with an index-specific header and a list of index entries. These entries seem to point to a page which has deleted rows, which would make sense in order to provide a way to find free space when inserting new rows.
+It has been observed that the first page of every table is an index page, usually empty if there are no deleted rows yet.
+
+.Index Page Details
+[bytefield]
+----
+(draw-column-headers)
+(draw-box (text "u" :math [:sub "a"]) {:span 2})
+(draw-box (text "u" :math [:sub "b"]) {:span 2})
+(draw-related-boxes [(text "ec" :hex) (text "03" :hex)] {:span 1})
+(draw-box (text "next" :math [:sub "o"]) {:span 2})
+(draw-box (text "page_index" :math) {:span 4})
+(draw-box (text "next_page" :math) {:span 4})
+(draw-related-boxes [(text "ff" :hex) (text "ff" :hex) (text "ff" :hex) (text "03" :hex)] {:span 1})
+(draw-related-boxes [(text "00" :hex) (text "00" :hex) (text "00" :hex) (text "00" :hex)] {:span 1})
+(draw-box (text "num" :math [:sub "e"]) {:span 2})
+(draw-box (text "first" :math [:sub "e"]) {:span 2})
+(draw-gap "Index Entries")
+(draw-bottom)
+----
+
+The header of an index page contains several fields whose purpose is not yet fully understood.
+
+The first two bytes are called _unknown~a~_ and they are usually `0x1fff` or `0x0001`, although values like `0x0002` have been observed on tables with a big number of rows.
+
+After that, bytes `2-3` are called _unkown~b~_ and they're usually `0x1fff` or `0x0000`, although values like `0x00b3` have been observed on tables with a big number of rows.
+
+Next comes a 2-byte magic value `0x03ec`. 
+
+__next_offset__ (bytes `6-7`, abbreviated _next~o~_) specifies the byte offset of where to insert the next index entry. Relative to the start of index entries, usually zero for empty pages. 
+
+Bytes `8-11` and `12-15` are _page_index_ and __next_page__, and they reflect the values with the same name that are found in the common page header.
+
+The two following 32-bit fields contain another magic value `0x03ffffff` and zeros `0x00000000`.
+
+The __num_entries__ field at bytes `24-25` (abbreviated _num~e~_) indicates how many index entries are present in the page. Field __first_empty__ at bytes `26-27` (abbreviated _first~e~_) points to the first empty index entry, and is `0x1fff` if there are none. An empty index entry has the value `0x1ffffff8`.
+
+.Index Entry
+[bytefield]
+----
+(def box-width 30)
+(def boxes-per-row 32)
+(def left-margin 1)
+
+;; Create a list of 32 labels, from "31" down to "0"
+(def bit-labels (mapv str (reverse (range 32))))
+
+;; Use your custom labels for the headers
+(draw-column-headers {:labels bit-labels})
+
+;; Example of drawing 32 empty boxes
+(draw-box (text "page_index" :math [:sub "28-0"]) {:span 29})
+(draw-box (text "index_flags" :math) {:span 3})
+----
+
+Each entry is a four-byte value. As we have said above, an index entry of `1ffffff8` indicates an empty slot.
+Otherwise, the entry is a bitfield that contains a page index and some flags.
+
+Bits `31-3` are a page index (i.e. the page that is pointed to by this index entry) but without the 3 most significant bits. Bits `0-2` (called `index_flags`) have unknown purpose, and their most common value is just `0x000`.
 
 == Table Rows
 
