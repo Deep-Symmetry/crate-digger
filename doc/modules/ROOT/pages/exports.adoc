@@ -181,9 +181,39 @@ This number only ever increases over time, and can be used to calculate how many
 The final 11 bits, __num_rows__, report the number of valid rows that are currently present in the table.footnote:[It is unclear why these two values are packed into three bytes like this.
  We did not understand this structure, and had to rely on clumsy workarounds, until https://github.com/RobinMcCorkell[Robin McCorkell] figured this out in December 2025.]
 
-Byte{nbsp}``1b`` is called __page_flags__ (abbreviated _p~f~_ in the diagram), and it's used to distinguish pages of different types. 
-Index pages (which contain pointers to data pages with deleted rows) have a __page_flags__ value of `64`. Data pages which are pointed to by index entries have the value `34`, while data pages which aren't have the value `24`. The value `44` has been observed but its meaning is unknown.
-Crate Digger considers a page to be a data page if __page_flags__&``40``{nbsp}={nbsp}`0`.
+Byte{nbsp}``1b`` is called __page_flags__ (abbreviated _p~f~_ in the diagram) which is partially understood:
+
+.Page flags
+[bytefield]
+----
+include::example$bitfield.edn[]
+
+(draw-box (text "u" :math [:sub 7]))
+(draw-box (text "I" :math))
+(draw-box (text "u" :math [:sub 5]))
+(draw-box (text "D" :math))
+(draw-box (text "u" :math [:sub 3]))
+(draw-box (text "u" :math [:sub 2]))
+(draw-box (text "u" :math [:sub 1]))
+(draw-box (text "u" :math [:sub 0]))
+----
+
+[cols=">1l,2,8"]
+|===
+|bit |label |purpose
+
+|7 |_u~7~_        |Unknown, always unset?
+|6 |_I_ (index)   |Page contains index entries rather than data entries.
+|5 |_u~5~_        |Unknown, always set?
+|4 |_D_ (deleted) |Data page contains deleted/invalid rows.
+|3 |_u~3~_        |Unknown, always unset?
+|2 |_u~2~_        |Unknown, always set?
+|1 |_u~1~_        |Unknown, always unset?
+|0 |_u~0~_        |Unknown, always unset?
+|===
+
+Index pages typically always have a flags value of `0x64`, while data pages typically have a flags value of `0x24` or `0x34`.
+Crate Digger considers a page to be a data page if __page_flags__&``0x40``{nbsp}={nbsp}`0`.
 
 Bytes{nbsp}``1c``-`1d` are called __free_size__ (abbreviated _free~s~_ in the diagram), and store the amount of unused space in the page heap (excluding the row index which is built backwards from the end of the page); __used_size__ at bytes{nbsp}``1e``-`1f` (abbreviated _used~s~_) stores the number of bytes that are in use in the page heap.
 
