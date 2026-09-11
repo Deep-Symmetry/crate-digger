@@ -4,7 +4,7 @@ meta:
   application: rekordbox
   file-extension:
     - pdb
-  license: EPL-1.0
+  license: EPL-2.0 OR MPL-2.0 OR LGPL-3.0-only
   endian: le
 
 doc: |

@@ -5,7 +5,7 @@ meta:
   file-extension:
     - dat
     - ext
-  license: EPL-1.0
+  license: EPL-2.0 OR MPL-2.0 OR LGPL-3.0-only
   endian: be
 
 doc: |
@@ -261,12 +261,12 @@ types:
       - id: loop_numerator
         type: u2
         doc: |
-          The numerator of the loop length in beats. 
+          The numerator of the loop length in beats.
           Zero if the loop is not quantized.
       - id: loop_denominator
         type: u2
         doc: |
-          The denominator of the loop length in beats. 
+          The denominator of the loop length in beats.
           Zero if the loop is not quantized.
       - id: len_comment
         type: u4
