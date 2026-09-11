@@ -310,6 +310,9 @@ satisfied: https://www.mozilla.org/en-US/MPL/2.0/[Mozilla Public
 License 2.0], or https://opensource.org/licenses/LGPL-3.0[GNU Lesser
 General Public License v. 3].
 
+Downstream use: Parsers generated from the Kaitai Struct
+specifications in `src/main/kaitai/` are covered by the same license
+and secondary-license election as the specifications themselves.
 
 
 === Library and Build Tool Licenses
