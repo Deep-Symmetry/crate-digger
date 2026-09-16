@@ -13,6 +13,7 @@ Later player hardware added support for things like colored and more-detailed wa
 Apparently these were deemed too large to fit in the `.DAT` files (probably due to memory limitations of the older players downloading those files), so another file was introduced, which shares the same base filename as the `.DAT` file, but uses an extension of `.EXT` instead (presumably for “extended analysis”).
 And the CDJ-3000 introduced yet another variant of the file, with extension `.2EX` (double extended?), for its new 3-band waveforms.
 All three kinds of file share the same structure, but different sets of tags can be found in each.
+The 3-band waveform tags found in `.2EX` files are described in the <<three-band-preview,3-Band Preview>> and <<three-band-detail,3-Band Detail>> sections below, along with the <<waveform-3-band-calibration,small calibration tag>> that can accompany them.
 
 [#file-header]
 == Analysis File Header
@@ -457,7 +458,7 @@ This kind of section holds a fixed-width three-band preview of the track wavefor
 It is also used in rekordbox itself.
 This is stored in a second extended analysis file (with extension `.2EX`).
 It is identified by the four-character code `PWV6` and has the structure shown below.
-__len_header__ is `14`.
+__len_header__ is `14`, that is, twenty (decimal) bytes.
 
 .Waveform 3-Band Preview tag.
 [bytefield]
@@ -474,15 +475,16 @@ __len_entry_bytes__ identifies how many bytes each waveform preview entry takes 
 __len_entries__ specifies how many entries are present in the tag.
 The three-band waveform preview data begins at byte{nbsp}``14`` and is 3,600 (decimal) bytes long, representing 1,200 columns of waveform preview information.
 
-The three-band waveform preview entries are one-byte height values representing the mid-range, high, and low frequencies, in that order.
+The three-band waveform preview entries are one-byte height values representing the low, mid-range, and high frequencies, in that order.
 There is some scaling involved, and they seem to be drawn stacked on top of each other, with the lows in dark blue, the mid-range in amber, and the highs in white.
+This order was verified by analyzing rekordbox's rendition of a 20kHz→20Hz frequency sweep (where early columns must be dominated by high frequencies and later columns by low frequencies).
 
 [#three-band-detail]
 === Waveform 3-Band Detail Tag
 
 This kind of section holds a variable-width and much larger three-band rendition of the track waveform, introduced with the CDJ-3000 (and also used in rekordbox), which scrolls along while the track plays, giving a detailed glimpse of the neighborhood of the current playback position.
-This is stored in the second extended analysis file (with extension `.EXT`).
-It is identified by the four-character code `PWV7` and has the structure shown below. __len_header__ is `18`.
+This is stored in the second extended analysis file (with extension `.2EX`).
+It is identified by the four-character code `PWV7` and has the structure shown below. __len_header__ is `18`, that is, twenty-four (decimal) bytes.
 
 .Waveform 3-Band Detail tag.
 [bytefield]
@@ -502,13 +504,39 @@ Each entry represents one xref:djl-analysis:ROOT:track_metadata.adoc#frames[half
 The purpose of the header bytes{nbsp}``14``-`17` is unknown; they may always have the value `00960000`.
 The three-band waveform detail entries begin at byte{nbsp}``18``.
 
-Three-band detail entries have the same structure preview entries, one-byte height values representing the mid-range, high, and low frequencies, in that order.
+Three-band detail entries have the same structure as preview entries, one-byte height values representing the low, mid-range, and high frequencies, in that order.
+The band order is the same as in the <<three-band-preview,3-Band Preview>> tag; see the note there.
 There is a different kind of scaling involved in drawing these, and it seems to be non-linear.
 We have not yet found an approach that perfectly matches what we see in rekordbox, but we can get results that look decent.
 The colors for low, mid-range, and high frequencies are the same as in the preview, but they are drawn on the same axis rather than being stacked.
 The area where low and mid-range frequencies overlap is drawn in brown, and their pure colors are seen where there is no overlap.
 The white high frequency is drawn last so it obscures any low or mid-range information underneath it.
 Recordbox actually seems to do some light blending, but it is so dim that we have not bothered to reproduce it so far.
+
+[#waveform-3-band-calibration]
+=== Waveform 3-Band Calibration Tag
+
+This kind of section contains three per-band values that rekordbox computed while analyzing the track.
+It is stored in the second extended analysis file (with extension `.2EX`).
+It is identified by the four-character code `PWVC` and has the structure shown below.
+It is much smaller than the waveform tags: __len_header__ is `e`, that is, fourteen (decimal) bytes, and as always __len_tag__ is the length of the entire tag including the header (so far always `14`, twenty (decimal) bytes).
+
+.Waveform 3-Band Calibration tag.
+[bytefield]
+----
+include::example$tag_shared.edn[]
+(draw-tag-header "PWVC")
+(draw-box (text "unknown" :math) [:bg-yellow {:span 2}])
+(draw-box (text "thr" :math [:sub "low"]) {:span 2})
+(draw-box (text "thr" :math [:sub "mid"]) {:span 2})
+(draw-box (text "thr" :math [:sub "high"]) {:span 2})
+(draw-bottom)
+----
+
+The two-byte _unknown_ field at bytes{nbsp}``0c``-`0d` has always been observed to contain zero.
+Beginning at byte{nbsp}``0e``, there are three sixteen-bit big-endian unsigned values, _thr~low~_, _thr~mid~_, and _thr~high~_, associated with the low (dark blue), mid-range (amber), and high (white) waveform bands, respectively.
+Across a survey of 192 analyzed tracks, the xref:djl-analysis:ROOT:track_metadata.adoc#requesting-vocal-config[protocol analysis] reports observed values of 80--114 for _thr~low~_, 80--146 for _thr~mid~_, and 98--159 for _thr~high~_, and interprets them as vocal detection thresholds used to classify frequency content as vocal or non-vocal.
+The rekordcrate project instead models this tag as per-band gain calibration for the 3-band player waveform, so the exact purpose of these values is not yet settled; note also that we have seen values outside those ranges in Pioneer's own demo tracks (for example `005b`, `008a`, and `018c`).
 
 [#song-structure-tag]
 === Song Structure Tag

@@ -80,8 +80,9 @@ types:
             'section_tags::wave_scroll': wave_scroll_tag                # PWV3, seen in .EXT
             'section_tags::wave_color_preview': wave_color_preview_tag  # PWV4, in .EXT
             'section_tags::wave_color_scroll': wave_color_scroll_tag    # PWV5, in .EXT
-            'section_tags::wave_3band_preview': wave_3band_preview_tag  # P@V6, in .2EX
+            'section_tags::wave_3band_preview': wave_3band_preview_tag  # PWV6, in .2EX
             'section_tags::wave_3band_scroll': wave_3band_scroll_tag    # PWV7, in .2EX
+            'section_tags::wave_3band_calibration': wave_3band_calibration_tag  # PWVC, in .2EX
             'section_tags::song_structure': song_structure_tag          # PSSI, in .EXT
             _: unknown_tag
     -webide-representation: '{fourcc}'
@@ -403,7 +404,12 @@ types:
   wave_3band_preview_tag:
     doc: |
       The minimalist CDJ-3000 waveform preview image suitable for display
-      above the touch strip for jumping to a track position.
+      above the touch strip for jumping to a track position. Each entry
+      holds three one-byte band energies stored in the order low,
+      mid-range, high (verified by analyzing rekordbox's rendition of a
+      20kHz→20Hz frequency sweep), and the bands are drawn stacked, with
+      the lows in dark blue, the mid-range in amber, and the highs in
+      white.
     seq:
       - id: len_entry_bytes
         type: u4
@@ -413,14 +419,17 @@ types:
         type: u4
         doc: |
           The number of waveform data points, each of which takes one
-          byte for each of six channels of information.
+          byte for each of three frequency bands.
       - id: entries
-        size: len_entries * len_entry_bytes
+        type: wave_3band_entry
+        repeat: expr
+        repeat-expr: len_entries
 
   wave_3band_scroll_tag:
     doc: |
       The minimalist CDJ-3000 waveform image suitable for scrolling along
-      as a track plays on newer high-resolution hardware.
+      as a track plays on newer high-resolution hardware. Entries have
+      the same three-band structure as the preview tag.
     seq:
       - id: len_entry_bytes
         type: u4
@@ -433,7 +442,41 @@ types:
           non-color waveform length.
       - type: u4
       - id: entries
-        size: len_entries * len_entry_bytes
+        type: wave_3band_entry
+        repeat: expr
+        repeat-expr: len_entries
+
+  wave_3band_calibration_tag:
+    doc: |
+      Accompanies the 3-band waveforms in .2EX analysis files. Contains
+      three sixteen-bit big-endian values associated with the low,
+      mid-range, and high waveform bands. The protocol analysis
+      interprets them as vocal detection thresholds, while the
+      rekordcrate project models them as per-band gain calibration, so
+      their exact purpose is not yet settled.
+    seq:
+      - id: unknown
+        type: u2
+        doc: |
+          Has always been observed to contain zero.
+      - id: low
+        type: u2
+      - id: mid
+        type: u2
+      - id: high
+        type: u2
+
+  wave_3band_entry:
+    doc: |
+      Describes the band energies of one column of a CDJ-3000 three-band
+      waveform, in the order low, mid-range, high.
+    seq:
+      - id: low
+        type: u1
+      - id: mid
+        type: u1
+      - id: high
+        type: u1
 
   song_structure_tag:
     doc: |
@@ -611,6 +654,7 @@ enums:
     0x50535349: song_structure      # PSSI (seen in .EXT)
     0x50575636: wave_3band_preview  # PWV6 (seen in .2EX)
     0x50575637: wave_3band_scroll   # PWV7 (seen in .2EX)
+    0x50575643: wave_3band_calibration  # PWVC (seen in .2EX)
 
   cue_list_type:
     0: memory_cues

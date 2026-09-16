@@ -8,6 +8,9 @@ This change log follows the conventions of
 
 ### Fixed
 
+- Documented the tags found in `.2EX` analysis files, and corrected the order of the three bands in `PWV6` and `PWV7` waveform entries: analysis of a frequency sweep shows they are stored in low, mid-range, high order, not mid-range, high, low as previously documented (and still claimed by the protocol analysis, so this is worth checking in your own code).
+  Also added a section describing the `PWVC` calibration tag that can accompany the 3-band waveforms (resolving issue #22).
+
 - Reworked the database export Kaitai Struct definition to incorporate some important discoveries by the [Mixxx](https://mixxx.org) and [rekordcrate](https://github.com/Holzhaus/rekordcrate) developers (thanks once again [@Swiftb0y](https://github.com/Swiftb0y)): all tables that use string offsets have subtypes which control whether those offsets are eight or sixteen bits.
   We had previously only noted that for the Artists table, but the Album, Tag, and Tag Track tables behave this way as well, and in fact even the Track table follows this pattern, but its offsets always use the sixteen bit variant because the rows are so big.
 - The understanding of row counts in DeviceSQL data pages has been broken since the very beginning (though we had some clumsy workarounds that were good enough for reading).
