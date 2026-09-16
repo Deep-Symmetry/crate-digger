@@ -103,6 +103,13 @@ class DatabaseUtil implements Closeable {
                     // logger.info("Indexing page " + currentRef.index());
                     final RekordboxPdb.Page page = currentRef.body();
 
+                    // Stop if following next_page has taken us to a page from another table.
+                    // This is one of the termination conditions for PDB table scans documented
+                    // in the Kaitai specification.
+                    if (page.type() != type) {
+                        break;
+                    }
+
                     // Process only ordinary data pages.
                     if (page.isDataPage()) {
                         for (RekordboxPdb.RowGroup rowGroup : page.rowGroups()) {
@@ -152,6 +159,13 @@ class DatabaseUtil implements Closeable {
                 do {
                     // logger.info("Indexing page " + currentRef.index());
                     final RekordboxPdb.Page page = currentRef.body();
+
+                    // Stop if following next_page has taken us to a page from another table.
+                    // This is one of the termination conditions for PDB table scans documented
+                    // in the Kaitai specification.
+                    if (page.typeExt() != type) {
+                        break;
+                    }
 
                     // Process only ordinary data pages.
                     if (page.isDataPage()) {
